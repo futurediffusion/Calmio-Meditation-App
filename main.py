@@ -47,7 +47,8 @@ class BreathCircle(QWidget):
             return
         self.cycle_valid = self._radius >= self.max_radius - 1
         self.phase = 'exhaling'
-        self.animate(self._radius, self.min_radius, self.exhale_time)
+        duration = self.exhale_time if self.cycle_valid else 2000
+        self.animate(self._radius, self.min_radius, duration)
 
     def animate(self, start, end, duration):
         if self.animation:
@@ -97,15 +98,18 @@ class MainWindow(QMainWindow):
         self.circle.count_changed_callback = self.update_count
 
         font = QFont()
-        font.setPointSize(24)
+        font.setPointSize(32)
         font.setBold(True)
         self.label = QLabel("0")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setFont(font)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.label, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        layout.addWidget(self.circle, alignment=Qt.AlignCenter)
+        layout.setSpacing(10)
+        layout.addStretch()
+        layout.addWidget(self.label, alignment=Qt.AlignHCenter)
+        layout.addWidget(self.circle, alignment=Qt.AlignHCenter)
+        layout.addStretch()
 
         container = QWidget()
         container.setLayout(layout)
