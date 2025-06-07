@@ -74,7 +74,8 @@ class DonutProgress(QWidget):
         super().__init__(parent)
         self.goal = goal
         self.minutes = 0
-        self.setMinimumSize(140, 140)
+        # Fixed square size to keep circle proportions
+        self.setFixedSize(120, 120)
 
     def set_goal(self, goal):
         self.goal = goal
@@ -87,9 +88,16 @@ class DonutProgress(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        rect = self.rect().adjusted(10, 10, -10, -10)
-        base_pen = QPen(QColor("#E0E0E0"), 12, Qt.SolidLine, Qt.RoundCap)
-        progress_pen = QPen(QColor("#8D9DFE"), 12, Qt.SolidLine, Qt.RoundCap)
+        stroke = 10
+        side = min(self.width(), self.height()) - stroke
+        rect = QRectF(
+            (self.width() - side) / 2,
+            (self.height() - side) / 2,
+            side,
+            side,
+        )
+        base_pen = QPen(QColor("#E0E0E0"), stroke, Qt.SolidLine, Qt.RoundCap)
+        progress_pen = QPen(QColor("#8D9DFE"), stroke, Qt.SolidLine, Qt.RoundCap)
         painter.setPen(base_pen)
         painter.drawArc(rect, 0, 360 * 16)
         progress = min(self.minutes / self.goal, 1.0) if self.goal else 0
@@ -136,7 +144,10 @@ class MonthlyStatsView(QWidget):
             stats_layout.addWidget(lbl)
 
         self.progress = DonutProgress()
-        bottom.addWidget(self.progress, alignment=Qt.AlignRight)
+        progress_container = QWidget()
+        pc_layout = QVBoxLayout(progress_container)
+        pc_layout.addWidget(self.progress, alignment=Qt.AlignCenter)
+        bottom.addWidget(progress_container, alignment=Qt.AlignRight)
 
     def set_stats(self, weekly_minutes, total, average, best_week_idx, longest_streak, goal=600):
         self.graph.set_minutes(weekly_minutes)
