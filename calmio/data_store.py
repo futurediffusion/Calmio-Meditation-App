@@ -146,3 +146,53 @@ class DataStore:
             "longest_time": longest_time,
             "longest_minutes": longest_secs / 60,
         }
+
+    def get_monthly_summary(self, year, month, goal=600):
+        """Return stats for the specified month."""
+        from datetime import date
+
+        start = date(year, month, 1)
+        if month == 12:
+            next_month = date(year + 1, 1, 1)
+        else:
+            next_month = date(year, month + 1, 1)
+        days = (next_month - start).days
+
+        # minutes per week
+        weeks = []
+        current = start
+        while current < next_month:
+            week_end = current + timedelta(days=6 - current.weekday())
+            if week_end >= next_month:
+                week_end = next_month - timedelta(days=1)
+            total = 0
+            d = current
+            while d <= week_end:
+                total += self.data["daily_seconds"].get(d.isoformat(), 0)
+                d += timedelta(days=1)
+            weeks.append(total / 60)
+            current = week_end + timedelta(days=1)
+
+        total_minutes = sum(weeks)
+        average = total_minutes / days if days else 0
+        best_week_idx = 1 + weeks.index(max(weeks)) if weeks else 0
+
+        # longest streak in month
+        longest = 0
+        current_streak = 0
+        for i in range(days):
+            day = start + timedelta(days=i)
+            if self.data["daily_seconds"].get(day.isoformat(), 0) > 0:
+                current_streak += 1
+                longest = max(longest, current_streak)
+            else:
+                current_streak = 0
+
+        return {
+            "minutes_per_week": [int(round(m)) for m in weeks],
+            "total": total_minutes,
+            "average": average,
+            "best_week": best_week_idx,
+            "longest_streak": longest,
+            "goal": goal,
+        }
