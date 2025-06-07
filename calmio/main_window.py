@@ -9,10 +9,12 @@ from PySide6.QtWidgets import (
     QLabel,
     QWidget,
     QPushButton,
+    QStackedWidget,
 )
 
 from .breath_circle import BreathCircle
 from .stats_overlay import StatsOverlay
+from .session_complete import SessionComplete
 from .data_store import DataStore
 
 
@@ -55,7 +57,17 @@ class MainWindow(QMainWindow):
 
         container = QWidget()
         container.setLayout(layout)
-        self.setCentralWidget(container)
+        self.main_view = container
+
+        self.session_complete = SessionComplete(self)
+        self.session_complete.done.connect(self.on_session_complete_done)
+        self.session_complete.closed.connect(self.on_session_complete_closed)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.main_view)
+        self.stack.addWidget(self.session_complete)
+
+        self.setCentralWidget(self.stack)
         self.setFocusPolicy(Qt.StrongFocus)
 
         self.menu_button = QPushButton("\u22EF", self)
@@ -138,8 +150,17 @@ class MainWindow(QMainWindow):
             start_str, session_minutes, breaths, self.last_cycle_duration
         )
         self.stats_overlay.update_minutes(self.meditation_seconds // 60)
-        self.stats_overlay.show()
-        self.stats_overlay.raise_()
+
+        end_time_str = datetime.now().strftime("%I:%M %p")
+        start_time_str = self.session_start.strftime("%I:%M %p")
+        self.session_complete.set_stats(
+            session_minutes,
+            breaths,
+            self.last_cycle_duration,
+            start_time_str,
+            end_time_str,
+        )
+        self.stack.setCurrentWidget(self.session_complete)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
@@ -216,3 +237,15 @@ class MainWindow(QMainWindow):
             self.end_button.hide()
             self.stats_overlay.hide()
         super().mousePressEvent(event)
+
+    def on_session_complete_done(self):
+        self.stack.setCurrentWidget(self.main_view)
+        self.stats_overlay.show()
+        self.stats_overlay.raise_()
+        for btn in (self.options_button, self.stats_button, self.end_button):
+            btn.hide()
+
+    def on_session_complete_closed(self):
+        self.stack.setCurrentWidget(self.main_view)
+        for btn in (self.options_button, self.stats_button, self.end_button):
+            btn.hide()
