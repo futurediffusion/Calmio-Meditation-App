@@ -1,6 +1,13 @@
 from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMainWindow
+from PySide6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+)
 
 class BreathCircle(QWidget):
     def __init__(self, parent=None):
