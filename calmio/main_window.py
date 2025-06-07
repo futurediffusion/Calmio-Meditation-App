@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
         self.last_cycle_duration = duration
         self.last_inhale = inhale
         self.last_exhale = exhale
-        self.cycle_durations.append(duration)
+        self.cycle_durations.append({"inhale": inhale, "exhale": exhale})
         self.stats_overlay.update_minutes(self.meditation_seconds)
 
     def end_session(self):
@@ -329,7 +329,12 @@ class MainWindow(QMainWindow):
             btn.hide()
 
     def open_session_details(self, session):
-        self.session_details.set_session(session)
+        is_last = False
+        try:
+            is_last = session == self.data_store.get_last_session()
+        except Exception:
+            pass
+        self.session_details.set_session(session, is_last=is_last)
         self.stats_overlay.hide()
         self.today_sessions.hide()
         self.session_details.show()
