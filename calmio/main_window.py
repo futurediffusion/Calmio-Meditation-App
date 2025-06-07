@@ -114,6 +114,7 @@ class MainWindow(QMainWindow):
                 last.get("last_inhale", 0),
                 last.get("last_exhale", 0),
             )
+        self.stats_overlay.update_streak(self.data_store.get_streak())
 
         self.position_buttons()
 
@@ -165,6 +166,7 @@ class MainWindow(QMainWindow):
             end_time_str,
         )
         self.stack.setCurrentWidget(self.session_complete)
+        self.stats_overlay.update_streak(self.data_store.get_streak())
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
 
@@ -198,7 +200,10 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
-            pos = self.mapFromGlobal(event.globalPosition().toPoint())
+            if hasattr(event, "globalPosition"):
+                pos = self.mapFromGlobal(event.globalPosition().toPoint())
+            else:
+                pos = self.mapFromGlobal(event.globalPos())
             if not (
                 self.menu_button.geometry().contains(pos)
                 or self.options_button.geometry().contains(pos)
@@ -253,10 +258,16 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.main_view)
         self.stats_overlay.show()
         self.stats_overlay.raise_()
+        self.circle.breath_count = 0
+        self.label.setText("0")
+        self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
 
     def on_session_complete_closed(self):
         self.stack.setCurrentWidget(self.main_view)
+        self.circle.breath_count = 0
+        self.label.setText("0")
+        self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()

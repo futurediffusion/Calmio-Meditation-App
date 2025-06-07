@@ -41,7 +41,25 @@ class ProgressCircle(QWidget):
         font.setPointSize(14)
         painter.setFont(font)
         painter.setPen(QColor("#444"))
-        center_text = f"{int(self.seconds // 60)} min\nmeditated"
+
+        if self.seconds < 60:
+            time_str = f"{int(self.seconds)}s"
+        elif self.seconds < 3600:
+            m = int(self.seconds // 60)
+            s = int(self.seconds % 60)
+            time_str = f"{m}m" + (f" {s}s" if s else "")
+        else:
+            h = int(self.seconds // 3600)
+            m = int((self.seconds % 3600) // 60)
+            s = int(self.seconds % 60)
+            parts = [f"{h}h"]
+            if m:
+                parts.append(f"{m}m")
+            if s:
+                parts.append(f"{s}s")
+            time_str = " ".join(parts)
+
+        center_text = f"{time_str}\nmeditados"
         painter.drawText(self.rect(), Qt.AlignCenter, center_text)
 
         base = (int(self.seconds // 60) // (self.goal_step // 60)) * (self.goal_step // 60)

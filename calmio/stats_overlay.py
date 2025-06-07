@@ -45,7 +45,7 @@ class StatsOverlay(QWidget):
 
         self.progress = ProgressCircle(self)
 
-        self.streak_label = QLabel("\ud83d\udd25 3 days in a row", self)
+        self.streak_label = QLabel("\ud83d\udd25 1 d\u00eda consecutivo", self)
         streak_font = QFont("Sans Serif")
         streak_font.setPointSize(12)
         self.streak_label.setFont(streak_font)
@@ -70,14 +70,17 @@ class StatsOverlay(QWidget):
 
         self.last_session = QFrame()
         self.last_session.setStyleSheet(
-            "background:white;border-radius:15px;padding:10px;"
+            "background:#E0F0FF;border-radius:15px;padding:6px;"
         )
         ls_shadow = QGraphicsDropShadowEffect(self)
         ls_shadow.setBlurRadius(8)
         ls_shadow.setOffset(0, 2)
         self.last_session.setGraphicsEffect(ls_shadow)
         ls_layout = QHBoxLayout(self.last_session)
+        ls_layout.setContentsMargins(6, 2, 6, 2)
         self.ls_text = QLabel("")
+        self.ls_text.setAlignment(Qt.AlignLeft)
+        self.ls_text.setWordWrap(True)
         ls_tag = QLabel("Last session")
         ls_tag.setStyleSheet(
             "background:#eee;border-radius:10px;padding:2px 6px;"
@@ -111,6 +114,13 @@ class StatsOverlay(QWidget):
         layout.addWidget(self.last_session)
         layout.addStretch()
         layout.addLayout(nav_layout)
+
+    def update_streak(self, days):
+        if days == 1:
+            text = "\ud83d\udd25 1 d\u00eda consecutivo"
+        else:
+            text = f"\ud83d\udd25 {days} d\u00edas consecutivos"
+        self.streak_label.setText(text)
 
     def update_minutes(self, seconds):
         self.progress.set_seconds(seconds)
