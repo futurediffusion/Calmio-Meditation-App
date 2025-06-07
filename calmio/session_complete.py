@@ -61,16 +61,18 @@ class SessionComplete(QWidget):
             row_widget.setLayout(row_layout)
             return row_widget, lbl
 
-        self.duration_row, self.duration_lbl = row("\u23F1 Duration: 0 min")
-        self.breaths_row, self.breaths_lbl = row("\u1F4A8 Breaths: 0")
-        self.longest_row, self.longest_lbl = row("\u23F2 Longest breath: 0s")
+        self.duration_row, self.duration_lbl = row("\u23F1 Duration: 0s")
+        self.breaths_row, self.breaths_lbl = row("\U0001FAC1 Breaths: 0")
+        self.inhale_row, self.inhale_lbl = row("\u2B06\ufe0f Inhale: 0.00s")
+        self.exhale_row, self.exhale_lbl = row("\u2B07\ufe0f Exhale: 0.00s")
         self.start_row, self.start_lbl = row("\u23F0 Start time: --")
         self.end_row, self.end_lbl = row("\u23F0 End time: --")
 
         for rw in (
             self.duration_row,
             self.breaths_row,
-            self.longest_row,
+            self.inhale_row,
+            self.exhale_row,
             self.start_row,
             self.end_row,
         ):
@@ -95,10 +97,17 @@ class SessionComplete(QWidget):
         self.done_btn.clicked.connect(self.done.emit)
         layout.addWidget(self.done_btn, alignment=Qt.AlignCenter)
 
-    def set_stats(self, duration, breaths, longest, start, end):
-        self.duration_lbl.setText(f"\u23F1 Duration: {duration} min")
-        self.breaths_lbl.setText(f"\U0001F4A8 Breaths: {breaths}")
-        self.longest_lbl.setText(f"\u23F2 Longest breath: {longest}s")
+    def set_stats(self, duration, breaths, inhale, exhale, start, end):
+        if duration < 60:
+            self.duration_lbl.setText(f"\u23F1 Duration: {duration:.0f}s")
+        else:
+            m = int(duration // 60)
+            s = int(duration % 60)
+            dur_str = f"{m}m" + (f" {s}s" if s else "")
+            self.duration_lbl.setText(f"\u23F1 Duration: {dur_str}")
+        self.breaths_lbl.setText(f"\U0001FAC1 Breaths: {breaths}")
+        self.inhale_lbl.setText(f"\u2B06\ufe0f Inhale: {inhale:.2f}s")
+        self.exhale_lbl.setText(f"\u2B07\ufe0f Exhale: {exhale:.2f}s")
         self.start_lbl.setText(f"\u23F0 Start time: {start}")
         self.end_lbl.setText(f"\u23F0 End time: {end}")
 

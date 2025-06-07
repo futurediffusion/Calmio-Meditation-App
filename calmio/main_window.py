@@ -29,8 +29,10 @@ class MainWindow(QMainWindow):
         self.session_active = False
         self.session_start = None
         self.last_cycle_duration = 0
+        self.last_inhale = 0
+        self.last_exhale = 0
 
-        self.meditation_seconds = self.data_store.get_today_minutes() * 60
+        self.meditation_seconds = self.data_store.get_today_seconds()
         self.session_seconds = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
@@ -101,15 +103,16 @@ class MainWindow(QMainWindow):
         self.stats_button.clicked.connect(self.toggle_stats)
 
         # Initialize overlay with stored data
-        self.stats_overlay.update_minutes(self.meditation_seconds // 60)
+        self.stats_overlay.update_minutes(self.meditation_seconds)
         last = self.data_store.get_last_session()
         if last:
             time_part = last.get("start", "").split(" ")[-1] if last.get("start") else ""
             self.stats_overlay.update_last_session(
                 time_part,
-                last.get("minutes", 0),
+                last.get("duration", 0),
                 last.get("breaths", 0),
-                last.get("last_cycle", 0),
+                last.get("last_inhale", 0),
+                last.get("last_exhale", 0),
             )
 
         self.position_buttons()
@@ -121,8 +124,7 @@ class MainWindow(QMainWindow):
         if self.session_active and self.circle.phase != 'idle':
             self.meditation_seconds += 1
             self.session_seconds += 1
-            minutes = self.meditation_seconds // 60
-            self.stats_overlay.update_minutes(minutes)
+            self.stats_overlay.update_minutes(self.meditation_seconds)
 
     def on_breath_start(self):
         if not self.session_active:
@@ -131,36 +133,40 @@ class MainWindow(QMainWindow):
             self.session_seconds = 0
         self.cycle_start = time.perf_counter()
 
-    def on_breath_end(self, duration):
-        self.last_cycle_duration = int(duration)
-        minutes = self.meditation_seconds // 60
-        self.stats_overlay.update_minutes(minutes)
+    def on_breath_end(self, duration, inhale, exhale):
+        self.last_cycle_duration = duration
+        self.last_inhale = inhale
+        self.last_exhale = exhale
+        self.stats_overlay.update_minutes(self.meditation_seconds)
 
     def end_session(self):
         if not self.session_active:
             return
         self.session_active = False
-        start_str = self.session_start.strftime("%H:%M") if self.session_start else ""
-        session_minutes = self.session_seconds // 60
+        start_str = self.session_start.strftime("%H:%M:%S") if self.session_start else ""
+        duration_seconds = self.session_seconds
         breaths = self.circle.breath_count
         self.data_store.add_session(
-            self.session_start, session_minutes, breaths, self.last_cycle_duration
+            self.session_start, duration_seconds, breaths, self.last_inhale, self.last_exhale
         )
         self.stats_overlay.update_last_session(
-            start_str, session_minutes, breaths, self.last_cycle_duration
+            start_str, duration_seconds, breaths, self.last_inhale, self.last_exhale
         )
-        self.stats_overlay.update_minutes(self.meditation_seconds // 60)
+        self.stats_overlay.update_minutes(self.meditation_seconds)
 
         end_time_str = datetime.now().strftime("%I:%M %p")
         start_time_str = self.session_start.strftime("%I:%M %p")
         self.session_complete.set_stats(
-            session_minutes,
+            duration_seconds,
             breaths,
-            self.last_cycle_duration,
+            self.last_inhale,
+            self.last_exhale,
             start_time_str,
             end_time_str,
         )
         self.stack.setCurrentWidget(self.session_complete)
+        for btn in (self.options_button, self.stats_button, self.end_button):
+            btn.hide()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
@@ -222,6 +228,11 @@ class MainWindow(QMainWindow):
         else:
             self.stats_overlay.show()
             self.stats_overlay.raise_()
+
+    def close_stats(self):
+        self.stats_overlay.hide()
+        for btn in (self.options_button, self.stats_button, self.end_button):
+            btn.hide()
 
     def mousePressEvent(self, event):
         pos = event.pos()

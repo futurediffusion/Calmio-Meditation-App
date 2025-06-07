@@ -24,6 +24,8 @@ class BreathCircle(QWidget):
         self.breath_started_callback = None
         self.breath_finished_callback = None
         self.breath_start_time = 0
+        self.inhale_start_time = 0
+        self.exhale_start_time = 0
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -62,6 +64,7 @@ class BreathCircle(QWidget):
             return
         self.phase = 'inhaling'
         self.breath_start_time = time.perf_counter()
+        self.inhale_start_time = self.breath_start_time
         if self.breath_started_callback:
             self.breath_started_callback()
         self.cycle_valid = False
@@ -72,6 +75,7 @@ class BreathCircle(QWidget):
         if self.phase != 'inhaling':
             return
         self.cycle_valid = self._radius >= self.max_radius - 1
+        self.exhale_start_time = time.perf_counter()
         self.phase = 'exhaling'
         duration = self.exhale_time if self.cycle_valid else 2000
         self.animate(self._radius, self.min_radius, duration,
@@ -102,12 +106,15 @@ class BreathCircle(QWidget):
     def animation_finished(self):
         if self.phase == 'exhaling':
             if self.cycle_valid:
-                duration = time.perf_counter() - self.breath_start_time
+                exhale_end = time.perf_counter()
+                duration = exhale_end - self.breath_start_time
+                inhale_dur = self.exhale_start_time - self.inhale_start_time
+                exhale_dur = exhale_end - self.exhale_start_time
                 self.breath_count += 1
                 if self.count_changed_callback:
                     self.count_changed_callback(self.breath_count)
                 if self.breath_finished_callback:
-                    self.breath_finished_callback(duration)
+                    self.breath_finished_callback(duration, inhale_dur, exhale_dur)
                 self.inhale_time += self.increment
                 self.exhale_time += self.increment
             self.breath_start_time = 0
