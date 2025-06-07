@@ -443,7 +443,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "bounce_anim"):
             self.bounce_anim.stop()
         hide = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        hide.setDuration(500)
+        hide.setDuration(4000)
         hide.setStartValue(self.msg_opacity.opacity())
         hide.setEndValue(0)
         hide.finished.connect(self.message_label.hide)
@@ -459,7 +459,7 @@ class MainWindow(QMainWindow):
         fade_in.setStartValue(0)
         fade_in.setEndValue(1)
         fade_out = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        fade_out.setDuration(600)
+        fade_out.setDuration(4000)
         fade_out.setStartValue(1)
         fade_out.setEndValue(0)
         group = QSequentialAnimationGroup(self)
