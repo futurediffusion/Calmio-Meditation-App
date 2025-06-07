@@ -8,9 +8,11 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QGraphicsDropShadowEffect,
+    QStackedWidget,
 )
 
 from .progress_circle import ProgressCircle
+from .weekly_stats import WeeklyStatsView
 
 
 class StatsOverlay(QWidget):
@@ -97,6 +99,24 @@ class StatsOverlay(QWidget):
         self.last_session.setCursor(Qt.PointingHandCursor)
         self.last_session.mouseReleaseEvent = self._on_last_session_clicked
 
+        # Today view container
+        self.today_container = QWidget()
+        today_layout = QVBoxLayout(self.today_container)
+        today_layout.setSpacing(10)
+        today_layout.addWidget(self.progress, alignment=Qt.AlignCenter)
+        today_layout.addWidget(streak_card, alignment=Qt.AlignCenter)
+        today_layout.addWidget(self.sessions_btn, alignment=Qt.AlignCenter)
+        today_layout.addWidget(self.last_session)
+        today_layout.addStretch()
+
+        self.week_view = WeeklyStatsView(self)
+        self.month_placeholder = QWidget()
+
+        self.content_stack = QStackedWidget()
+        self.content_stack.addWidget(self.today_container)
+        self.content_stack.addWidget(self.week_view)
+        self.content_stack.addWidget(self.month_placeholder)
+
         nav_layout = QHBoxLayout()
         self.today_btn = QPushButton("Today")
         self.week_btn = QPushButton("Week")
@@ -109,18 +129,20 @@ class StatsOverlay(QWidget):
             btn.setStyleSheet(btn_style)
         self.today_btn.setStyleSheet(
             "QPushButton{background:#CCE4FF;border-radius:15px;"
-            "padding:8px 16px;color:#444;}"
+            "padding:8px 16px;color:#444;font-weight:bold;}"
         )
         nav_layout.addWidget(self.today_btn)
         nav_layout.addWidget(self.week_btn)
         nav_layout.addWidget(self.month_btn)
 
-        layout.addWidget(self.progress, alignment=Qt.AlignCenter)
-        layout.addWidget(streak_card, alignment=Qt.AlignCenter)
-        layout.addWidget(self.sessions_btn, alignment=Qt.AlignCenter)
-        layout.addWidget(self.last_session)
-        layout.addStretch()
+        layout.addWidget(self.content_stack)
         layout.addLayout(nav_layout)
+
+        self.today_btn.clicked.connect(lambda: self.show_tab(0))
+        self.week_btn.clicked.connect(lambda: self.show_tab(1))
+        self.month_btn.clicked.connect(lambda: self.show_tab(2))
+
+        self.show_tab(0)
 
     def update_streak(self, days):
         if days == 1:
@@ -171,3 +193,33 @@ class StatsOverlay(QWidget):
     def _on_last_session_clicked(self, event):
         if self._last_session_data:
             self.session_requested.emit(self._last_session_data)
+
+    def show_tab(self, index: int):
+        self.content_stack.setCurrentIndex(index)
+        btns = [self.today_btn, self.week_btn, self.month_btn]
+        for i, b in enumerate(btns):
+            if i == index:
+                b.setStyleSheet(
+                    "QPushButton{background:#CCE4FF;border-radius:15px;"
+                    "padding:8px 16px;color:#444;font-weight:bold;}"
+                )
+            else:
+                b.setStyleSheet(
+                    "QPushButton{background:white;border-radius:15px;"
+                    "padding:8px 16px;color:#777;}"
+                )
+        if index == 1:
+            self.refresh_week()
+
+    def refresh_week(self):
+        store = getattr(self.parent(), "data_store", None)
+        if not store:
+            return
+        data = store.get_weekly_summary()
+        self.week_view.set_stats(
+            data["minutes_per_day"],
+            data["total"],
+            data["average"],
+            data["longest_day"],
+            data["longest_minutes"],
+        )
