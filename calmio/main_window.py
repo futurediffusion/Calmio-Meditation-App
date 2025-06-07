@@ -57,15 +57,17 @@ class MainWindow(QMainWindow):
         self.circle.count_changed_callback = self.update_count
         self.circle.breath_started_callback = self.on_breath_start
         self.circle.breath_finished_callback = self.on_breath_end
+        self.circle.exhale_started_callback = self.on_exhale_start
 
         font = QFont("Sans Serif")
         font.setPointSize(32)
         font.setBold(True)
-        self.label = QLabel("0")
+        self.label = QLabel("")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setFont(font)
         self.count_opacity = QGraphicsOpacityEffect(self.label)
         self.label.setGraphicsEffect(self.count_opacity)
+        self.count_opacity.setOpacity(0)
 
         layout = QVBoxLayout()
         layout.setSpacing(10)
@@ -178,33 +180,7 @@ class MainWindow(QMainWindow):
         self.start_prompt_animation()
 
     def update_count(self, count):
-        if (
-            hasattr(self, "count_anim")
-            and self.count_anim.state() != QAbstractAnimation.Stopped
-        ):
-            self.count_anim.stop()
-
-        fade_out = QPropertyAnimation(self.count_opacity, b"opacity", self)
-        fade_out.setDuration(500)
-        fade_out.setStartValue(1)
-        fade_out.setEndValue(0)
-
-        fade_in = QPropertyAnimation(self.count_opacity, b"opacity", self)
-        fade_in.setDuration(500)
-        fade_in.setStartValue(0)
-        fade_in.setEndValue(1)
-
-        def set_text():
-            self.label.setText(str(count))
-
-        fade_out.finished.connect(set_text)
-
-        group = QSequentialAnimationGroup(self)
-        group.addAnimation(fade_out)
-        group.addAnimation(fade_in)
-        group.start()
-        self.count_anim = group
-
+        """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
 
     def update_timer(self):
@@ -221,6 +197,33 @@ class MainWindow(QMainWindow):
             self.cycle_durations = []
             self.stop_prompt_animation()
         self.cycle_start = time.perf_counter()
+
+        if (
+            hasattr(self, "count_anim")
+            and self.count_anim.state() != QAbstractAnimation.Stopped
+        ):
+            self.count_anim.stop()
+
+        self.label.setText(str(self.circle.breath_count + 1))
+        self.count_opacity.setOpacity(0)
+        self.count_anim = QPropertyAnimation(self.count_opacity, b"opacity", self)
+        self.count_anim.setDuration(int(self.circle.inhale_time))
+        self.count_anim.setStartValue(0)
+        self.count_anim.setEndValue(1)
+        self.count_anim.start()
+
+    def on_exhale_start(self, duration):
+        if (
+            hasattr(self, "count_anim")
+            and self.count_anim.state() != QAbstractAnimation.Stopped
+        ):
+            self.count_anim.stop()
+
+        self.count_anim = QPropertyAnimation(self.count_opacity, b"opacity", self)
+        self.count_anim.setDuration(int(duration))
+        self.count_anim.setStartValue(self.count_opacity.opacity())
+        self.count_anim.setEndValue(0)
+        self.count_anim.start()
 
     def on_breath_end(self, duration, inhale, exhale):
         self.last_cycle_duration = duration
@@ -385,7 +388,8 @@ class MainWindow(QMainWindow):
         self.stats_overlay.show()
         self.stats_overlay.raise_()
         self.circle.breath_count = 0
-        self.label.setText("0")
+        self.label.setText("")
+        self.count_opacity.setOpacity(0)
         self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
@@ -394,7 +398,8 @@ class MainWindow(QMainWindow):
     def on_session_complete_closed(self):
         self.stack.setCurrentWidget(self.main_view)
         self.circle.breath_count = 0
-        self.label.setText("0")
+        self.label.setText("")
+        self.count_opacity.setOpacity(0)
         self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()

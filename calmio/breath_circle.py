@@ -26,6 +26,7 @@ class BreathCircle(QWidget):
         self.count_changed_callback = None
         self.breath_started_callback = None
         self.breath_finished_callback = None
+        self.exhale_started_callback = None
         self.breath_start_time = 0
         self.inhale_start_time = 0
         self.exhale_start_time = 0
@@ -83,6 +84,8 @@ class BreathCircle(QWidget):
         self.exhale_start_time = time.perf_counter()
         self.phase = 'exhaling'
         duration = self.exhale_time if self.cycle_valid else 2000
+        if self.exhale_started_callback:
+            self.exhale_started_callback(duration)
         self.animate(self._radius, self.min_radius, duration,
                      target_color=self.base_color)
 
