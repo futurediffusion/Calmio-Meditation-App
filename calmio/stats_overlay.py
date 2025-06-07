@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QPushButton,
+    QGraphicsDropShadowEffect,
 )
 
 from .progress_circle import ProgressCircle
@@ -41,8 +42,11 @@ class StatsOverlay(QWidget):
         streak_card.setStyleSheet(
             "background:white;border-radius:15px;"
             "padding:10px;"
-            "box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
         )
+        streak_shadow = QGraphicsDropShadowEffect(self)
+        streak_shadow.setBlurRadius(8)
+        streak_shadow.setOffset(0, 2)
+        streak_card.setGraphicsEffect(streak_shadow)
         streak_layout = QHBoxLayout(streak_card)
         streak_layout.addWidget(self.streak_label, alignment=Qt.AlignCenter)
 
@@ -56,16 +60,19 @@ class StatsOverlay(QWidget):
         self.last_session = QFrame()
         self.last_session.setStyleSheet(
             "background:white;border-radius:15px;padding:10px;"
-            "box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
         )
+        ls_shadow = QGraphicsDropShadowEffect(self)
+        ls_shadow.setBlurRadius(8)
+        ls_shadow.setOffset(0, 2)
+        self.last_session.setGraphicsEffect(ls_shadow)
         ls_layout = QHBoxLayout(self.last_session)
-        ls_text = QLabel("08:00 \u2022 10min \u2022 83 br \u2022 5s last")
+        self.ls_text = QLabel("")
         ls_tag = QLabel("Last session")
         ls_tag.setStyleSheet(
             "background:#eee;border-radius:10px;padding:2px 6px;"
             "font-size:10px;color:#777;"
         )
-        ls_layout.addWidget(ls_text)
+        ls_layout.addWidget(self.ls_text)
         ls_layout.addStretch()
         ls_layout.addWidget(ls_tag)
 
@@ -97,3 +104,8 @@ class StatsOverlay(QWidget):
 
     def update_minutes(self, m):
         self.progress.set_minutes(m)
+
+    def update_last_session(self, start, minutes, breaths, last_cycle):
+        self.ls_text.setText(
+            f"{start} \u2022 {minutes}min \u2022 {breaths} br \u2022 {last_cycle}s last"
+        )

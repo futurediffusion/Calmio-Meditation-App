@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
+import time
 from PySide6.QtGui import QPainter, QBrush, QColor, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
@@ -20,6 +21,9 @@ class BreathCircle(QWidget):
         self.breath_count = 0
         self.cycle_valid = False
         self.count_changed_callback = None
+        self.breath_started_callback = None
+        self.breath_finished_callback = None
+        self.breath_start_time = 0
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -57,6 +61,9 @@ class BreathCircle(QWidget):
         if self.phase != 'idle':
             return
         self.phase = 'inhaling'
+        self.breath_start_time = time.perf_counter()
+        if self.breath_started_callback:
+            self.breath_started_callback()
         self.cycle_valid = False
         self.animate(self._radius, self.max_radius, self.inhale_time,
                      target_color=self.complement_color)
@@ -95,11 +102,15 @@ class BreathCircle(QWidget):
     def animation_finished(self):
         if self.phase == 'exhaling':
             if self.cycle_valid:
+                duration = time.perf_counter() - self.breath_start_time
                 self.breath_count += 1
                 if self.count_changed_callback:
                     self.count_changed_callback(self.breath_count)
+                if self.breath_finished_callback:
+                    self.breath_finished_callback(duration)
                 self.inhale_time += self.increment
                 self.exhale_time += self.increment
+            self.breath_start_time = 0
             self.phase = 'idle'
         elif self.phase == 'inhaling':
             pass
