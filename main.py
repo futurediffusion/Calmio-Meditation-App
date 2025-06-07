@@ -146,6 +146,22 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
         self.setFocusPolicy(Qt.StrongFocus)
 
+        # Floating menu buttons
+        self.menu_button = QPushButton("\u22EF", self)  # "⋯" icon
+        self.menu_button.setFixedSize(40, 40)
+        self.menu_button.setStyleSheet("background:none; border:none; font-size:24px;")
+        self.menu_button.clicked.connect(self.toggle_menu)
+
+        self.options_button = QPushButton("\u2699\ufe0f", self)  # "⚙️" icon
+        self.stats_button = QPushButton("\ud83d\udcca", self)    # "📊" icon
+
+        for btn in (self.options_button, self.stats_button):
+            btn.setFixedSize(40, 40)
+            btn.setStyleSheet("background:white; border:none; font-size:20px;")
+            btn.hide()
+
+        self.position_buttons()
+
     def update_count(self, count):
         self.label.setText(str(count))
 
@@ -162,6 +178,35 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             super().keyReleaseEvent(event)
+
+    def position_buttons(self):
+        margin = 10
+        x = self.width() - self.menu_button.width() - margin
+        y = self.height() - self.menu_button.height() - margin
+        self.menu_button.move(x, y)
+        self.options_button.move(x - self.options_button.width() - margin, y)
+        self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.position_buttons()
+
+    def toggle_menu(self):
+        if self.options_button.isVisible():
+            self.options_button.hide()
+            self.stats_button.hide()
+        else:
+            self.options_button.show()
+            self.stats_button.show()
+
+    def mousePressEvent(self, event):
+        pos = event.pos()
+        if not (self.menu_button.geometry().contains(pos) or
+                self.options_button.geometry().contains(pos) or
+                self.stats_button.geometry().contains(pos)):
+            self.options_button.hide()
+            self.stats_button.hide()
+        super().mousePressEvent(event)
 
 
 def main():
