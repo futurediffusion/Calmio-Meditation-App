@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QPropertyAnimation
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QWidget,
@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QGraphicsDropShadowEffect,
+    QGraphicsOpacityEffect,
 )
 
 
@@ -80,6 +81,16 @@ class SessionComplete(QWidget):
 
         layout.addWidget(card)
 
+        self.badge_label = QLabel("")
+        badge_font = QFont("Sans Serif")
+        badge_font.setPointSize(14)
+        badge_font.setWeight(QFont.Bold)
+        self.badge_label.setFont(badge_font)
+        self.badge_label.setAlignment(Qt.AlignCenter)
+        self.badge_label.setStyleSheet("color:#F39C12;")
+        self.badge_label.hide()
+        layout.addWidget(self.badge_label)
+
         self.phrase = QLabel("Lleva esta calma contigo durante el d\u00eda.")
         ph_font = QFont("Sans Serif")
         ph_font.setPointSize(12)
@@ -87,6 +98,14 @@ class SessionComplete(QWidget):
         self.phrase.setAlignment(Qt.AlignCenter)
         self.phrase.setStyleSheet("color:#666;")
         layout.addWidget(self.phrase)
+
+        # ephemeral star animation widgets
+        self._stars = []
+        for _ in range(5):
+            lbl = QLabel("\u2728", self)
+            lbl.setStyleSheet("font-size:24px;color:#F5B041;")
+            lbl.hide()
+            self._stars.append(lbl)
 
         self.done_btn = QPushButton("Listo")
         self.done_btn.setStyleSheet(
@@ -110,4 +129,33 @@ class SessionComplete(QWidget):
         self.exhale_lbl.setText(f"\u2B07\ufe0f Exhalar: {exhale:.2f}s")
         self.start_lbl.setText(f"\u23F0 Inicio: {start}")
         self.end_lbl.setText(f"\u23F0 Fin: {end}")
+
+    def show_badges(self, badges):
+        from .badges import BADGE_NAMES
+        if badges:
+            names = [BADGE_NAMES.get(b, b) for b in badges]
+            self.badge_label.setText("\u2728 " + ", ".join(names))
+            self.badge_label.show()
+        else:
+            self.badge_label.hide()
+        self.play_completion_animation()
+
+    def play_completion_animation(self):
+        import random
+        for star in self._stars:
+            star.hide()
+        for star in self._stars:
+            x = random.randint(0, max(0, self.width() - star.width()))
+            y = random.randint(0, max(0, self.height() // 2))
+            star.move(x, y)
+            effect = QGraphicsOpacityEffect(star)
+            star.setGraphicsEffect(effect)
+            effect.setOpacity(1)
+            star.show()
+            anim = QPropertyAnimation(effect, b"opacity", self)
+            anim.setDuration(1000)
+            anim.setStartValue(1)
+            anim.setEndValue(0)
+            anim.finished.connect(star.hide)
+            anim.start()
 
