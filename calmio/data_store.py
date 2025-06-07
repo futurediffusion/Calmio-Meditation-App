@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class DataStore:
@@ -98,3 +98,38 @@ class DataStore:
             else:
                 break
         self.data["streak"] = streak
+
+    def get_weekly_summary(self, reference_date=None):
+        """Return stats for the week of the given date (default today)."""
+        if reference_date is None:
+            reference_date = datetime.now().date()
+        start = reference_date - timedelta(days=reference_date.weekday())
+        minutes_per_day = []
+        total_seconds = 0
+        for i in range(7):
+            d = start + timedelta(days=i)
+            secs = self.data["daily_seconds"].get(d.isoformat(), 0)
+            minutes_per_day.append(secs / 60)
+            total_seconds += secs
+
+        longest_secs = 0
+        longest_day = ""
+        for s in self.data.get("sessions", []):
+            try:
+                dt = datetime.fromisoformat(s.get("start", ""))
+            except ValueError:
+                continue
+            if start <= dt.date() <= start + timedelta(days=6):
+                dur = s.get("duration", 0)
+                if dur > longest_secs:
+                    longest_secs = dur
+                    longest_day = dt.strftime("%A")
+
+        average = (total_seconds / 60) / 7 if total_seconds else 0
+        return {
+            "minutes_per_day": [int(round(m)) for m in minutes_per_day],
+            "total": total_seconds / 60,
+            "average": average,
+            "longest_day": longest_day,
+            "longest_minutes": longest_secs / 60,
+        }
