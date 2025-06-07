@@ -1,4 +1,11 @@
-from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
+from PySide6.QtCore import (
+    Qt,
+    Property,
+    QPropertyAnimation,
+    QEasingCurve,
+    QParallelAnimationGroup,
+    QEvent,
+)
 from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient
 from PySide6.QtWidgets import (
     QApplication,
@@ -159,13 +166,22 @@ class MainWindow(QMainWindow):
         self.menu_button.setStyleSheet("background:none; border:none; font-size:24px;")
         self.menu_button.clicked.connect(self.toggle_menu)
 
+        QApplication.instance().installEventFilter(self)
+
+        self.setFocus()
+
         self.options_button = QPushButton("\u2699\ufe0f", self)  # "⚙️" icon
         self.stats_button = QPushButton("\ud83d\udcca", self)    # "📊" icon
 
         for btn in (self.options_button, self.stats_button):
             btn.setFixedSize(40, 40)
-            btn.setStyleSheet("background:white; border:none; font-size:20px;")
+            btn.setStyleSheet(
+                "QPushButton {background:none; border:none; font-size:20px;}"
+            )
+            btn.setFocusPolicy(Qt.NoFocus)
             btn.hide()
+
+        self.menu_button.setFocusPolicy(Qt.NoFocus)
 
         self.position_buttons()
 
@@ -197,6 +213,18 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.position_buttons()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.MouseButtonPress:
+            pos = self.mapFromGlobal(event.globalPosition().toPoint())
+            if not (
+                self.menu_button.geometry().contains(pos)
+                or self.options_button.geometry().contains(pos)
+                or self.stats_button.geometry().contains(pos)
+            ):
+                self.options_button.hide()
+                self.stats_button.hide()
+        return super().eventFilter(obj, event)
 
     def toggle_menu(self):
         if self.options_button.isVisible():
