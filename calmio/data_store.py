@@ -6,7 +6,12 @@ from datetime import datetime
 class DataStore:
     def __init__(self, path="calmio_data.json"):
         self.path = Path(path)
-        self.data = {"daily_seconds": {}, "last_session": {}, "streak": 1}
+        self.data = {
+            "daily_seconds": {},
+            "last_session": {},
+            "streak": 1,
+            "sessions": [],
+        }
         self.load()
 
     def load(self):
@@ -20,6 +25,8 @@ class DataStore:
                         }
                     if "streak" not in self.data:
                         self.data["streak"] = 1
+                    if "sessions" not in self.data:
+                        self.data["sessions"] = []
             except (json.JSONDecodeError, IOError):
                 pass
 
@@ -40,6 +47,15 @@ class DataStore:
             "last_exhale": exhale,
         }
         self._update_streak()
+        self.data.setdefault("sessions", []).append(
+            {
+                "start": start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                "duration": seconds,
+                "breaths": breaths,
+                "last_inhale": inhale,
+                "last_exhale": exhale,
+            }
+        )
         self.save()
 
     def get_today_seconds(self):
@@ -48,6 +64,19 @@ class DataStore:
 
     def get_last_session(self):
         return self.data.get("last_session", {})
+
+    def get_sessions_for_date(self, date_obj):
+        date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
+        sessions = []
+        for s in self.data.get("sessions", []):
+            try:
+                dt = datetime.fromisoformat(s.get("start", ""))
+            except ValueError:
+                continue
+            if dt.date().isoformat() == date_key:
+                sessions.append(s)
+        sessions.sort(key=lambda x: x.get("start", ""), reverse=True)
+        return sessions
 
     def get_streak(self):
         return self.data.get("streak", 1)

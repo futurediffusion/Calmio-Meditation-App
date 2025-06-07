@@ -4,6 +4,7 @@ from .breath_circle import BreathCircle
 from .progress_circle import ProgressCircle
 from .stats_overlay import StatsOverlay
 from .session_complete import SessionComplete
+from .today_sessions import TodaySessionsView
 from .main_window import MainWindow
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "ProgressCircle",
     "StatsOverlay",
     "SessionComplete",
+    "TodaySessionsView",
     "MainWindow",
 ]

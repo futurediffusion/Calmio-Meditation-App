@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QWidget,
@@ -14,6 +14,7 @@ from .progress_circle import ProgressCircle
 
 
 class StatsOverlay(QWidget):
+    view_sessions = Signal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -67,6 +68,8 @@ class StatsOverlay(QWidget):
             "background-color:#CCE4FF;border:none;border-radius:20px;"
             "padding:12px 24px;font-size:14px;}"
         )
+
+        self.sessions_btn.clicked.connect(self.view_sessions.emit)
 
         self.last_session = QFrame()
         self.last_session.setStyleSheet(
