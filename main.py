@@ -1,10 +1,6 @@
-import random
-
-from PySide6.QtCore import (Qt, Property, QPropertyAnimation, QEasingCurve,
-                            QParallelAnimationGroup, QTimer, QPointF)
+from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QLabel,
-                               QMainWindow, QPushButton, QMenu)
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMainWindow
 
 class BreathCircle(QWidget):
     def __init__(self, parent=None):
@@ -20,14 +16,10 @@ class BreathCircle(QWidget):
         self.exhale_time = 6000  # milliseconds
         self.increment = 50      # milliseconds per phase after each cycle
         self.animation = None
-        self.color_animation = None
         self.phase = 'idle'
         self.breath_count = 0
         self.cycle_valid = False
         self.count_changed_callback = None
-        self._offset = QPointF(0, 0)
-        self.offset_timer = QTimer(self)
-        self.offset_timer.timeout.connect(self.update_offset)
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -48,15 +40,10 @@ class BreathCircle(QWidget):
 
     color = Property(QColor, getColor, setColor)
 
-    def update_offset(self):
-        # random offset for subtle texture movement
-        self._offset = QPointF(random.uniform(-8, 8), random.uniform(-8, 8))
-        self.update()
-
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        center = QPointF(self.rect().center()) + self._offset
+        center = self.rect().center()
 
         gradient = QRadialGradient(center, self._radius)
         gradient.setColorAt(0, self._color.lighter(120))
@@ -71,10 +58,8 @@ class BreathCircle(QWidget):
             return
         self.phase = 'inhaling'
         self.cycle_valid = False
-        self.offset_timer.start(120)
-        # transition to warm orange while expanding
         self.animate(self._radius, self.max_radius, self.inhale_time,
-                     target_color=self.base_color)
+                     target_color=self.complement_color)
 
     def start_exhale(self):
         if self.phase != 'inhaling':
@@ -107,16 +92,6 @@ class BreathCircle(QWidget):
         self.animation.finished.connect(self.animation_finished)
         self.animation.start()
 
-    def animate_color(self, start_color, end_color, duration=800):
-        if self.color_animation:
-            self.color_animation.stop()
-        self.color_animation = QPropertyAnimation(self, b"color")
-        self.color_animation.setStartValue(start_color)
-        self.color_animation.setEndValue(end_color)
-        self.color_animation.setDuration(int(duration))
-        self.color_animation.setEasingCurve(QEasingCurve.InOutSine)
-        self.color_animation.start()
-
     def animation_finished(self):
         if self.phase == 'exhaling':
             if self.cycle_valid:
@@ -126,9 +101,6 @@ class BreathCircle(QWidget):
                 self.inhale_time += self.increment
                 self.exhale_time += self.increment
             self.phase = 'idle'
-            self.offset_timer.stop()
-            # subtle transition to soothing green when resting
-            self.animate_color(self._color, self.complement_color, 800)
         elif self.phase == 'inhaling':
             pass
 
@@ -151,7 +123,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
-        self.setStyleSheet("background-color: #FAFAFA;")
 
         self.circle = BreathCircle()
         self.circle.count_changed_callback = self.update_count
@@ -163,21 +134,12 @@ class MainWindow(QMainWindow):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setFont(font)
 
-        self.menu_button = QPushButton("\u22EF")  # ellipsis character
-        self.menu_button.setStyleSheet(
-            "border: none; background: transparent; font-size: 24px; color: #444;"
-        )
-        menu = QMenu(self)
-        menu.addAction("Placeholder")
-        self.menu_button.setMenu(menu)
-
         layout = QVBoxLayout()
         layout.setSpacing(10)
         layout.addStretch()
         layout.addWidget(self.label, alignment=Qt.AlignHCenter)
         layout.addWidget(self.circle, alignment=Qt.AlignHCenter)
         layout.addStretch()
-        layout.addWidget(self.menu_button, alignment=Qt.AlignRight | Qt.AlignBottom)
 
         container = QWidget()
         container.setLayout(layout)
