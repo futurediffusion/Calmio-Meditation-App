@@ -1,27 +1,62 @@
 from PySide6.QtCore import Qt, Signal, QPointF
-from PySide6.QtGui import QFont, QPainter, QColor, QPen, QPainterPath, QLinearGradient, QBrush
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QFrame, QGraphicsDropShadowEffect
+from PySide6.QtGui import (
+    QFont,
+    QPainter,
+    QColor,
+    QPen,
+    QPainterPath,
+    QLinearGradient,
+    QBrush,
+)
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QHBoxLayout,
+    QPushButton,
+    QFrame,
+    QGraphicsDropShadowEffect,
+)
 
 
 class BreathGraph(QWidget):
-    """Simple line graph to display breathing cycle durations."""
+    """Smooth graph representing inhale and exhale durations."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.cycles = []
+        self.values = []
         self.setMinimumHeight(200)
         self.start_label = ""
         self.end_label = ""
 
     def set_cycles(self, cycles):
         self.cycles = list(cycles or [])
-        if self.cycles:
-            self.start_label = f"Inicio: {self.cycles[0]:.0f}s"
-            self.end_label = f"\u00DAltima: {self.cycles[-1]:.0f}s"
+        self.values = []
+        if self.cycles and isinstance(self.cycles[0], dict):
+            for c in self.cycles:
+                self.values.append(float(c.get("inhale", 0)))
+                self.values.append(float(c.get("exhale", 0)))
+        else:
+            self.values = [float(v) for v in self.cycles]
+        if self.values:
+            self.start_label = f"Inicio: {self.values[0]:.2f}s"
+            self.end_label = f"\u00DAltima: {self.values[-1]:.2f}s"
         self.update()
 
+    def _smooth_path(self, pts):
+        path = QPainterPath(pts[0])
+        for i in range(1, len(pts) - 1):
+            mid = QPointF(
+                (pts[i].x() + pts[i + 1].x()) / 2,
+                (pts[i].y() + pts[i + 1].y()) / 2,
+            )
+            path.quadTo(pts[i], mid)
+        path.quadTo(pts[-1], pts[-1])
+        return path
+
     def paintEvent(self, event):
-        if not self.cycles:
+        if not self.values:
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -31,20 +66,18 @@ class BreathGraph(QWidget):
         w = self.width() - 2 * margin_x
         h = self.height() - 2 * margin_y
 
-        min_v = min(self.cycles)
-        max_v = max(self.cycles)
+        min_v = min(self.values)
+        max_v = max(self.values)
         span = max(max_v - min_v, 1e-6)
 
-        step_x = w / (len(self.cycles) - 1)
+        step_x = w / (len(self.values) - 1)
         points = []
-        for i, v in enumerate(self.cycles):
+        for i, v in enumerate(self.values):
             x = margin_x + i * step_x
             y = margin_y + h - ((v - min_v) / span * h)
             points.append(QPointF(x, y))
 
-        path = QPainterPath(points[0])
-        for p in points[1:]:
-            path.lineTo(p)
+        path = self._smooth_path(points)
 
         fill = QPainterPath(path)
         fill.lineTo(points[-1].x(), self.height() - margin_y)
@@ -99,13 +132,51 @@ class SessionDetailsView(QWidget):
         header.addStretch()
         layout.addLayout(header)
 
-        self.summary = QLabel("")
-        self.summary.setAlignment(Qt.AlignCenter)
-        self.summary.setStyleSheet("background:#CCE4FF;border-radius:20px;padding:8px 12px;font-size:14px;")
+        self.summary = QFrame()
+        self.summary.setStyleSheet(
+            "background:#E0F0FF;border-radius:20px;padding:6px;"
+        )
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(8)
         shadow.setOffset(0, 2)
         self.summary.setGraphicsEffect(shadow)
+        sum_layout = QHBoxLayout(self.summary)
+        sum_layout.setContentsMargins(12, 4, 12, 4)
+        sum_layout.setSpacing(15)
+
+        def pair(icon):
+            ic = QLabel(icon)
+            val = QLabel("-")
+            row = QHBoxLayout()
+            row.addWidget(ic)
+            row.addWidget(val)
+            w = QWidget()
+            w.setLayout(row)
+            return w, val
+
+        self.start_w, self.start_lbl = pair("\u23F0")
+        self.dur_w, self.dur_lbl = pair("\u23F1")
+        self.breath_w, self.breath_lbl = pair("\U0001FAC1")
+        self.avg_w, self.avg_lbl = pair("\U0001F4C8")
+        self.last_w, self.last_lbl = pair("\U0001F4C9")
+
+        for w in (
+            self.start_w,
+            self.dur_w,
+            self.breath_w,
+            self.avg_w,
+            self.last_w,
+        ):
+            sum_layout.addWidget(w)
+
+        sum_layout.addStretch()
+        self.tag_lbl = QLabel("\u00DAltima sesi\u00F3n")
+        self.tag_lbl.setStyleSheet(
+            "background:#eee;border-radius:10px;padding:2px 6px;font-size:10px;color:#777;"
+        )
+        sum_layout.addWidget(self.tag_lbl)
+        self.tag_lbl.hide()
+
         layout.addWidget(self.summary, alignment=Qt.AlignCenter)
 
         self.graph = BreathGraph(self)
@@ -119,12 +190,21 @@ class SessionDetailsView(QWidget):
         self.phrase.setStyleSheet("color:#666;")
         layout.addWidget(self.phrase, alignment=Qt.AlignCenter)
 
-    def set_session(self, session):
+    def set_session(self, session, is_last=False):
         start = session.get("start", "").split(" ")[-1]
         duration = session.get("duration", 0)
         breaths = session.get("breaths", 0)
         cycles = session.get("cycles", [])
-        last_cycle = cycles[-1] if cycles else session.get("last_inhale", 0) + session.get("last_exhale", 0)
+
+        totals = []
+        for c in cycles:
+            if isinstance(c, dict):
+                totals.append(c.get("inhale", 0) + c.get("exhale", 0))
+            else:
+                totals.append(float(c))
+
+        last_cycle = totals[-1] if totals else session.get("last_inhale", 0) + session.get("last_exhale", 0)
+        avg_cycle = sum(totals) / len(totals) if totals else last_cycle
 
         if duration < 60:
             dur_str = f"{duration:.0f}s"
@@ -132,6 +212,12 @@ class SessionDetailsView(QWidget):
             m = int(duration // 60)
             s = int(duration % 60)
             dur_str = f"{m}m" + (f" {s}s" if s else "")
-        self.summary.setText(f"{start} \u2022 {dur_str} \u2022 {breaths} br \u2022 {last_cycle:.0f}s \u00FAltima")
+
+        self.start_lbl.setText(start)
+        self.dur_lbl.setText(dur_str)
+        self.breath_lbl.setText(str(breaths))
+        self.avg_lbl.setText(f"{avg_cycle:.2f}s")
+        self.last_lbl.setText(f"{last_cycle:.2f}s")
+        self.tag_lbl.setVisible(is_last)
 
         self.graph.set_cycles(cycles)
