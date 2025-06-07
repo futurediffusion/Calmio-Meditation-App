@@ -1,6 +1,6 @@
 # Calmio Meditation App
 
-Prototype breathing exercise built with **PySide6**. A central circle expands while you hold the space bar (or press the circle), and contracts when released. Each completed inhale+exhale cycle increments the breath counter and slightly increases the duration of the next cycle.
+Prototype breathing exercise built with **PySide6**. The minimalist interface features a textured breathing circle that gently inflates and deflates. The circle shifts to a calm green hue when idle, and a small menu button offers additional options.
 
 ## Requirements
 
