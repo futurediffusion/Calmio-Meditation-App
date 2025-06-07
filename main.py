@@ -5,8 +5,9 @@ from PySide6.QtCore import (
     QEasingCurve,
     QParallelAnimationGroup,
     QEvent,
+    QTimer,
 )
-from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient
+from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient, QPen
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -132,16 +133,114 @@ class BreathCircle(QWidget):
         else:
             super().mouseReleaseEvent(event)
 
+class ProgressCircle(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.minutes = 0
+        self.goal_step = 30
+        self.setMinimumSize(220, 220)
+
+    def set_minutes(self, m):
+        self.minutes = m
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = self.rect().adjusted(20, 20, -20, -20)
+
+        base_pen = QPen(QColor(200, 220, 255), 12, Qt.SolidLine, Qt.RoundCap)
+        progress_pen = QPen(QColor(255, 204, 188), 12, Qt.SolidLine, Qt.RoundCap)
+
+        painter.setPen(base_pen)
+        painter.drawArc(rect, 0, 360 * 16)
+
+        progress = (self.minutes % self.goal_step) / self.goal_step
+        painter.setPen(progress_pen)
+        painter.drawArc(rect, 90 * 16, int(-360 * 16 * progress))
+
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(Qt.NoBrush)
+
+        # Center text
+        font = QFont("Sans Serif")
+        font.setPointSize(14)
+        painter.setFont(font)
+        painter.setPen(QColor("#444"))
+        center_text = f"{self.minutes} min\nmeditated"
+        painter.drawText(self.rect(), Qt.AlignCenter, center_text)
+
+        # Labels
+        base = (self.minutes // self.goal_step) * self.goal_step
+        labels = {
+            "top": base + self.goal_step,
+            "right": base + 10,
+            "left": base + 20,
+        }
+
+        label_font = QFont("Sans Serif")
+        label_font.setPointSize(10)
+        painter.setFont(label_font)
+        painter.drawText(
+            rect.center().x() - 10,
+            rect.top() - 5,
+            f"{labels['top']} min",
+        )
+        painter.drawText(
+            rect.right() - 40,
+            rect.bottom() + 15,
+            f"{labels['right']} min",
+        )
+        painter.drawText(
+            rect.left() + 10,
+            rect.bottom() + 15,
+            f"{labels['left']} min",
+        )
+
+
+class StatsOverlay(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setStyleSheet(
+            "background-color:#FAFAFA; border-radius:20px;"
+            "color:#444;"
+        )
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+
+        title = QLabel("Today's Meditation", self)
+        title_font = QFont("Sans Serif")
+        title_font.setPointSize(18)
+        title_font.setBold(True)
+        title.setFont(title_font)
+        title.setAlignment(Qt.AlignCenter)
+
+        self.progress = ProgressCircle(self)
+
+        layout.addWidget(title)
+        layout.addWidget(self.progress, alignment=Qt.AlignCenter)
+
+    def update_minutes(self, m):
+        self.progress.set_minutes(m)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
 
+        self.meditation_seconds = 0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000)
+
         self.circle = BreathCircle()
         self.circle.count_changed_callback = self.update_count
 
-        font = QFont()
+        font = QFont("Sans Serif")
         font.setPointSize(32)
         font.setBold(True)
         self.label = QLabel("0")
@@ -183,10 +282,21 @@ class MainWindow(QMainWindow):
 
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
+        self.stats_overlay = StatsOverlay(self)
+        self.stats_overlay.setGeometry(self.rect())
+        self.stats_overlay.hide()
+        self.stats_button.clicked.connect(self.toggle_stats)
+
         self.position_buttons()
 
     def update_count(self, count):
         self.label.setText(str(count))
+
+    def update_timer(self):
+        if self.circle.phase != 'idle':
+            self.meditation_seconds += 1
+            minutes = self.meditation_seconds // 60
+            self.stats_overlay.update_minutes(minutes)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
@@ -209,6 +319,7 @@ class MainWindow(QMainWindow):
         self.menu_button.move(x, y)
         self.options_button.move(x - self.options_button.width() - margin, y)
         self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
+        self.stats_overlay.setGeometry(self.rect())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -221,9 +332,11 @@ class MainWindow(QMainWindow):
                 self.menu_button.geometry().contains(pos)
                 or self.options_button.geometry().contains(pos)
                 or self.stats_button.geometry().contains(pos)
+                or self.stats_overlay.geometry().contains(pos)
             ):
                 self.options_button.hide()
                 self.stats_button.hide()
+                self.stats_overlay.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -234,13 +347,22 @@ class MainWindow(QMainWindow):
             self.options_button.show()
             self.stats_button.show()
 
+    def toggle_stats(self):
+        if self.stats_overlay.isVisible():
+            self.stats_overlay.hide()
+        else:
+            self.stats_overlay.show()
+            self.stats_overlay.raise_()
+
     def mousePressEvent(self, event):
         pos = event.pos()
         if not (self.menu_button.geometry().contains(pos) or
                 self.options_button.geometry().contains(pos) or
-                self.stats_button.geometry().contains(pos)):
+                self.stats_button.geometry().contains(pos) or
+                self.stats_overlay.geometry().contains(pos)):
             self.options_button.hide()
             self.stats_button.hide()
+            self.stats_overlay.hide()
         super().mousePressEvent(event)
 
 
