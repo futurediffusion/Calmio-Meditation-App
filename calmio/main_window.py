@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from .breath_circle import BreathCircle
 from .stats_overlay import StatsOverlay
+from .data_store import DataStore
 
 
 class MainWindow(QMainWindow):
@@ -21,11 +22,14 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
 
+        self.data_store = DataStore()
+
         self.session_active = False
         self.session_start = None
         self.last_cycle_duration = 0
 
-        self.meditation_seconds = 0
+        self.meditation_seconds = self.data_store.get_today_minutes() * 60
+        self.session_seconds = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
         self.timer.start(1000)
@@ -84,6 +88,18 @@ class MainWindow(QMainWindow):
         self.stats_overlay.hide()
         self.stats_button.clicked.connect(self.toggle_stats)
 
+        # Initialize overlay with stored data
+        self.stats_overlay.update_minutes(self.meditation_seconds // 60)
+        last = self.data_store.get_last_session()
+        if last:
+            time_part = last.get("start", "").split(" ")[-1] if last.get("start") else ""
+            self.stats_overlay.update_last_session(
+                time_part,
+                last.get("minutes", 0),
+                last.get("breaths", 0),
+                last.get("last_cycle", 0),
+            )
+
         self.position_buttons()
 
     def update_count(self, count):
@@ -92,6 +108,7 @@ class MainWindow(QMainWindow):
     def update_timer(self):
         if self.session_active and self.circle.phase != 'idle':
             self.meditation_seconds += 1
+            self.session_seconds += 1
             minutes = self.meditation_seconds // 60
             self.stats_overlay.update_minutes(minutes)
 
@@ -99,6 +116,7 @@ class MainWindow(QMainWindow):
         if not self.session_active:
             self.session_active = True
             self.session_start = datetime.now()
+            self.session_seconds = 0
         self.cycle_start = time.perf_counter()
 
     def on_breath_end(self, duration):
@@ -111,9 +129,15 @@ class MainWindow(QMainWindow):
             return
         self.session_active = False
         start_str = self.session_start.strftime("%H:%M") if self.session_start else ""
-        minutes = self.meditation_seconds // 60
+        session_minutes = self.session_seconds // 60
         breaths = self.circle.breath_count
-        self.stats_overlay.update_last_session(start_str, minutes, breaths, self.last_cycle_duration)
+        self.data_store.add_session(
+            self.session_start, session_minutes, breaths, self.last_cycle_duration
+        )
+        self.stats_overlay.update_last_session(
+            start_str, session_minutes, breaths, self.last_cycle_duration
+        )
+        self.stats_overlay.update_minutes(self.meditation_seconds // 60)
         self.stats_overlay.show()
         self.stats_overlay.raise_()
 
