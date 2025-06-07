@@ -34,7 +34,7 @@ class DataStore:
         with self.path.open("w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2)
 
-    def add_session(self, start_dt, seconds, breaths, inhale, exhale):
+    def add_session(self, start_dt, seconds, breaths, inhale, exhale, cycles=None):
         date_key = start_dt.date().isoformat()
         self.data["daily_seconds"][date_key] = (
             self.data["daily_seconds"].get(date_key, 0) + seconds
@@ -45,6 +45,7 @@ class DataStore:
             "breaths": breaths,
             "last_inhale": inhale,
             "last_exhale": exhale,
+            "cycles": cycles or [],
         }
         self._update_streak()
         self.data.setdefault("sessions", []).append(
@@ -54,6 +55,7 @@ class DataStore:
                 "breaths": breaths,
                 "last_inhale": inhale,
                 "last_exhale": exhale,
+                "cycles": cycles or [],
             }
         )
         self.save()

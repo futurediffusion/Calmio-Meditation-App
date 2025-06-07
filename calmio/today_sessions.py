@@ -16,6 +16,7 @@ class TodaySessionsView(QWidget):
     """Display list of today's sessions."""
 
     back_requested = Signal()
+    session_selected = Signal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -70,6 +71,7 @@ class TodaySessionsView(QWidget):
             eff.setBlurRadius(8)
             eff.setOffset(0, 2)
             card.setGraphicsEffect(eff)
+            card.setCursor(Qt.PointingHandCursor)
 
             row = QHBoxLayout(card)
             row.setContentsMargins(6, 2, 6, 2)
@@ -84,6 +86,10 @@ class TodaySessionsView(QWidget):
                 clock.setStyleSheet("color:#777;")
                 row.addWidget(clock)
             self.list_layout.insertWidget(idx, card)
+
+            def handler(evt, sess=s):
+                self.session_selected.emit(sess)
+            card.mouseReleaseEvent = handler
 
     def _format_session_text(self, s):
         start = s.get("start", "").split(" ")[-1]
