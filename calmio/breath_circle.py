@@ -17,7 +17,8 @@ class BreathCircle(QWidget):
         self.exhale_time = 6000
         # Increase breathing times more gradually
         # Third inhale should be around 4.3 seconds (150ms per cycle)
-        self.increment = 150
+        # Reduce progression speed by half
+        self.increment = 75
         self.animation = None
         self.phase = 'idle'
         self.breath_count = 0

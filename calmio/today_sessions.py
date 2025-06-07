@@ -97,6 +97,17 @@ class TodaySessionsView(QWidget):
         breaths = s.get("breaths", 0)
         inhale = s.get("last_inhale", 0.0)
         exhale = s.get("last_exhale", 0.0)
+        cycles = s.get("cycles", [])
+        first_cycle = cycles[0] if cycles and isinstance(cycles[0], dict) else None
+        last_cycle = cycles[-1] if cycles and isinstance(cycles[-1], dict) else None
+        if first_cycle:
+            first_dur = first_cycle.get("inhale", 0) + first_cycle.get("exhale", 0)
+        else:
+            first_dur = inhale + exhale
+        if last_cycle:
+            last_dur = last_cycle.get("inhale", 0) + last_cycle.get("exhale", 0)
+        else:
+            last_dur = inhale + exhale
         if duration < 60:
             dur_str = f"{duration:.0f}s"
         else:
@@ -106,6 +117,6 @@ class TodaySessionsView(QWidget):
         return (
             f"\u23F0 {start} \u2022 \u23F1 {dur_str} "
             f"\u2022 \U0001FAC1 {breaths} "
-            f"\u2022 \u2B06\uFE0F {inhale:.2f}s \u2B07\uFE0F {exhale:.2f}s"
+            f"\u2022 \u2B06\uFE0F {first_dur:.2f}s \u2B07\uFE0F {last_dur:.2f}s"
         )
 
