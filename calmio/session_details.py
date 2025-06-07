@@ -147,16 +147,24 @@ class SessionDetailsView(QWidget):
         shadow.setOffset(0, 2)
         self.summary.setGraphicsEffect(shadow)
 
-        sum_layout = QHBoxLayout()
+        sum_layout = QVBoxLayout()
         sum_layout.setContentsMargins(12, 4, 12, 4)
-        sum_layout.setSpacing(15)
+        sum_layout.setSpacing(6)
         self.summary.setLayout(sum_layout)
+
+        line1 = QHBoxLayout()
+        line1.setContentsMargins(0, 0, 0, 0)
+        line1.setSpacing(8)
+
+        line2 = QHBoxLayout()
+        line2.setContentsMargins(0, 0, 0, 0)
+        line2.setSpacing(8)
 
         def pair(icon: str):
             ic = QLabel(icon)
-            ic.setStyleSheet("font-size:14px;color:#555;")
+            ic.setStyleSheet("font-size:12px;color:#555;")
             val = QLabel("-")
-            val.setStyleSheet("font-size:14px;color:#000;")
+            val.setStyleSheet("font-size:12px;color:#000;")
             row = QHBoxLayout()
             row.setContentsMargins(0, 0, 0, 0)
             row.setSpacing(4)
@@ -172,22 +180,23 @@ class SessionDetailsView(QWidget):
         self.first_w, self.first_lbl = pair("\u2B06\ufe0f")
         self.last_w, self.last_lbl = pair("\u2B07\ufe0f")
 
-        for w in (
-            self.start_w,
-            self.dur_w,
-            self.breath_w,
-            self.first_w,
-            self.last_w,
-        ):
-            sum_layout.addWidget(w)
+        for w in (self.start_w, self.dur_w, self.breath_w):
+            line1.addWidget(w)
+        line1.addStretch()
 
-        sum_layout.addStretch()
+        for w in (self.first_w, self.last_w):
+            line2.addWidget(w)
+        line2.addStretch()
+
         self.tag_lbl = QLabel("\u00DAltima sesi\u00F3n")
         self.tag_lbl.setStyleSheet(
             "background:#eee;border-radius:10px;padding:2px 6px;font-size:10px;color:#777;"
         )
-        sum_layout.addWidget(self.tag_lbl)
+        line2.addWidget(self.tag_lbl)
         self.tag_lbl.hide()
+
+        sum_layout.addLayout(line1)
+        sum_layout.addLayout(line2)
 
         layout.addWidget(self.summary, alignment=Qt.AlignCenter)
 
