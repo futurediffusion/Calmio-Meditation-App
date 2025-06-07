@@ -203,24 +203,87 @@ class StatsOverlay(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setStyleSheet(
-            "background-color:#FAFAFA; border-radius:20px;"
-            "color:#444;"
+            "background-color:#FAFAFA; border-radius:20px; color:#444;"
         )
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(20)
 
         title = QLabel("Today's Meditation", self)
         title_font = QFont("Sans Serif")
-        title_font.setPointSize(18)
-        title_font.setBold(True)
+        title_font.setPointSize(20)
+        title_font.setWeight(QFont.Medium)
         title.setFont(title_font)
         title.setAlignment(Qt.AlignCenter)
 
         self.progress = ProgressCircle(self)
 
+        # Streak card
+        self.streak_label = QLabel("\ud83d\udd25 3 days in a row", self)
+        streak_font = QFont("Sans Serif")
+        streak_font.setPointSize(12)
+        self.streak_label.setFont(streak_font)
+        streak_card = QFrame()
+        streak_card.setStyleSheet(
+            "background:white;border-radius:15px;"
+            "padding:10px;"
+            "box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        )
+        streak_layout = QHBoxLayout(streak_card)
+        streak_layout.addWidget(self.streak_label, alignment=Qt.AlignCenter)
+
+        # View Sessions button
+        self.sessions_btn = QPushButton("View Sessions")
+        self.sessions_btn.setStyleSheet(
+            "QPushButton{" 
+            "background-color:#CCE4FF;border:none;border-radius:20px;"
+            "padding:12px 24px;font-size:14px;}"
+        )
+
+        # Last session card
+        self.last_session = QFrame()
+        self.last_session.setStyleSheet(
+            "background:white;border-radius:15px;padding:10px;"
+            "box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        )
+        ls_layout = QHBoxLayout(self.last_session)
+        ls_text = QLabel("08:00 \u2022 10min \u2022 83 br \u2022 5s last")
+        ls_tag = QLabel("Last session")
+        ls_tag.setStyleSheet(
+            "background:#eee;border-radius:10px;padding:2px 6px;"
+            "font-size:10px;color:#777;"
+        )
+        ls_layout.addWidget(ls_text)
+        ls_layout.addStretch()
+        ls_layout.addWidget(ls_tag)
+
+        # Bottom navigation
+        nav_layout = QHBoxLayout()
+        self.today_btn = QPushButton("Today")
+        self.week_btn = QPushButton("Week")
+        self.month_btn = QPushButton("Month")
+        btn_style = (
+            "QPushButton{background:white;border-radius:15px;"
+            "padding:8px 16px;color:#777;}"
+        )
+        for btn in (self.today_btn, self.week_btn, self.month_btn):
+            btn.setStyleSheet(btn_style)
+        self.today_btn.setStyleSheet(
+            "QPushButton{background:#CCE4FF;border-radius:15px;"
+            "padding:8px 16px;color:#444;}"
+        )
+        nav_layout.addWidget(self.today_btn)
+        nav_layout.addWidget(self.week_btn)
+        nav_layout.addWidget(self.month_btn)
+
         layout.addWidget(title)
         layout.addWidget(self.progress, alignment=Qt.AlignCenter)
+        layout.addWidget(streak_card, alignment=Qt.AlignCenter)
+        layout.addWidget(self.sessions_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.last_session)
+        layout.addStretch()
+        layout.addLayout(nav_layout)
 
     def update_minutes(self, m):
         self.progress.set_minutes(m)
@@ -271,8 +334,9 @@ class MainWindow(QMainWindow):
 
         self.options_button = QPushButton("\u2699\ufe0f", self)  # "⚙️" icon
         self.stats_button = QPushButton("\ud83d\udcca", self)    # "📊" icon
+        self.end_button = QPushButton("\U0001F6D1", self)        # "🛑" icon
 
-        for btn in (self.options_button, self.stats_button):
+        for btn in (self.options_button, self.stats_button, self.end_button):
             btn.setFixedSize(40, 40)
             btn.setStyleSheet(
                 "QPushButton {background:none; border:none; font-size:20px;}"
@@ -319,6 +383,7 @@ class MainWindow(QMainWindow):
         self.menu_button.move(x, y)
         self.options_button.move(x - self.options_button.width() - margin, y)
         self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
+        self.end_button.move(x - 3 * (self.menu_button.width() + margin), y)
         self.stats_overlay.setGeometry(self.rect())
 
     def resizeEvent(self, event):
@@ -332,10 +397,12 @@ class MainWindow(QMainWindow):
                 self.menu_button.geometry().contains(pos)
                 or self.options_button.geometry().contains(pos)
                 or self.stats_button.geometry().contains(pos)
+                or self.end_button.geometry().contains(pos)
                 or self.stats_overlay.geometry().contains(pos)
             ):
                 self.options_button.hide()
                 self.stats_button.hide()
+                self.end_button.hide()
                 self.stats_overlay.hide()
         return super().eventFilter(obj, event)
 
@@ -343,9 +410,11 @@ class MainWindow(QMainWindow):
         if self.options_button.isVisible():
             self.options_button.hide()
             self.stats_button.hide()
+            self.end_button.hide()
         else:
             self.options_button.show()
             self.stats_button.show()
+            self.end_button.show()
 
     def toggle_stats(self):
         if self.stats_overlay.isVisible():
@@ -359,9 +428,11 @@ class MainWindow(QMainWindow):
         if not (self.menu_button.geometry().contains(pos) or
                 self.options_button.geometry().contains(pos) or
                 self.stats_button.geometry().contains(pos) or
+                self.end_button.geometry().contains(pos) or
                 self.stats_overlay.geometry().contains(pos)):
             self.options_button.hide()
             self.stats_button.hide()
+            self.end_button.hide()
             self.stats_overlay.hide()
         super().mousePressEvent(event)
 
