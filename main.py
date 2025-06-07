@@ -9,8 +9,8 @@ class BreathCircle(QWidget):
         self.min_radius = 60
         self.max_radius = 140
         self.base_color = QColor(255, 140, 0)      # orange
-        # Complementary color opposite of orange (approx. blue)
-        self.complement_color = QColor(0, 115, 255)
+        # Color used when the circle reaches maximum size (soothing green)
+        self.complement_color = QColor(0, 150, 136)
         self._color = self.base_color
         self.inhale_time = 4000  # milliseconds
         self.exhale_time = 6000  # milliseconds
