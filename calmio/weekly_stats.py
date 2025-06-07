@@ -9,7 +9,7 @@ class WeeklyBarGraph(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.minutes = [0] * 7
-        self.days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        self.days = ["Lun", "Mar", "Mi\u00e9", "Jue", "Vie", "S\u00e1b", "Dom"]
         self.setMinimumHeight(200)
 
     def set_minutes(self, minutes):
@@ -65,9 +65,9 @@ class WeeklyStatsView(QWidget):
         self.graph = WeeklyBarGraph(self)
         layout.addWidget(self.graph)
 
-        self.total_lbl = QLabel("Total this week: 0 min")
-        self.avg_lbl = QLabel("Daily average: 0 min")
-        self.longest_lbl = QLabel("Longest session: --")
+        self.total_lbl = QLabel("Total esta semana: 0 min")
+        self.avg_lbl = QLabel("Promedio diario: 0 min")
+        self.longest_lbl = QLabel("Sesi\u00f3n m\u00e1s larga: --")
 
         for lbl in (self.total_lbl, self.avg_lbl, self.longest_lbl):
             font = QFont("Sans Serif")
@@ -77,13 +77,13 @@ class WeeklyStatsView(QWidget):
             lbl.setAlignment(Qt.AlignCenter)
             layout.addWidget(lbl)
 
-    def set_stats(self, minutes_per_day, total, average, longest_day, longest_minutes):
+    def set_stats(self, minutes_per_day, total, average, longest_day, longest_time, longest_minutes):
         self.graph.set_minutes(minutes_per_day)
-        self.total_lbl.setText(f"Total this week: {int(total)} min")
-        self.avg_lbl.setText(f"Daily average: {average:.1f} min")
+        self.total_lbl.setText(f"Total esta semana: {int(total)} min")
+        self.avg_lbl.setText(f"Promedio diario: {average:.1f} min")
         if longest_day:
             self.longest_lbl.setText(
-                f"Longest session: {longest_day} – {int(longest_minutes)} min"
+                f"Sesi\u00f3n m\u00e1s larga: {longest_day} {longest_time} – {int(longest_minutes)} min"
             )
         else:
-            self.longest_lbl.setText("Longest session: --")
+            self.longest_lbl.setText("Sesi\u00f3n m\u00e1s larga: --")

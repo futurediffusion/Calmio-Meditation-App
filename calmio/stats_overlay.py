@@ -37,13 +37,13 @@ class StatsOverlay(QWidget):
         )
         header_layout.addWidget(self.back_btn, alignment=Qt.AlignLeft)
 
-        title = QLabel("Today's Meditation", self)
+        self.title = QLabel("Meditaci\u00f3n de hoy", self)
         title_font = QFont("Sans Serif")
         title_font.setPointSize(20)
         title_font.setWeight(QFont.Medium)
-        title.setFont(title_font)
-        title.setAlignment(Qt.AlignCenter)
-        header_layout.addWidget(title, alignment=Qt.AlignCenter)
+        self.title.setFont(title_font)
+        self.title.setAlignment(Qt.AlignCenter)
+        header_layout.addWidget(self.title, alignment=Qt.AlignCenter)
         header_layout.addStretch()
         layout.addLayout(header_layout)
         self.back_btn.clicked.connect(self.on_back)
@@ -66,7 +66,7 @@ class StatsOverlay(QWidget):
         streak_layout = QHBoxLayout(streak_card)
         streak_layout.addWidget(self.streak_label, alignment=Qt.AlignCenter)
 
-        self.sessions_btn = QPushButton("View Sessions")
+        self.sessions_btn = QPushButton("Ver sesiones")
         self.sessions_btn.setStyleSheet(
             "QPushButton{"
             "background-color:#CCE4FF;border:none;border-radius:20px;"
@@ -88,7 +88,7 @@ class StatsOverlay(QWidget):
         self.ls_text = QLabel("")
         self.ls_text.setAlignment(Qt.AlignLeft)
         self.ls_text.setWordWrap(True)
-        ls_tag = QLabel("Last session")
+        ls_tag = QLabel("\u00daltima sesi\u00f3n")
         ls_tag.setStyleSheet(
             "background:#eee;border-radius:10px;padding:2px 6px;"
             "font-size:10px;color:#777;"
@@ -118,9 +118,9 @@ class StatsOverlay(QWidget):
         self.content_stack.addWidget(self.month_placeholder)
 
         nav_layout = QHBoxLayout()
-        self.today_btn = QPushButton("Today")
-        self.week_btn = QPushButton("Week")
-        self.month_btn = QPushButton("Month")
+        self.today_btn = QPushButton("Hoy")
+        self.week_btn = QPushButton("Semana")
+        self.month_btn = QPushButton("Mes")
         btn_style = (
             "QPushButton{background:white;border-radius:15px;"
             "padding:8px 16px;color:#777;}"
@@ -210,6 +210,12 @@ class StatsOverlay(QWidget):
                 )
         if index == 1:
             self.refresh_week()
+        if index == 0:
+            self.title.setText("Meditaci\u00f3n de hoy")
+        elif index == 1:
+            self.title.setText("Estad\u00edsticas semanales")
+        else:
+            self.title.setText("Estad\u00edsticas mensuales")
 
     def refresh_week(self):
         store = getattr(self.parent(), "data_store", None)
@@ -221,5 +227,6 @@ class StatsOverlay(QWidget):
             data["total"],
             data["average"],
             data["longest_day"],
+            data.get("longest_time", ""),
             data["longest_minutes"],
         )

@@ -114,6 +114,7 @@ class DataStore:
 
         longest_secs = 0
         longest_day = ""
+        longest_time = ""
         for s in self.data.get("sessions", []):
             try:
                 dt = datetime.fromisoformat(s.get("start", ""))
@@ -123,7 +124,18 @@ class DataStore:
                 dur = s.get("duration", 0)
                 if dur > longest_secs:
                     longest_secs = dur
-                    longest_day = dt.strftime("%A")
+                    eng_day = dt.strftime("%A")
+                    day_map = {
+                        "Monday": "Lunes",
+                        "Tuesday": "Martes",
+                        "Wednesday": "Mi\u00e9rcoles",
+                        "Thursday": "Jueves",
+                        "Friday": "Viernes",
+                        "Saturday": "S\u00e1bado",
+                        "Sunday": "Domingo",
+                    }
+                    longest_day = day_map.get(eng_day, eng_day)
+                    longest_time = dt.strftime("%H:%M")
 
         average = (total_seconds / 60) / 7 if total_seconds else 0
         return {
@@ -131,5 +143,6 @@ class DataStore:
             "total": total_seconds / 60,
             "average": average,
             "longest_day": longest_day,
+            "longest_time": longest_time,
             "longest_minutes": longest_secs / 60,
         }
