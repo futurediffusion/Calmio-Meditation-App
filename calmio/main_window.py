@@ -11,7 +11,7 @@ from datetime import datetime
 import json
 import time
 from pathlib import Path
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QFontMetrics
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -76,7 +76,18 @@ class MainWindow(QMainWindow):
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setFont(msg_font)
         self.message_label.setVisible(False)
-        layout.addWidget(self.message_label, alignment=Qt.AlignHCenter)
+        self.message_container = QWidget()
+        msg_layout = QVBoxLayout(self.message_container)
+        msg_layout.setContentsMargins(0, 0, 0, 0)
+        msg_layout.setSpacing(0)
+        msg_layout.addWidget(self.message_label, alignment=Qt.AlignCenter)
+        # Reserve height for the largest animation size so layout doesn't move
+        max_font = QFont(msg_font)
+        max_font.setPointSize(18)
+        fm = QFontMetrics(max_font)
+        self.message_container.setFixedHeight(fm.height())
+        self.message_container.setVisible(False)
+        layout.addWidget(self.message_container, alignment=Qt.AlignHCenter)
 
         layout.addStretch()
 
@@ -400,6 +411,7 @@ class MainWindow(QMainWindow):
     def start_prompt_animation(self):
         self.message_label.setText("Toca para comenzar")
         self.message_label.show()
+        self.message_container.show()
         self.msg_opacity.setOpacity(0.2)
         self.fade_anim = QPropertyAnimation(self.msg_opacity, b"opacity", self)
         self.fade_anim.setDuration(1500)
@@ -434,6 +446,7 @@ class MainWindow(QMainWindow):
         hide.setStartValue(self.msg_opacity.opacity())
         hide.setEndValue(0)
         hide.finished.connect(self.message_label.hide)
+        hide.finished.connect(self.message_container.hide)
         hide.start()
         self.fade_anim = hide
 
@@ -441,6 +454,7 @@ class MainWindow(QMainWindow):
         self.msg_opacity.setOpacity(0)
         self.message_label.setText(text)
         self.message_label.show()
+        self.message_container.show()
         fade_in = QPropertyAnimation(self.msg_opacity, b"opacity", self)
         fade_in.setDuration(600)
         fade_in.setStartValue(0)
@@ -454,6 +468,7 @@ class MainWindow(QMainWindow):
         group.addPause(1000)
         group.addAnimation(fade_out)
         group.finished.connect(self.message_label.hide)
+        group.finished.connect(self.message_container.hide)
         group.start()
         self.temp_msg_anim = group
 
