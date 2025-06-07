@@ -11,6 +11,7 @@ class DataStore:
             "last_session": {},
             "streak": 1,
             "sessions": [],
+            "badges": [],
         }
         self.load()
 
@@ -27,6 +28,8 @@ class DataStore:
                         self.data["streak"] = 1
                     if "sessions" not in self.data:
                         self.data["sessions"] = []
+                    if "badges" not in self.data:
+                        self.data["badges"] = []
             except (json.JSONDecodeError, IOError):
                 pass
 
@@ -58,7 +61,9 @@ class DataStore:
                 "cycles": cycles or [],
             }
         )
+        new_badges = self._check_badges(seconds, breaths)
         self.save()
+        return new_badges
 
     def get_today_seconds(self):
         today_key = datetime.now().date().isoformat()
@@ -66,6 +71,9 @@ class DataStore:
 
     def get_last_session(self):
         return self.data.get("last_session", {})
+
+    def get_badges(self):
+        return self.data.get("badges", [])
 
     def get_sessions_for_date(self, date_obj):
         date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
@@ -98,6 +106,21 @@ class DataStore:
             else:
                 break
         self.data["streak"] = streak
+
+    def _check_badges(self, session_seconds, breaths):
+        """Check and award badges based on totals and streak."""
+        new_badges = []
+        total_minutes = sum(self.data["daily_seconds"].values()) / 60
+        if total_minutes >= 5 and "5_min_total" not in self.data["badges"]:
+            self.data["badges"].append("5_min_total")
+            new_badges.append("5_min_total")
+        if breaths >= 10 and "10_breaths" not in self.data["badges"]:
+            self.data["badges"].append("10_breaths")
+            new_badges.append("10_breaths")
+        if self.data.get("streak", 1) >= 3 and "3_day_streak" not in self.data["badges"]:
+            self.data["badges"].append("3_day_streak")
+            new_badges.append("3_day_streak")
+        return new_badges
 
     def get_weekly_summary(self, reference_date=None):
         """Return stats for the week of the given date (default today)."""

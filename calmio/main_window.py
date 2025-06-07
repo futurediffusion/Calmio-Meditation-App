@@ -169,6 +169,7 @@ class MainWindow(QMainWindow):
                 last.get("cycles", []),
             )
         self.stats_overlay.update_streak(self.data_store.get_streak())
+        self.stats_overlay.update_badges(self.data_store.get_badges())
 
         self.position_buttons()
 
@@ -239,7 +240,7 @@ class MainWindow(QMainWindow):
         start_str = self.session_start.strftime("%H:%M:%S") if self.session_start else ""
         duration_seconds = self.session_seconds
         breaths = self.circle.breath_count
-        self.data_store.add_session(
+        new_badges = self.data_store.add_session(
             self.session_start,
             duration_seconds,
             breaths,
@@ -267,8 +268,13 @@ class MainWindow(QMainWindow):
             start_time_str,
             end_time_str,
         )
+        if new_badges:
+            self.session_complete.show_badges(new_badges)
+        else:
+            self.session_complete.show_badges([])
         self.stack.setCurrentWidget(self.session_complete)
         self.stats_overlay.update_streak(self.data_store.get_streak())
+        self.stats_overlay.update_badges(self.data_store.get_badges())
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
 

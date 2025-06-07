@@ -109,6 +109,12 @@ class StatsOverlay(QWidget):
         today_layout.addWidget(streak_card, alignment=Qt.AlignCenter)
         today_layout.addWidget(self.sessions_btn, alignment=Qt.AlignCenter)
         today_layout.addWidget(self.last_session)
+        self.badges_label = QLabel("")
+        badges_font = QFont("Sans Serif")
+        badges_font.setPointSize(12)
+        self.badges_label.setFont(badges_font)
+        self.badges_label.setWordWrap(True)
+        today_layout.addWidget(self.badges_label, alignment=Qt.AlignCenter)
         today_layout.addStretch()
 
         self.week_view = WeeklyStatsView(self)
@@ -155,6 +161,14 @@ class StatsOverlay(QWidget):
 
     def update_minutes(self, seconds):
         self.progress.set_seconds(seconds)
+
+    def update_badges(self, badges):
+        from .badges import BADGE_NAMES
+        if badges:
+            names = [BADGE_NAMES.get(b, b) for b in badges]
+            self.badges_label.setText("Logros: " + ", ".join(names))
+        else:
+            self.badges_label.setText("")
 
     def update_last_session(self, start, duration, breaths, inhale, exhale, cycles=None):
         self._last_session_data = {
