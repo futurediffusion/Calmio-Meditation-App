@@ -8,6 +8,10 @@ class BreathCircle(QWidget):
         self._radius = 60
         self.min_radius = 60
         self.max_radius = 140
+        self.base_color = QColor(255, 140, 0)      # orange
+        # Complementary color opposite of orange (approx. blue)
+        self.complement_color = QColor(0, 115, 255)
+        self.current_color = self.base_color
         self.inhale_time = 4000  # milliseconds
         self.exhale_time = 6000  # milliseconds
         self.increment = 50      # milliseconds per phase after each cycle
@@ -30,7 +34,7 @@ class BreathCircle(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QBrush(QColor(255, 140, 0)))  # orange
+        painter.setBrush(QBrush(self.current_color))
         painter.setPen(Qt.NoPen)
         center = self.rect().center()
         painter.drawEllipse(center, self._radius, self._radius)
@@ -70,9 +74,13 @@ class BreathCircle(QWidget):
                 self.inhale_time += self.increment
                 self.exhale_time += self.increment
             self.phase = 'idle'
+            # Return to original color at end of exhalation
+            self.current_color = self.base_color
+            self.update()
         elif self.phase == 'inhaling':
-            # Wait for release to exhale
-            pass
+            # Change color when maximum inhalation is reached
+            self.current_color = self.complement_color
+            self.update()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
