@@ -230,10 +230,10 @@ class SessionDetailsView(QWidget):
                 }
             ]
 
-        first_cycle = cycles[0] if cycles and isinstance(cycles[0], dict) else {}
         last_cycle = cycles[-1] if cycles and isinstance(cycles[-1], dict) else {}
-        first_duration = first_cycle.get("inhale", 0) + first_cycle.get("exhale", 0)
-        last_duration = last_cycle.get("inhale", 0) + last_cycle.get("exhale", 0)
+
+        last_inhale = last_cycle.get("inhale", 0)
+        last_exhale = last_cycle.get("exhale", 0)
 
         if duration < 60:
             dur_str = f"{duration:.0f}s"
@@ -245,8 +245,8 @@ class SessionDetailsView(QWidget):
         self.start_lbl.setText(start)
         self.dur_lbl.setText(dur_str)
         self.breath_lbl.setText(str(breaths))
-        self.first_lbl.setText(f"{first_duration:.2f}s")
-        self.last_lbl.setText(f"{last_duration:.2f}s")
+        self.first_lbl.setText(f"{last_inhale:.2f}s")
+        self.last_lbl.setText(f"{last_exhale:.2f}s")
         self.tag_lbl.setVisible(is_last)
 
         self.graph.set_cycles(cycles)
