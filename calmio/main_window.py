@@ -5,7 +5,6 @@ from PySide6.QtCore import (
     QPropertyAnimation,
     QEasingCurve,
     QSequentialAnimationGroup,
-    QParallelAnimationGroup,
     QVariantAnimation,
 )
 from datetime import datetime
@@ -22,7 +21,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QStackedWidget,
     QGraphicsOpacityEffect,
-    QGraphicsBlurEffect,
 )
 
 from .breath_circle import BreathCircle
@@ -172,11 +170,8 @@ class MainWindow(QMainWindow):
         self.load_messages()
         self.build_message_schedule()
         self.message_index = 0
-        self.msg_opacity = QGraphicsOpacityEffect(self.message_container)
-        self.message_container.setGraphicsEffect(self.msg_opacity)
-        self.msg_blur = QGraphicsBlurEffect(self.message_label)
-        self.msg_blur.setBlurRadius(0)
-        self.message_label.setGraphicsEffect(self.msg_blur)
+        self.msg_opacity = QGraphicsOpacityEffect(self.message_label)
+        self.message_label.setGraphicsEffect(self.msg_opacity)
         self.start_prompt_animation()
 
     def update_count(self, count):
@@ -418,10 +413,9 @@ class MainWindow(QMainWindow):
         self.message_label.setText("Toca para comenzar")
         self.message_label.show()
         self.message_container.show()
-        self.msg_blur.setBlurRadius(0)
         self.msg_opacity.setOpacity(0.2)
         self.fade_anim = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        self.fade_anim.setDuration(3000)
+        self.fade_anim.setDuration(1500)
         self.fade_anim.setStartValue(0.2)
         self.fade_anim.setKeyValueAt(0.5, 1)
         self.fade_anim.setEndValue(0.2)
@@ -429,7 +423,7 @@ class MainWindow(QMainWindow):
         self.fade_anim.start()
 
         self.bounce_anim = QVariantAnimation(self)
-        self.bounce_anim.setDuration(3000)
+        self.bounce_anim.setDuration(1500)
         self.bounce_anim.setStartValue(14)
         self.bounce_anim.setKeyValueAt(0.5, 18)
         self.bounce_anim.setEndValue(14)
@@ -449,7 +443,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "bounce_anim"):
             self.bounce_anim.stop()
         hide = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        hide.setDuration(1000)
+        hide.setDuration(500)
         hide.setStartValue(self.msg_opacity.opacity())
         hide.setEndValue(0)
         hide.finished.connect(self.message_label.hide)
@@ -460,26 +454,18 @@ class MainWindow(QMainWindow):
         self.msg_opacity.setOpacity(0)
         self.message_label.setText(text)
         self.message_label.show()
-        self.msg_blur.setBlurRadius(0)
         fade_in = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        fade_in.setDuration(1200)
+        fade_in.setDuration(600)
         fade_in.setStartValue(0)
         fade_in.setEndValue(1)
         fade_out = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        fade_out.setDuration(1200)
+        fade_out.setDuration(600)
         fade_out.setStartValue(1)
         fade_out.setEndValue(0)
         group = QSequentialAnimationGroup(self)
         group.addAnimation(fade_in)
-        blur_anim = QPropertyAnimation(self.msg_blur, b"blurRadius", self)
-        blur_anim.setDuration(1200)
-        blur_anim.setStartValue(0)
-        blur_anim.setEndValue(5)
-        group.addPause(2000)
-        fade_out_group = QParallelAnimationGroup(self)
-        fade_out_group.addAnimation(fade_out)
-        fade_out_group.addAnimation(blur_anim)
-        group.addAnimation(fade_out_group)
+        group.addPause(1000)
+        group.addAnimation(fade_out)
         group.finished.connect(self.message_label.hide)
         group.start()
         self.temp_msg_anim = group
