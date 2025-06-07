@@ -59,7 +59,7 @@ class BreathCircle(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         center = self.rect().center()
-        g_center = QPointF(center) + self._offset
+        g_center = center + self._offset
 
         gradient = QRadialGradient(g_center, self._radius)
         gradient.setColorAt(0, self._color.lighter(120))
