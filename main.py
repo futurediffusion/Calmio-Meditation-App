@@ -1,5 +1,5 @@
-from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QPainter, QBrush, QColor, QFont
+from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
+from PySide6.QtGui import QPainter, QBrush, QColor, QFont, QRadialGradient
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMainWindow
 
 class BreathCircle(QWidget):
@@ -11,7 +11,7 @@ class BreathCircle(QWidget):
         self.base_color = QColor(255, 140, 0)      # orange
         # Complementary color opposite of orange (approx. blue)
         self.complement_color = QColor(0, 115, 255)
-        self.current_color = self.base_color
+        self._color = self.base_color
         self.inhale_time = 4000  # milliseconds
         self.exhale_time = 6000  # milliseconds
         self.increment = 50      # milliseconds per phase after each cycle
@@ -31,12 +31,26 @@ class BreathCircle(QWidget):
 
     radius = Property(float, getRadius, setRadius)
 
+    def getColor(self):
+        return self._color
+
+    def setColor(self, color):
+        self._color = color
+        self.update()
+
+    color = Property(QColor, getColor, setColor)
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QBrush(self.current_color))
-        painter.setPen(Qt.NoPen)
         center = self.rect().center()
+
+        gradient = QRadialGradient(center, self._radius)
+        gradient.setColorAt(0, self._color.lighter(120))
+        gradient.setColorAt(1, self._color.darker(150))
+
+        painter.setBrush(QBrush(gradient))
+        painter.setPen(Qt.NoPen)
         painter.drawEllipse(center, self._radius, self._radius)
 
     def start_inhale(self):
@@ -44,7 +58,8 @@ class BreathCircle(QWidget):
             return
         self.phase = 'inhaling'
         self.cycle_valid = False
-        self.animate(self._radius, self.max_radius, self.inhale_time)
+        self.animate(self._radius, self.max_radius, self.inhale_time,
+                     target_color=self.complement_color)
 
     def start_exhale(self):
         if self.phase != 'inhaling':
@@ -52,16 +67,28 @@ class BreathCircle(QWidget):
         self.cycle_valid = self._radius >= self.max_radius - 1
         self.phase = 'exhaling'
         duration = self.exhale_time if self.cycle_valid else 2000
-        self.animate(self._radius, self.min_radius, duration)
+        self.animate(self._radius, self.min_radius, duration,
+                     target_color=self.base_color)
 
-    def animate(self, start, end, duration):
+    def animate(self, start, end, duration, target_color):
         if self.animation:
             self.animation.stop()
-        self.animation = QPropertyAnimation(self, b"radius")
-        self.animation.setStartValue(start)
-        self.animation.setEndValue(end)
-        self.animation.setDuration(int(duration))
-        self.animation.setEasingCurve(QEasingCurve.InOutQuad)
+        self.animation = QParallelAnimationGroup(self)
+
+        radius_anim = QPropertyAnimation(self, b"radius")
+        radius_anim.setStartValue(start)
+        radius_anim.setEndValue(end)
+        radius_anim.setDuration(int(duration))
+        radius_anim.setEasingCurve(QEasingCurve.InOutSine)
+
+        color_anim = QPropertyAnimation(self, b"color")
+        color_anim.setStartValue(self._color)
+        color_anim.setEndValue(target_color)
+        color_anim.setDuration(int(duration))
+        color_anim.setEasingCurve(QEasingCurve.InOutSine)
+
+        self.animation.addAnimation(radius_anim)
+        self.animation.addAnimation(color_anim)
         self.animation.finished.connect(self.animation_finished)
         self.animation.start()
 
@@ -74,13 +101,8 @@ class BreathCircle(QWidget):
                 self.inhale_time += self.increment
                 self.exhale_time += self.increment
             self.phase = 'idle'
-            # Return to original color at end of exhalation
-            self.current_color = self.base_color
-            self.update()
         elif self.phase == 'inhaling':
-            # Change color when maximum inhalation is reached
-            self.current_color = self.complement_color
-            self.update()
+            pass
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
