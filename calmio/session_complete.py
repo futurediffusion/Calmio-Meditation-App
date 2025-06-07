@@ -25,7 +25,7 @@ class SessionComplete(QWidget):
         layout.setSpacing(20)
 
         header_layout = QHBoxLayout()
-        title = QLabel("Session Complete")
+        title = QLabel("Sesi\u00f3n completada")
         title_font = QFont("Sans Serif")
         title_font.setPointSize(24)
         title_font.setWeight(QFont.Medium)
@@ -61,12 +61,12 @@ class SessionComplete(QWidget):
             row_widget.setLayout(row_layout)
             return row_widget, lbl
 
-        self.duration_row, self.duration_lbl = row("\u23F1 Duration: 0s")
-        self.breaths_row, self.breaths_lbl = row("\U0001FAC1 Breaths: 0")
-        self.inhale_row, self.inhale_lbl = row("\u2B06\ufe0f Inhale: 0.00s")
-        self.exhale_row, self.exhale_lbl = row("\u2B07\ufe0f Exhale: 0.00s")
-        self.start_row, self.start_lbl = row("\u23F0 Start time: --")
-        self.end_row, self.end_lbl = row("\u23F0 End time: --")
+        self.duration_row, self.duration_lbl = row("\u23F1 Duraci\u00f3n: 0s")
+        self.breaths_row, self.breaths_lbl = row("\U0001FAC1 Respiraciones: 0")
+        self.inhale_row, self.inhale_lbl = row("\u2B06\ufe0f Inhalar: 0.00s")
+        self.exhale_row, self.exhale_lbl = row("\u2B07\ufe0f Exhalar: 0.00s")
+        self.start_row, self.start_lbl = row("\u23F0 Inicio: --")
+        self.end_row, self.end_lbl = row("\u23F0 Fin: --")
 
         for rw in (
             self.duration_row,
@@ -80,7 +80,7 @@ class SessionComplete(QWidget):
 
         layout.addWidget(card)
 
-        self.phrase = QLabel("Take this calm with you into the day.")
+        self.phrase = QLabel("Lleva esta calma contigo durante el d\u00eda.")
         ph_font = QFont("Sans Serif")
         ph_font.setPointSize(12)
         self.phrase.setFont(ph_font)
@@ -88,7 +88,7 @@ class SessionComplete(QWidget):
         self.phrase.setStyleSheet("color:#666;")
         layout.addWidget(self.phrase)
 
-        self.done_btn = QPushButton("Done")
+        self.done_btn = QPushButton("Listo")
         self.done_btn.setStyleSheet(
             "QPushButton{"
             "background-color:#4D9FFF;border:none;border-radius:20px;"
@@ -99,15 +99,15 @@ class SessionComplete(QWidget):
 
     def set_stats(self, duration, breaths, inhale, exhale, start, end):
         if duration < 60:
-            self.duration_lbl.setText(f"\u23F1 Duration: {duration:.0f}s")
+            self.duration_lbl.setText(f"\u23F1 Duraci\u00f3n: {duration:.0f}s")
         else:
             m = int(duration // 60)
             s = int(duration % 60)
             dur_str = f"{m}m" + (f" {s}s" if s else "")
-            self.duration_lbl.setText(f"\u23F1 Duration: {dur_str}")
-        self.breaths_lbl.setText(f"\U0001FAC1 Breaths: {breaths}")
-        self.inhale_lbl.setText(f"\u2B06\ufe0f Inhale: {inhale:.2f}s")
-        self.exhale_lbl.setText(f"\u2B07\ufe0f Exhale: {exhale:.2f}s")
-        self.start_lbl.setText(f"\u23F0 Start time: {start}")
-        self.end_lbl.setText(f"\u23F0 End time: {end}")
+            self.duration_lbl.setText(f"\u23F1 Duraci\u00f3n: {dur_str}")
+        self.breaths_lbl.setText(f"\U0001FAC1 Respiraciones: {breaths}")
+        self.inhale_lbl.setText(f"\u2B06\ufe0f Inhalar: {inhale:.2f}s")
+        self.exhale_lbl.setText(f"\u2B07\ufe0f Exhalar: {exhale:.2f}s")
+        self.start_lbl.setText(f"\u23F0 Inicio: {start}")
+        self.end_lbl.setText(f"\u23F0 Fin: {end}")
 
