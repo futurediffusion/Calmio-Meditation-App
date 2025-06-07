@@ -74,7 +74,7 @@ class ProgressCircle(QWidget):
         painter.setFont(label_font)
         painter.drawText(
             rect.center().x() - 10,
-            rect.top() - 15,
+            rect.top() + 5,
             f"{labels['top']} min",
         )
         painter.drawText(
