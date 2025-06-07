@@ -15,12 +15,14 @@ from .progress_circle import ProgressCircle
 
 class StatsOverlay(QWidget):
     view_sessions = Signal()
+    session_requested = Signal(dict)
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setStyleSheet(
             "background-color:#FAFAFA; border-radius:20px; color:#444;"
         )
+        self._last_session_data = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -92,6 +94,8 @@ class StatsOverlay(QWidget):
         ls_layout.addWidget(self.ls_text)
         ls_layout.addStretch()
         ls_layout.addWidget(ls_tag)
+        self.last_session.setCursor(Qt.PointingHandCursor)
+        self.last_session.mouseReleaseEvent = self._on_last_session_clicked
 
         nav_layout = QHBoxLayout()
         self.today_btn = QPushButton("Today")
@@ -128,7 +132,15 @@ class StatsOverlay(QWidget):
     def update_minutes(self, seconds):
         self.progress.set_seconds(seconds)
 
-    def update_last_session(self, start, duration, breaths, inhale, exhale):
+    def update_last_session(self, start, duration, breaths, inhale, exhale, cycles=None):
+        self._last_session_data = {
+            "start": start,
+            "duration": duration,
+            "breaths": breaths,
+            "last_inhale": inhale,
+            "last_exhale": exhale,
+            "cycles": cycles or [],
+        }
         if duration < 60:
             dur_str = f"{duration:.0f}s"
         else:
@@ -145,3 +157,7 @@ class StatsOverlay(QWidget):
             parent.close_stats()
         else:
             self.hide()
+
+    def _on_last_session_clicked(self, event):
+        if self._last_session_data:
+            self.session_requested.emit(self._last_session_data)
