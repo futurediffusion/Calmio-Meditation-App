@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
         self.position_buttons()
 
         self.load_messages()
-        self.message_schedule = set(range(3, 100, 6))
+        self.build_message_schedule()
         self.message_index = 0
         self.msg_opacity = QGraphicsOpacityEffect(self.message_label)
         self.message_label.setGraphicsEffect(self.msg_opacity)
@@ -384,6 +384,18 @@ class MainWindow(QMainWindow):
                 self.motivational_messages = data.get("messages", [])
         except Exception:
             self.motivational_messages = []
+
+    def build_message_schedule(self, max_count: int = 150):
+        """Generate an increasing interval schedule for motivational messages."""
+        schedule = []
+        interval = 3
+        total = 0
+        while total < max_count:
+            for _ in range(3):
+                total += interval
+                schedule.append(total)
+            interval += 1
+        self.message_schedule = set(schedule)
 
     def start_prompt_animation(self):
         self.message_label.setText("Toca para comenzar")
