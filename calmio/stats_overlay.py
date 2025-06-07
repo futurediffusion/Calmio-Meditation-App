@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
+from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from .progress_circle import ProgressCircle
 from .weekly_stats import WeeklyStatsView
+from .monthly_stats import MonthlyStatsView
 
 
 class StatsOverlay(QWidget):
@@ -110,12 +112,12 @@ class StatsOverlay(QWidget):
         today_layout.addStretch()
 
         self.week_view = WeeklyStatsView(self)
-        self.month_placeholder = QWidget()
+        self.month_view = MonthlyStatsView(self)
 
         self.content_stack = QStackedWidget()
         self.content_stack.addWidget(self.today_container)
         self.content_stack.addWidget(self.week_view)
-        self.content_stack.addWidget(self.month_placeholder)
+        self.content_stack.addWidget(self.month_view)
 
         nav_layout = QHBoxLayout()
         self.today_btn = QPushButton("Hoy")
@@ -210,6 +212,8 @@ class StatsOverlay(QWidget):
                 )
         if index == 1:
             self.refresh_week()
+        if index == 2:
+            self.refresh_month()
         if index == 0:
             self.title.setText("Meditaci\u00f3n de hoy")
         elif index == 1:
@@ -229,4 +233,19 @@ class StatsOverlay(QWidget):
             data["longest_day"],
             data.get("longest_time", ""),
             data["longest_minutes"],
+        )
+
+    def refresh_month(self):
+        store = getattr(self.parent(), "data_store", None)
+        if not store:
+            return
+        dt = datetime.now()
+        data = store.get_monthly_summary(dt.year, dt.month)
+        self.month_view.set_stats(
+            data["minutes_per_week"],
+            data["total"],
+            data["average"],
+            data["best_week"],
+            data["longest_streak"],
+            data.get("goal", 600),
         )
