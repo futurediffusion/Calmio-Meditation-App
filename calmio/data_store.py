@@ -6,7 +6,7 @@ from datetime import datetime
 class DataStore:
     def __init__(self, path="calmio_data.json"):
         self.path = Path(path)
-        self.data = {"daily_seconds": {}, "last_session": {}}
+        self.data = {"daily_seconds": {}, "last_session": {}, "streak": 1}
         self.load()
 
     def load(self):
@@ -18,6 +18,8 @@ class DataStore:
                         self.data["daily_seconds"] = {
                             k: v * 60 for k, v in self.data.pop("daily_minutes").items()
                         }
+                    if "streak" not in self.data:
+                        self.data["streak"] = 1
             except (json.JSONDecodeError, IOError):
                 pass
 
@@ -37,6 +39,7 @@ class DataStore:
             "last_inhale": inhale,
             "last_exhale": exhale,
         }
+        self._update_streak()
         self.save()
 
     def get_today_seconds(self):
@@ -45,3 +48,22 @@ class DataStore:
 
     def get_last_session(self):
         return self.data.get("last_session", {})
+
+    def get_streak(self):
+        return self.data.get("streak", 1)
+
+    def _update_streak(self):
+        dates = sorted(self.data["daily_seconds"].keys())
+        if not dates:
+            self.data["streak"] = 0
+            return
+        streak = 1
+        prev = datetime.fromisoformat(dates[-1]).date()
+        for d in reversed(dates[:-1]):
+            current = datetime.fromisoformat(d).date()
+            if (prev - current).days == 1:
+                streak += 1
+                prev = current
+            else:
+                break
+        self.data["streak"] = streak
