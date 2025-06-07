@@ -86,7 +86,8 @@ class MainWindow(QMainWindow):
         max_font.setPointSize(18)
         fm = QFontMetrics(max_font)
         self.message_container.setFixedHeight(fm.height())
-        self.message_container.setVisible(False)
+        # Keep container visible so layout doesn't shift when messages appear
+        self.message_container.setVisible(True)
         layout.addWidget(self.message_container, alignment=Qt.AlignHCenter)
 
         layout.addStretch()
@@ -446,7 +447,6 @@ class MainWindow(QMainWindow):
         hide.setStartValue(self.msg_opacity.opacity())
         hide.setEndValue(0)
         hide.finished.connect(self.message_label.hide)
-        hide.finished.connect(self.message_container.hide)
         hide.start()
         self.fade_anim = hide
 
@@ -454,7 +454,6 @@ class MainWindow(QMainWindow):
         self.msg_opacity.setOpacity(0)
         self.message_label.setText(text)
         self.message_label.show()
-        self.message_container.show()
         fade_in = QPropertyAnimation(self.msg_opacity, b"opacity", self)
         fade_in.setDuration(600)
         fade_in.setStartValue(0)
@@ -468,7 +467,6 @@ class MainWindow(QMainWindow):
         group.addPause(1000)
         group.addAnimation(fade_out)
         group.finished.connect(self.message_label.hide)
-        group.finished.connect(self.message_container.hide)
         group.start()
         self.temp_msg_anim = group
 
