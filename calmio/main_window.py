@@ -1,4 +1,6 @@
 from PySide6.QtCore import Qt, QEvent, QTimer
+from datetime import datetime
+import time
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
@@ -19,6 +21,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
 
+        self.session_active = False
+        self.session_start = None
+        self.last_cycle_duration = 0
+
         self.meditation_seconds = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
@@ -26,6 +32,8 @@ class MainWindow(QMainWindow):
 
         self.circle = BreathCircle()
         self.circle.count_changed_callback = self.update_count
+        self.circle.breath_started_callback = self.on_breath_start
+        self.circle.breath_finished_callback = self.on_breath_end
 
         font = QFont("Sans Serif")
         font.setPointSize(32)
@@ -67,6 +75,8 @@ class MainWindow(QMainWindow):
             btn.setFocusPolicy(Qt.NoFocus)
             btn.hide()
 
+        self.end_button.clicked.connect(self.end_session)
+
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
         self.stats_overlay = StatsOverlay(self)
@@ -80,10 +90,32 @@ class MainWindow(QMainWindow):
         self.label.setText(str(count))
 
     def update_timer(self):
-        if self.circle.phase != 'idle':
+        if self.session_active and self.circle.phase != 'idle':
             self.meditation_seconds += 1
             minutes = self.meditation_seconds // 60
             self.stats_overlay.update_minutes(minutes)
+
+    def on_breath_start(self):
+        if not self.session_active:
+            self.session_active = True
+            self.session_start = datetime.now()
+        self.cycle_start = time.perf_counter()
+
+    def on_breath_end(self, duration):
+        self.last_cycle_duration = int(duration)
+        minutes = self.meditation_seconds // 60
+        self.stats_overlay.update_minutes(minutes)
+
+    def end_session(self):
+        if not self.session_active:
+            return
+        self.session_active = False
+        start_str = self.session_start.strftime("%H:%M") if self.session_start else ""
+        minutes = self.meditation_seconds // 60
+        breaths = self.circle.breath_count
+        self.stats_overlay.update_last_session(start_str, minutes, breaths, self.last_cycle_duration)
+        self.stats_overlay.show()
+        self.stats_overlay.raise_()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
