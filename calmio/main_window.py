@@ -6,6 +6,7 @@ from PySide6.QtCore import (
     QEasingCurve,
     QSequentialAnimationGroup,
     QVariantAnimation,
+    QAbstractAnimation,
 )
 from datetime import datetime
 import json
@@ -63,6 +64,8 @@ class MainWindow(QMainWindow):
         self.label = QLabel("0")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setFont(font)
+        self.count_opacity = QGraphicsOpacityEffect(self.label)
+        self.label.setGraphicsEffect(self.count_opacity)
 
         layout = QVBoxLayout()
         layout.setSpacing(10)
@@ -175,7 +178,33 @@ class MainWindow(QMainWindow):
         self.start_prompt_animation()
 
     def update_count(self, count):
-        self.label.setText(str(count))
+        if (
+            hasattr(self, "count_anim")
+            and self.count_anim.state() != QAbstractAnimation.Stopped
+        ):
+            self.count_anim.stop()
+
+        fade_out = QPropertyAnimation(self.count_opacity, b"opacity", self)
+        fade_out.setDuration(500)
+        fade_out.setStartValue(1)
+        fade_out.setEndValue(0)
+
+        fade_in = QPropertyAnimation(self.count_opacity, b"opacity", self)
+        fade_in.setDuration(500)
+        fade_in.setStartValue(0)
+        fade_in.setEndValue(1)
+
+        def set_text():
+            self.label.setText(str(count))
+
+        fade_out.finished.connect(set_text)
+
+        group = QSequentialAnimationGroup(self)
+        group.addAnimation(fade_out)
+        group.addAnimation(fade_in)
+        group.start()
+        self.count_anim = group
+
         self.check_motivational_message(count)
 
     def update_timer(self):
