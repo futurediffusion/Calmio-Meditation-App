@@ -146,14 +146,20 @@ class SessionDetailsView(QWidget):
         shadow.setBlurRadius(8)
         shadow.setOffset(0, 2)
         self.summary.setGraphicsEffect(shadow)
-        sum_layout = QHBoxLayout(self.summary)
+
+        sum_layout = QHBoxLayout()
         sum_layout.setContentsMargins(12, 4, 12, 4)
         sum_layout.setSpacing(15)
+        self.summary.setLayout(sum_layout)
 
-        def pair(icon):
+        def pair(icon: str):
             ic = QLabel(icon)
+            ic.setStyleSheet("font-size:14px;color:#555;")
             val = QLabel("-")
+            val.setStyleSheet("font-size:14px;color:#000;")
             row = QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(4)
             row.addWidget(ic)
             row.addWidget(val)
             w = QWidget()
