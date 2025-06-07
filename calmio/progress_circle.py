@@ -16,6 +16,8 @@ class ProgressCircle(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        if self.width() <= 0 or self.height() <= 0:
+            return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect().adjusted(20, 20, -20, -20)

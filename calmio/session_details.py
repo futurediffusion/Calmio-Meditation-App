@@ -68,7 +68,7 @@ class BreathGraph(QWidget):
         return path
 
     def paintEvent(self, event):
-        if not self.values:
+        if not self.values or self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
