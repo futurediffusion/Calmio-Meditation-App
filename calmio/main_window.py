@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 from .breath_circle import BreathCircle
 from .stats_overlay import StatsOverlay
 from .session_complete import SessionComplete
+from .today_sessions import TodaySessionsView
 from .data_store import DataStore
 
 
@@ -101,6 +102,12 @@ class MainWindow(QMainWindow):
         self.stats_overlay.setGeometry(self.rect())
         self.stats_overlay.hide()
         self.stats_button.clicked.connect(self.toggle_stats)
+        self.stats_overlay.view_sessions.connect(self.open_today_sessions)
+
+        self.today_sessions = TodaySessionsView(self)
+        self.today_sessions.setGeometry(self.rect())
+        self.today_sessions.hide()
+        self.today_sessions.back_requested.connect(self.close_today_sessions)
 
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
@@ -193,6 +200,7 @@ class MainWindow(QMainWindow):
         self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
         self.end_button.move(x - 3 * (self.menu_button.width() + margin), y)
         self.stats_overlay.setGeometry(self.rect())
+        self.today_sessions.setGeometry(self.rect())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -210,11 +218,13 @@ class MainWindow(QMainWindow):
                 or self.stats_button.geometry().contains(pos)
                 or self.end_button.geometry().contains(pos)
                 or self.stats_overlay.geometry().contains(pos)
+                or self.today_sessions.geometry().contains(pos)
             ):
                 self.options_button.hide()
                 self.stats_button.hide()
                 self.end_button.hide()
                 self.stats_overlay.hide()
+                self.today_sessions.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -230,7 +240,9 @@ class MainWindow(QMainWindow):
     def toggle_stats(self):
         if self.stats_overlay.isVisible():
             self.stats_overlay.hide()
+            self.today_sessions.hide()
         else:
+            self.today_sessions.hide()
             self.stats_overlay.show()
             self.stats_overlay.raise_()
 
@@ -238,6 +250,18 @@ class MainWindow(QMainWindow):
         self.stats_overlay.hide()
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
+
+    def open_today_sessions(self):
+        sessions = self.data_store.get_sessions_for_date(datetime.now())
+        self.today_sessions.set_sessions(sessions)
+        self.stats_overlay.hide()
+        self.today_sessions.show()
+        self.today_sessions.raise_()
+
+    def close_today_sessions(self):
+        self.today_sessions.hide()
+        self.stats_overlay.show()
+        self.stats_overlay.raise_()
 
     def mousePressEvent(self, event):
         pos = event.pos()
@@ -247,11 +271,13 @@ class MainWindow(QMainWindow):
             or self.stats_button.geometry().contains(pos)
             or self.end_button.geometry().contains(pos)
             or self.stats_overlay.geometry().contains(pos)
+            or self.today_sessions.geometry().contains(pos)
         ):
             self.options_button.hide()
             self.stats_button.hide()
             self.end_button.hide()
             self.stats_overlay.hide()
+            self.today_sessions.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
