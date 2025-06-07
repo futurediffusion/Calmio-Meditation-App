@@ -1,6 +1,16 @@
-from PySide6.QtCore import Qt, QEvent, QTimer
+from PySide6.QtCore import (
+    Qt,
+    QEvent,
+    QTimer,
+    QPropertyAnimation,
+    QEasingCurve,
+    QSequentialAnimationGroup,
+    QVariantAnimation,
+)
 from datetime import datetime
+import json
 import time
+from pathlib import Path
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
@@ -10,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QPushButton,
     QStackedWidget,
+    QGraphicsOpacityEffect,
 )
 
 from .breath_circle import BreathCircle
@@ -58,6 +69,15 @@ class MainWindow(QMainWindow):
         layout.addStretch()
         layout.addWidget(self.label, alignment=Qt.AlignHCenter)
         layout.addWidget(self.circle, alignment=Qt.AlignHCenter)
+
+        msg_font = QFont("Sans Serif")
+        msg_font.setPointSize(14)
+        self.message_label = QLabel("Toca para comenzar")
+        self.message_label.setAlignment(Qt.AlignCenter)
+        self.message_label.setFont(msg_font)
+        self.message_label.setVisible(False)
+        layout.addWidget(self.message_label, alignment=Qt.AlignHCenter)
+
         layout.addStretch()
 
         container = QWidget()
@@ -135,8 +155,16 @@ class MainWindow(QMainWindow):
 
         self.position_buttons()
 
+        self.load_messages()
+        self.message_schedule = set(range(3, 100, 6))
+        self.message_index = 0
+        self.msg_opacity = QGraphicsOpacityEffect(self.message_label)
+        self.message_label.setGraphicsEffect(self.msg_opacity)
+        self.start_prompt_animation()
+
     def update_count(self, count):
         self.label.setText(str(count))
+        self.check_motivational_message(count)
 
     def update_timer(self):
         if self.session_active and self.circle.phase != 'idle':
@@ -150,6 +178,7 @@ class MainWindow(QMainWindow):
             self.session_start = datetime.now()
             self.session_seconds = 0
             self.cycle_durations = []
+            self.stop_prompt_animation()
         self.cycle_start = time.perf_counter()
 
     def on_breath_end(self, duration, inhale, exhale):
@@ -319,6 +348,7 @@ class MainWindow(QMainWindow):
         self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
+        self.start_prompt_animation()
 
     def on_session_complete_closed(self):
         self.stack.setCurrentWidget(self.main_view)
@@ -327,6 +357,7 @@ class MainWindow(QMainWindow):
         self.session_seconds = 0
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
+        self.start_prompt_animation()
 
     def open_session_details(self, session):
         is_last = False
@@ -344,3 +375,78 @@ class MainWindow(QMainWindow):
         self.session_details.hide()
         self.stats_overlay.show()
         self.stats_overlay.raise_()
+
+    def load_messages(self):
+        path = Path(__file__).resolve().parent / "motivational_messages.json"
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.motivational_messages = data.get("messages", [])
+        except Exception:
+            self.motivational_messages = []
+
+    def start_prompt_animation(self):
+        self.message_label.setText("Toca para comenzar")
+        self.message_label.show()
+        self.msg_opacity.setOpacity(0.2)
+        self.fade_anim = QPropertyAnimation(self.msg_opacity, b"opacity", self)
+        self.fade_anim.setDuration(1500)
+        self.fade_anim.setStartValue(0.2)
+        self.fade_anim.setKeyValueAt(0.5, 1)
+        self.fade_anim.setEndValue(0.2)
+        self.fade_anim.setLoopCount(-1)
+        self.fade_anim.start()
+
+        self.bounce_anim = QVariantAnimation(self)
+        self.bounce_anim.setDuration(1500)
+        self.bounce_anim.setStartValue(14)
+        self.bounce_anim.setKeyValueAt(0.5, 18)
+        self.bounce_anim.setEndValue(14)
+        self.bounce_anim.setEasingCurve(QEasingCurve.OutBounce)
+        self.bounce_anim.setLoopCount(-1)
+        self.bounce_anim.valueChanged.connect(self._update_message_font)
+        self.bounce_anim.start()
+
+    def _update_message_font(self, value):
+        font = self.message_label.font()
+        font.setPointSize(int(value))
+        self.message_label.setFont(font)
+
+    def stop_prompt_animation(self):
+        if hasattr(self, "fade_anim"):
+            self.fade_anim.stop()
+        if hasattr(self, "bounce_anim"):
+            self.bounce_anim.stop()
+        hide = QPropertyAnimation(self.msg_opacity, b"opacity", self)
+        hide.setDuration(500)
+        hide.setStartValue(self.msg_opacity.opacity())
+        hide.setEndValue(0)
+        hide.finished.connect(self.message_label.hide)
+        hide.start()
+        self.fade_anim = hide
+
+    def display_motivational_message(self, text):
+        self.msg_opacity.setOpacity(0)
+        self.message_label.setText(text)
+        self.message_label.show()
+        fade_in = QPropertyAnimation(self.msg_opacity, b"opacity", self)
+        fade_in.setDuration(600)
+        fade_in.setStartValue(0)
+        fade_in.setEndValue(1)
+        fade_out = QPropertyAnimation(self.msg_opacity, b"opacity", self)
+        fade_out.setDuration(600)
+        fade_out.setStartValue(1)
+        fade_out.setEndValue(0)
+        group = QSequentialAnimationGroup(self)
+        group.addAnimation(fade_in)
+        group.addPause(1000)
+        group.addAnimation(fade_out)
+        group.finished.connect(self.message_label.hide)
+        group.start()
+        self.temp_msg_anim = group
+
+    def check_motivational_message(self, count):
+        if count in self.message_schedule and self.motivational_messages:
+            msg = self.motivational_messages[self.message_index % len(self.motivational_messages)]
+            self.message_index += 1
+            self.display_motivational_message(msg)
