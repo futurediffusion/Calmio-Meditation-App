@@ -46,8 +46,14 @@ class BreathGraph(QWidget):
         else:
             self.values = [float(v) for v in self.cycles]
         if self.values:
-            self.start_label = f"Inicio: {self.values[1]:.2f}s"
-            self.end_label = f"\u00DAltima: {self.values[-2]:.2f}s"
+            if self.cycles and isinstance(self.cycles[0], dict):
+                start_dur = self.cycles[0].get("inhale", 0) + self.cycles[0].get("exhale", 0)
+                end_dur = self.cycles[-1].get("inhale", 0) + self.cycles[-1].get("exhale", 0)
+            else:
+                start_dur = self.values[1] if len(self.values) > 3 else 0
+                end_dur = self.values[-2] if len(self.values) > 3 else 0
+            self.start_label = f"Inicio: {start_dur:.2f}s"
+            self.end_label = f"\u00DAltima: {end_dur:.2f}s"
         self.update()
 
     def _smooth_path(self, pts):
@@ -224,12 +230,10 @@ class SessionDetailsView(QWidget):
                 }
             ]
 
-        first_inhale = (
-            cycles[0].get("inhale", 0) if cycles and isinstance(cycles[0], dict) else 0
-        )
-        last_exhale = (
-            cycles[-1].get("exhale", 0) if cycles and isinstance(cycles[-1], dict) else 0
-        )
+        first_cycle = cycles[0] if cycles and isinstance(cycles[0], dict) else {}
+        last_cycle = cycles[-1] if cycles and isinstance(cycles[-1], dict) else {}
+        first_duration = first_cycle.get("inhale", 0) + first_cycle.get("exhale", 0)
+        last_duration = last_cycle.get("inhale", 0) + last_cycle.get("exhale", 0)
 
         if duration < 60:
             dur_str = f"{duration:.0f}s"
@@ -241,8 +245,8 @@ class SessionDetailsView(QWidget):
         self.start_lbl.setText(start)
         self.dur_lbl.setText(dur_str)
         self.breath_lbl.setText(str(breaths))
-        self.first_lbl.setText(f"{first_inhale:.2f}s")
-        self.last_lbl.setText(f"{last_exhale:.2f}s")
+        self.first_lbl.setText(f"{first_duration:.2f}s")
+        self.last_lbl.setText(f"{last_duration:.2f}s")
         self.tag_lbl.setVisible(is_last)
 
         self.graph.set_cycles(cycles)
