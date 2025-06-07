@@ -9,11 +9,14 @@ class MonthlyLineGraph(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.minutes = []
-        self.labels = ["Week 1", "Week 2", "Week 3", "Week 4/5"]
+        # labels are generated dynamically based on weeks provided
+        self.labels = []
         self.setMinimumHeight(200)
 
     def set_minutes(self, minutes):
         self.minutes = list(minutes)
+        # regenerate week labels to match number of weeks
+        self.labels = [f"Week {i+1}" for i in range(len(self.minutes))]
         self.update()
 
     def paintEvent(self, event):
@@ -24,7 +27,7 @@ class MonthlyLineGraph(QWidget):
         w = self.width()
         h = self.height()
         margin = 30
-        step = (w - 2 * margin) / (len(self.minutes) - 1)
+        step = (w - 2 * margin) / (len(self.minutes) - 1) if len(self.minutes) > 1 else 1
         max_val = max(self.minutes) if max(self.minutes) > 0 else 1
         points = []
         for i, m in enumerate(self.minutes):
@@ -63,7 +66,7 @@ class MonthlyLineGraph(QWidget):
             painter.drawText(
                 QRectF(x - step / 2, h - margin + 4, step, margin - 4),
                 Qt.AlignHCenter | Qt.AlignTop,
-                self.labels[i],
+                self.labels[i] if i < len(self.labels) else f"Week {i+1}",
             )
 
 
