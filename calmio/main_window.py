@@ -12,7 +12,7 @@ from datetime import datetime
 import json
 import time
 from pathlib import Path
-from PySide6.QtGui import QFont, QFontMetrics, QPalette
+from PySide6.QtGui import QFont, QFontMetrics, QPalette, QColor
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -72,6 +72,10 @@ class MainWindow(QMainWindow):
         self.label = QLabel("")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setFont(font)
+        self.label.setStyleSheet("color:white;")
+        self.base_text_color = QColor("white")
+        self.active_text_color = self.circle.complement_color
+        self.text_color_anim = None
         self.count_opacity = QGraphicsOpacityEffect(self.label)
         self.label.setGraphicsEffect(self.count_opacity)
         self.count_opacity.setOpacity(0)
@@ -87,6 +91,7 @@ class MainWindow(QMainWindow):
         self.message_label = QLabel("Toca para comenzar")
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setFont(msg_font)
+        self.message_label.setWordWrap(True)
         self.message_label.setVisible(False)
         self.message_container = QWidget()
         msg_layout = QVBoxLayout(self.message_container)
@@ -220,6 +225,15 @@ class MainWindow(QMainWindow):
         self.count_anim.setEndValue(1)
         self.count_anim.start()
 
+        if self.text_color_anim and self.text_color_anim.state() != QAbstractAnimation.Stopped:
+            self.text_color_anim.stop()
+        self.text_color_anim = QVariantAnimation(self)
+        self.text_color_anim.setDuration(int(self.circle.inhale_time))
+        self.text_color_anim.setStartValue(self.base_text_color)
+        self.text_color_anim.setEndValue(self.active_text_color)
+        self.text_color_anim.valueChanged.connect(self._update_label_color)
+        self.text_color_anim.start()
+
     def on_exhale_start(self, duration):
         if (
             hasattr(self, "count_anim")
@@ -232,6 +246,15 @@ class MainWindow(QMainWindow):
         self.count_anim.setStartValue(self.count_opacity.opacity())
         self.count_anim.setEndValue(0)
         self.count_anim.start()
+
+        if self.text_color_anim and self.text_color_anim.state() != QAbstractAnimation.Stopped:
+            self.text_color_anim.stop()
+        self.text_color_anim = QVariantAnimation(self)
+        self.text_color_anim.setDuration(int(duration))
+        self.text_color_anim.setStartValue(self.active_text_color)
+        self.text_color_anim.setEndValue(self.base_text_color)
+        self.text_color_anim.valueChanged.connect(self._update_label_color)
+        self.text_color_anim.start()
 
     def on_breath_end(self, duration, inhale, exhale):
         self.last_cycle_duration = duration
@@ -485,6 +508,10 @@ class MainWindow(QMainWindow):
         font = self.message_label.font()
         font.setPointSize(int(value))
         self.message_label.setFont(font)
+
+    def _update_label_color(self, color):
+        if isinstance(color, QColor):
+            self.label.setStyleSheet(f"color:{color.name()};")
 
     def stop_prompt_animation(self):
         if hasattr(self, "fade_anim"):
