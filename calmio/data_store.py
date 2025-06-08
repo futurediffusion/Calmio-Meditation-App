@@ -11,7 +11,9 @@ class DataStore:
             "last_session": {},
             "streak": 1,
             "sessions": [],
-            "badges": [],
+            # store cumulative counts for each badge code
+            "badges": {},
+            # badges earned today {date: {code: count}}
             "daily_badges": {},
         }
         self.load()
@@ -30,9 +32,19 @@ class DataStore:
                     if "sessions" not in self.data:
                         self.data["sessions"] = []
                     if "badges" not in self.data:
-                        self.data["badges"] = []
+                        self.data["badges"] = {}
+                    elif isinstance(self.data["badges"], list):
+                        self.data["badges"] = {b: 1 for b in self.data["badges"]}
                     if "daily_badges" not in self.data:
                         self.data["daily_badges"] = {}
+                    else:
+                        # convert old format lists to count dicts
+                        for k, v in list(self.data["daily_badges"].items()):
+                            if isinstance(v, list):
+                                counts = {}
+                                for b in v:
+                                    counts[b] = counts.get(b, 0) + 1
+                                self.data["daily_badges"][k] = counts
             except (json.JSONDecodeError, IOError):
                 pass
 
@@ -68,10 +80,10 @@ class DataStore:
         # store badges with session
         self.data["sessions"][-1]["badges"] = list(new_badges)
         if new_badges:
-            day_badges = self.data.setdefault("daily_badges", {}).get(date_key, [])
+            day_badges = self.data.setdefault("daily_badges", {}).get(date_key, {})
             for b in new_badges:
-                if b not in day_badges:
-                    day_badges.append(b)
+                day_badges[b] = day_badges.get(b, 0) + 1
+                self.data["badges"][b] = self.data["badges"].get(b, 0) + 1
             self.data["daily_badges"][date_key] = day_badges
         self.save()
         return new_badges
@@ -84,11 +96,13 @@ class DataStore:
         return self.data.get("last_session", {})
 
     def get_badges(self):
-        return self.data.get("badges", [])
+        return self.data.get("badges", {})
 
     def get_badges_for_date(self, date_obj):
-        date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
-        return self.data.get("daily_badges", {}).get(date_key, [])
+        date_key = (
+            date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
+        )
+        return self.data.get("daily_badges", {}).get(date_key, {})
 
     def get_sessions_for_date(self, date_obj):
         date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
@@ -129,7 +143,6 @@ class DataStore:
         # total meditation time badges
         total_minutes = sum(self.data["daily_seconds"].values()) / 60
         if total_minutes >= 5 and "5_min_total" not in self.data["badges"]:
-            self.data["badges"].append("5_min_total")
             new_badges.append("5_min_total")
 
         # breaths per session badges
@@ -146,8 +159,7 @@ class DataStore:
             (100, "100_breaths_session"),
         ]
         for count, code in breath_levels:
-            if breaths >= count and code not in self.data["badges"]:
-                self.data["badges"].append(code)
+            if breaths >= count:
                 new_badges.append(code)
 
         # number of sessions in a day badges
@@ -161,19 +173,15 @@ class DataStore:
             (3, "3_sessions_day"),
         ]
         for count, code in session_levels:
-            if sessions_today >= count and code not in self.data["badges"]:
-                self.data["badges"].append(code)
+            if sessions_today >= count:
                 new_badges.append(code)
 
         # streak based badges
         if self.data.get("streak", 1) >= 3 and "3_day_streak" not in self.data["badges"]:
-            self.data["badges"].append("3_day_streak")
             new_badges.append("3_day_streak")
         if self.data.get("streak", 1) >= 7 and "7_day_streak" not in self.data["badges"]:
-            self.data["badges"].append("7_day_streak")
             new_badges.append("7_day_streak")
         if self.data.get("streak", 1) >= 30 and "30_day_streak" not in self.data["badges"]:
-            self.data["badges"].append("30_day_streak")
             new_badges.append("30_day_streak")
 
         return new_badges

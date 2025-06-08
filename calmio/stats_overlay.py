@@ -167,9 +167,12 @@ class StatsOverlay(QWidget):
         self.progress.set_seconds(seconds)
 
     def update_badges(self, badges):
-        count = len(badges)
+        if isinstance(badges, dict):
+            count = sum(badges.values())
+        else:
+            count = len(badges)
         self.badges_btn.setText(f"Logros de hoy ({count})")
-        self.badges_btn.setEnabled(bool(badges))
+        self.badges_btn.setEnabled(count > 0)
 
     def update_last_session(self, start, duration, breaths, inhale, exhale, cycles=None):
         self._last_session_data = {
