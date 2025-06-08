@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
 import time
-from PySide6.QtGui import QPainter, QBrush, QColor, QRadialGradient
+from PySide6.QtGui import QPainter, QBrush, QColor, QRadialGradient, QPen
 from PySide6.QtWidgets import QWidget
 
 
@@ -30,6 +30,9 @@ class BreathCircle(QWidget):
         self.breath_start_time = 0
         self.inhale_start_time = 0
         self.exhale_start_time = 0
+        self._ripple_radius = 0
+        self._ripple_opacity = 0.0
+        self.ripple_anim = None
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -50,6 +53,24 @@ class BreathCircle(QWidget):
 
     color = Property(QColor, getColor, setColor)
 
+    def getRippleRadius(self):
+        return self._ripple_radius
+
+    def setRippleRadius(self, value):
+        self._ripple_radius = value
+        self.update()
+
+    ripple_radius = Property(float, getRippleRadius, setRippleRadius)
+
+    def getRippleOpacity(self):
+        return self._ripple_opacity
+
+    def setRippleOpacity(self, value):
+        self._ripple_opacity = value
+        self.update()
+
+    ripple_opacity = Property(float, getRippleOpacity, setRippleOpacity)
+
     def paintEvent(self, event):
         if self.width() <= 0 or self.height() <= 0:
             return
@@ -57,6 +78,16 @@ class BreathCircle(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         center = self.rect().center()
 
+        if self._ripple_opacity > 0:
+            pen_color = QColor(self._color)
+            pen_color.setAlphaF(min(1.0, max(0.0, self._ripple_opacity)))
+            pen = QPen(pen_color)
+            pen.setWidth(3)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawEllipse(center, self._ripple_radius, self._ripple_radius)
+
+        
         gradient = QRadialGradient(center, self._radius)
         gradient.setColorAt(0, self._color.lighter(120))
         gradient.setColorAt(1, self._color.darker(150))
@@ -111,6 +142,27 @@ class BreathCircle(QWidget):
         self.animation.finished.connect(self.animation_finished)
         self.animation.start()
 
+    def start_ripple(self):
+        if self.ripple_anim:
+            self.ripple_anim.stop()
+        self.setRippleOpacity(0.6)
+        group = QParallelAnimationGroup(self)
+        r_anim = QPropertyAnimation(self, b"ripple_radius")
+        r_anim.setStartValue(self._radius)
+        r_anim.setEndValue(self._radius * 1.6)
+        r_anim.setDuration(600)
+        r_anim.setEasingCurve(QEasingCurve.OutQuad)
+        o_anim = QPropertyAnimation(self, b"ripple_opacity")
+        o_anim.setStartValue(0.6)
+        o_anim.setEndValue(0.0)
+        o_anim.setDuration(600)
+        o_anim.setEasingCurve(QEasingCurve.OutQuad)
+        group.addAnimation(r_anim)
+        group.addAnimation(o_anim)
+        group.finished.connect(lambda: self.setRippleOpacity(0.0))
+        self.ripple_anim = group
+        group.start()
+
     def animation_finished(self):
         if self.phase == 'exhaling':
             if self.cycle_valid:
@@ -128,7 +180,7 @@ class BreathCircle(QWidget):
             self.breath_start_time = 0
             self.phase = 'idle'
         elif self.phase == 'inhaling':
-            pass
+            self.start_ripple()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
