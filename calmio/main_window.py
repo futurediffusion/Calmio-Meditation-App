@@ -29,6 +29,7 @@ from .stats_overlay import StatsOverlay
 from .session_complete import SessionComplete
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
+from .badges_view import BadgesView
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -164,6 +165,7 @@ class MainWindow(QMainWindow):
         self.stats_button.clicked.connect(self.toggle_stats)
         self.stats_overlay.view_sessions.connect(self.open_today_sessions)
         self.stats_overlay.session_requested.connect(self.open_session_details)
+        self.stats_overlay.view_badges_today.connect(self.open_today_badges)
 
         self.today_sessions = TodaySessionsView(self)
         self.today_sessions.setGeometry(self.rect())
@@ -175,6 +177,13 @@ class MainWindow(QMainWindow):
         self.session_details.setGeometry(self.rect())
         self.session_details.hide()
         self.session_details.back_requested.connect(self.close_session_details)
+        self.session_details.badges_requested.connect(self.open_session_badges)
+
+        self.badges_view = BadgesView(self)
+        self.badges_view.setGeometry(self.rect())
+        self.badges_view.hide()
+        self.badges_view.back_requested.connect(self.close_badges_view)
+        self._badges_return = self.stats_overlay
 
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
@@ -190,7 +199,9 @@ class MainWindow(QMainWindow):
                 last.get("cycles", []),
             )
         self.stats_overlay.update_streak(self.data_store.get_streak())
-        self.stats_overlay.update_badges(self.data_store.get_badges())
+        self.stats_overlay.update_badges(
+            self.data_store.get_badges_for_date(datetime.now())
+        )
 
         self.position_buttons()
 
@@ -335,7 +346,9 @@ class MainWindow(QMainWindow):
             self.session_complete.show_badges([])
         self.stack.setCurrentWidget(self.session_complete)
         self.stats_overlay.update_streak(self.data_store.get_streak())
-        self.stats_overlay.update_badges(self.data_store.get_badges())
+        self.stats_overlay.update_badges(
+            self.data_store.get_badges_for_date(datetime.now())
+        )
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
 
@@ -396,6 +409,7 @@ class MainWindow(QMainWindow):
                 or self.stats_overlay.geometry().contains(pos)
                 or self.today_sessions.geometry().contains(pos)
                 or self.session_details.geometry().contains(pos)
+                or self.badges_view.geometry().contains(pos)
             ):
                 self.options_button.hide()
                 self.stats_button.hide()
@@ -403,6 +417,7 @@ class MainWindow(QMainWindow):
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
                 self.session_details.hide()
+                self.badges_view.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -454,6 +469,7 @@ class MainWindow(QMainWindow):
             or self.stats_overlay.geometry().contains(pos)
             or self.today_sessions.geometry().contains(pos)
             or self.session_details.geometry().contains(pos)
+            or self.badges_view.geometry().contains(pos)
         ):
             self.options_button.hide()
             self.stats_button.hide()
@@ -461,6 +477,7 @@ class MainWindow(QMainWindow):
             self.stats_overlay.hide()
             self.today_sessions.hide()
             self.session_details.hide()
+            self.badges_view.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
@@ -501,6 +518,29 @@ class MainWindow(QMainWindow):
         self.session_details.hide()
         self.stats_overlay.show()
         self.stats_overlay.raise_()
+
+    def open_today_badges(self):
+        badges = self.data_store.get_badges_for_date(datetime.now())
+        self.badges_view.title_lbl.setText("Logros de hoy")
+        self.badges_view.set_badges(badges)
+        self._badges_return = self.stats_overlay
+        self.stats_overlay.hide()
+        self.badges_view.show()
+        self.badges_view.raise_()
+
+    def open_session_badges(self, badges):
+        self.badges_view.title_lbl.setText("Logros de sesi\u00f3n")
+        self.badges_view.set_badges(badges)
+        self._badges_return = self.session_details
+        self.session_details.hide()
+        self.badges_view.show()
+        self.badges_view.raise_()
+
+    def close_badges_view(self):
+        self.badges_view.hide()
+        if self._badges_return:
+            self._badges_return.show()
+            self._badges_return.raise_()
 
     def load_messages(self):
         path = Path(__file__).resolve().parent / "motivational_messages.json"

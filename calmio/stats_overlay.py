@@ -20,6 +20,7 @@ from .monthly_stats import MonthlyStatsView
 class StatsOverlay(QWidget):
     view_sessions = Signal()
     session_requested = Signal(dict)
+    view_badges_today = Signal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -77,6 +78,15 @@ class StatsOverlay(QWidget):
 
         self.sessions_btn.clicked.connect(self.view_sessions.emit)
 
+        self.badges_btn = QPushButton("Logros alcanzados hoy")
+        self.badges_btn.setStyleSheet(
+            "QPushButton{"
+            "background-color:#CCE4FF;border:none;border-radius:20px;"
+            "padding:12px 24px;font-size:14px;}"
+        )
+        self.badges_btn.clicked.connect(self.view_badges_today.emit)
+        self.badges_btn.hide()
+
         self.last_session = QFrame()
         self.last_session.setStyleSheet(
             "background:#E0F0FF;border-radius:15px;padding:6px;"
@@ -108,13 +118,8 @@ class StatsOverlay(QWidget):
         today_layout.addWidget(self.progress, alignment=Qt.AlignCenter)
         today_layout.addWidget(streak_card, alignment=Qt.AlignCenter)
         today_layout.addWidget(self.sessions_btn, alignment=Qt.AlignCenter)
+        today_layout.addWidget(self.badges_btn, alignment=Qt.AlignCenter)
         today_layout.addWidget(self.last_session)
-        self.badges_label = QLabel("")
-        badges_font = QFont("Sans Serif")
-        badges_font.setPointSize(12)
-        self.badges_label.setFont(badges_font)
-        self.badges_label.setWordWrap(True)
-        today_layout.addWidget(self.badges_label, alignment=Qt.AlignCenter)
         today_layout.addStretch()
 
         self.week_view = WeeklyStatsView(self)
@@ -163,12 +168,12 @@ class StatsOverlay(QWidget):
         self.progress.set_seconds(seconds)
 
     def update_badges(self, badges):
-        from .badges import BADGE_NAMES
         if badges:
-            names = [BADGE_NAMES.get(b, b) for b in badges]
-            self.badges_label.setText("Logros: " + ", ".join(names))
+            self.badges_btn.setText(f"Logros alcanzados hoy ({len(badges)})")
+            self.badges_btn.show()
         else:
-            self.badges_label.setText("")
+            self.badges_btn.setText("Logros alcanzados hoy")
+            self.badges_btn.hide()
 
     def update_last_session(self, start, duration, breaths, inhale, exhale, cycles=None):
         self._last_session_data = {

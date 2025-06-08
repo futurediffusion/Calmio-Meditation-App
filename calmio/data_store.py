@@ -12,6 +12,7 @@ class DataStore:
             "streak": 1,
             "sessions": [],
             "badges": [],
+            "daily_badges": {},
         }
         self.load()
 
@@ -30,6 +31,8 @@ class DataStore:
                         self.data["sessions"] = []
                     if "badges" not in self.data:
                         self.data["badges"] = []
+                    if "daily_badges" not in self.data:
+                        self.data["daily_badges"] = {}
             except (json.JSONDecodeError, IOError):
                 pass
 
@@ -62,6 +65,14 @@ class DataStore:
             }
         )
         new_badges = self._check_badges(seconds, breaths)
+        # store badges with session
+        self.data["sessions"][-1]["badges"] = list(new_badges)
+        if new_badges:
+            day_badges = self.data.setdefault("daily_badges", {}).get(date_key, [])
+            for b in new_badges:
+                if b not in day_badges:
+                    day_badges.append(b)
+            self.data["daily_badges"][date_key] = day_badges
         self.save()
         return new_badges
 
@@ -74,6 +85,10 @@ class DataStore:
 
     def get_badges(self):
         return self.data.get("badges", [])
+
+    def get_badges_for_date(self, date_obj):
+        date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
+        return self.data.get("daily_badges", {}).get(date_key, [])
 
     def get_sessions_for_date(self, date_obj):
         date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
