@@ -262,7 +262,8 @@ class SessionDetailsView(QWidget):
         self.graph.set_cycles(cycles)
         
         self.session_badges = session.get("badges", [])
-        self.badges_btn.setVisible(bool(self.session_badges))
+        self.badges_btn.setVisible(True)
+        self.badges_btn.setEnabled(bool(self.session_badges))
 
     def _emit_badges(self, evt=None):
         if self.session_badges:

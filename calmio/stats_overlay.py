@@ -37,7 +37,8 @@ class StatsOverlay(QWidget):
         self.back_btn.setStyleSheet(
             "QPushButton{background:none;border:none;font-size:18px;}"
         )
-        header_layout.addWidget(self.back_btn, alignment=Qt.AlignLeft)
+        header_layout.addWidget(self.back_btn)
+        header_layout.addStretch()
 
         self.title = QLabel("Meditaci\u00f3n de hoy", self)
         title_font = QFont("Sans Serif")
