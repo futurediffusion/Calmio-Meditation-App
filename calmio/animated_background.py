@@ -28,10 +28,11 @@ class AnimatedBackground(QWidget):
         self._opacity = 0.0
 
         self._angle = 0.0
-        self._waves = [
-            {"amp": 8, "length": 200, "speed": 0.0005, "phase": 0.0, "height": 0.85},
-            {"amp": 12, "length": 260, "speed": 0.0003, "phase": 1.5, "height": 0.9},
-            {"amp": 6, "length": 150, "speed": 0.0007, "phase": 3.0, "height": 0.8},
+        # Three halo rings rotating around the breathing circle
+        self._rings = [
+            {"radius": 0.35, "phase": 0.0, "speed": 0.002, "dir": 1},   # inner ring
+            {"radius": 0.45, "phase": 1.0, "speed": 0.001, "dir": -1},  # middle ring
+            {"radius": 0.55, "phase": 2.0, "speed": 0.003, "dir": 1},   # outer ring
         ]
         self._offset_timer = QTimer(self)
         self._offset_timer.timeout.connect(self._update_offset)
@@ -115,8 +116,8 @@ class AnimatedBackground(QWidget):
 
     def _update_offset(self):
         self._angle += 0.001
-        for wave in self._waves:
-            wave["phase"] += wave["speed"]
+        for ring in self._rings:
+            ring["phase"] += ring["speed"] * ring["dir"]
         self.update()
 
     def paintEvent(self, event):
@@ -140,20 +141,22 @@ class AnimatedBackground(QWidget):
 
         painter.setOpacity(self._opacity * 0.4)
         painter.setPen(Qt.NoPen)
-        for wave in self._waves:
+
+        for ring in self._rings:
             path = QPainterPath()
-            baseline = rect.height() * wave["height"]
-            path.moveTo(0, baseline)
-            step = 4
-            x = 0
-            while x <= rect.width():
-                y = baseline + wave["amp"] * math.sin(
-                    2 * math.pi * (x / wave["length"]) + wave["phase"]
-                )
-                path.lineTo(x, y)
-                x += step
-            path.lineTo(rect.width(), rect.height())
-            path.lineTo(0, rect.height())
+            steps = 120
+            base_radius = min(rect.width(), rect.height()) * ring["radius"]
+            amp = base_radius * 0.05
+            freq = 6
+            for i in range(steps + 1):
+                angle = 2 * math.pi * i / steps + ring["phase"]
+                r = base_radius + amp * math.sin(freq * angle)
+                x = center.x() + r * math.cos(angle)
+                y = center.y() + r * math.sin(angle)
+                if i == 0:
+                    path.moveTo(x, y)
+                else:
+                    path.lineTo(x, y)
             path.closeSubpath()
             color = QColor(255, 255, 255, 80)
             painter.fillPath(path, color)
