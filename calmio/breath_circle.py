@@ -146,27 +146,22 @@ class BreathCircle(QWidget):
         if self.ripple_anim:
             self.ripple_anim.stop()
         self.setRippleOpacity(0.6)
-        seq = QSequentialAnimationGroup(self)
-        durations = [1500, 1700, 1400]
-        for dur in durations:
-            group = QParallelAnimationGroup(self)
-            r_anim = QPropertyAnimation(self, b"ripple_radius")
-            r_anim.setStartValue(self._radius)
-            r_anim.setEndValue(self._radius * 1.6)
-            r_anim.setDuration(dur)
-            r_anim.setEasingCurve(QEasingCurve.OutQuad)
-            o_anim = QPropertyAnimation(self, b"ripple_opacity")
-            o_anim.setStartValue(0.6)
-            o_anim.setEndValue(0.0)
-            o_anim.setDuration(dur)
-            o_anim.setEasingCurve(QEasingCurve.OutQuad)
-            group.addAnimation(r_anim)
-            group.addAnimation(o_anim)
-            seq.addAnimation(group)
-            seq.addPause(300)
-        seq.finished.connect(lambda: self.setRippleOpacity(0.0))
-        self.ripple_anim = seq
-        seq.start()
+        group = QParallelAnimationGroup(self)
+        r_anim = QPropertyAnimation(self, b"ripple_radius")
+        r_anim.setStartValue(self._radius)
+        r_anim.setEndValue(self._radius * 1.6)
+        r_anim.setDuration(600)
+        r_anim.setEasingCurve(QEasingCurve.OutQuad)
+        o_anim = QPropertyAnimation(self, b"ripple_opacity")
+        o_anim.setStartValue(0.6)
+        o_anim.setEndValue(0.0)
+        o_anim.setDuration(600)
+        o_anim.setEasingCurve(QEasingCurve.OutQuad)
+        group.addAnimation(r_anim)
+        group.addAnimation(o_anim)
+        group.finished.connect(lambda: self.setRippleOpacity(0.0))
+        self.ripple_anim = group
+        group.start()
 
     def animation_finished(self):
         if self.phase == 'exhaling':
