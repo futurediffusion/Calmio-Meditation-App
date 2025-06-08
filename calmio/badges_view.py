@@ -55,7 +55,31 @@ class BadgesView(QWidget):
         self.list_layout.addStretch()
         self.scroll.setWidget(self.container)
 
-    LEVEL_EMOJIS = ["\ud83e\udd49", "\ud83e\udd49", "\ud83e\udd49", "\ud83e\udd48", "\ud83e\udd48", "\ud83e\udd47", "\ud83e\udd47", "\ud83d\udc8e", "\ud83d\udc8e", "\ud83c\udfc6"]
+    LEVEL_EMOJIS = [
+        "\ud83e\udd49",
+        "\ud83e\udd49",
+        "\ud83e\udd49",
+        "\ud83e\udd48",
+        "\ud83e\udd48",
+        "\ud83e\udd47",
+        "\ud83e\udd47",
+        "\ud83d\udc8e",
+        "\ud83d\udc8e",
+        "\ud83c\udfc6",
+    ]
+
+    LEVEL_COLORS = [
+        "#E0F0FF",
+        "#D0E8FF",
+        "#C0E0FF",
+        "#B0D8FF",
+        "#A0D0FF",
+        "#90C8FF",
+        "#80C0FF",
+        "#70B8FF",
+        "#60B0FF",
+        "#50A8FF",
+    ]
 
     def set_badges(self, badges):
         from .badges import BADGE_NAMES
@@ -74,7 +98,11 @@ class BadgesView(QWidget):
 
         for idx, (code, count) in enumerate(items):
             card = QFrame()
-            card.setStyleSheet("background:#E0F0FF;border-radius:15px;padding:6px;")
+            level = max(1, min(count, len(self.LEVEL_COLORS)))
+            color = self.LEVEL_COLORS[level - 1]
+            card.setStyleSheet(
+                f"background:{color};border-radius:15px;padding:6px;"
+            )
             eff = QGraphicsDropShadowEffect(self)
             eff.setBlurRadius(8)
             eff.setOffset(0, 2)
