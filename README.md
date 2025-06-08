@@ -8,6 +8,7 @@ The application now features a dynamic animated background that gently cycles th
 
 - Python 3.8+
 - PySide6
+- platformdirs
 
 Install dependencies in a virtual environment with the provided batch script.
 
