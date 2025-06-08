@@ -136,7 +136,9 @@ class MainWindow(QMainWindow):
 
         self.menu_button = QPushButton("\u22EF", self)
         self.menu_button.setFixedSize(40, 40)
-        self.menu_button.setStyleSheet("background:none; border:none; font-size:24px;")
+        self.menu_button.setStyleSheet(
+            "background:none; border:none; font-size:24px; color:#000;"
+        )
         self.menu_button.clicked.connect(self.toggle_menu)
 
         QApplication.instance().installEventFilter(self)
