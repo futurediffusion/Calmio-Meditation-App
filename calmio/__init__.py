@@ -8,6 +8,7 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .main_window import MainWindow
 from .animated_background import AnimatedBackground
+from .wave_overlay import WaveOverlay
 
 __all__ = [
     "BreathCircle",
@@ -18,4 +19,5 @@ __all__ = [
     "SessionDetailsView",
     "MainWindow",
     "AnimatedBackground",
+    "WaveOverlay",
 ]

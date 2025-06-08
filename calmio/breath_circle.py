@@ -64,6 +64,7 @@ class BreathCircle(QWidget):
         self.breath_started_callback = None
         self.breath_finished_callback = None
         self.exhale_started_callback = None
+        self.ripple_spawned_callback = None
         self.breath_start_time = 0
         self.inhale_start_time = 0
         self.exhale_start_time = 0
@@ -237,6 +238,9 @@ class BreathCircle(QWidget):
 
         self.ripple_anim = seq
         seq.start()
+        if self.ripple_spawned_callback:
+            center = self.mapTo(self.window(), self.rect().center())
+            self.ripple_spawned_callback(center, self._color)
 
     def animation_finished(self):
         if self.phase == 'exhaling':
