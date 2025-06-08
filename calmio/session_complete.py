@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 class SessionComplete(QWidget):
     done = Signal()
     closed = Signal()
+    badges_requested = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -81,15 +82,19 @@ class SessionComplete(QWidget):
 
         layout.addWidget(card)
 
-        self.badge_label = QLabel("")
+        self.badge_btn = QPushButton("")
+        self.badge_btn.setCursor(Qt.PointingHandCursor)
+        self.badge_btn.setStyleSheet(
+            "QPushButton{background:none;border:none;color:#F39C12;font-weight:bold;}"
+        )
         badge_font = QFont("Sans Serif")
         badge_font.setPointSize(14)
         badge_font.setWeight(QFont.Bold)
-        self.badge_label.setFont(badge_font)
-        self.badge_label.setAlignment(Qt.AlignCenter)
-        self.badge_label.setStyleSheet("color:#F39C12;")
-        self.badge_label.hide()
-        layout.addWidget(self.badge_label)
+        self.badge_btn.setFont(badge_font)
+        self.badge_btn.clicked.connect(self._emit_badges)
+        self.badge_btn.hide()
+        layout.addWidget(self.badge_btn)
+        self._badges = []
 
         self.phrase = QLabel("Lleva esta calma contigo durante el d\u00eda.")
         ph_font = QFont("Sans Serif")
@@ -101,7 +106,7 @@ class SessionComplete(QWidget):
 
         # ephemeral star animation widgets
         self._stars = []
-        for _ in range(5):
+        for _ in range(15):
             lbl = QLabel("\u2728", self)
             lbl.setStyleSheet("font-size:24px;color:#F5B041;")
             lbl.hide()
@@ -132,12 +137,13 @@ class SessionComplete(QWidget):
 
     def show_badges(self, badges):
         from .badges import BADGE_NAMES
+        self._badges = list(badges)
         if badges:
-            names = [BADGE_NAMES.get(b, b) for b in badges]
-            self.badge_label.setText("\u2728 " + ", ".join(names))
-            self.badge_label.show()
+            name = BADGE_NAMES.get(badges[-1], badges[-1])
+            self.badge_btn.setText("\u2728 " + name)
+            self.badge_btn.show()
         else:
-            self.badge_label.hide()
+            self.badge_btn.hide()
         self.play_completion_animation()
 
     def play_completion_animation(self):
@@ -146,7 +152,7 @@ class SessionComplete(QWidget):
             star.hide()
         for star in self._stars:
             x = random.randint(0, max(0, self.width() - star.width()))
-            y = random.randint(0, max(0, self.height() // 2))
+            y = random.randint(0, max(0, self.height() - star.height()))
             star.move(x, y)
             effect = QGraphicsOpacityEffect(star)
             star.setGraphicsEffect(effect)
@@ -158,4 +164,8 @@ class SessionComplete(QWidget):
             anim.setEndValue(0)
             anim.finished.connect(star.hide)
             anim.start()
+
+    def _emit_badges(self, evt=None):
+        if self._badges:
+            self.badges_requested.emit(self._badges)
 
