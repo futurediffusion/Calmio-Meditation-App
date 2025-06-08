@@ -31,6 +31,7 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
+from .wave_background import WaveBackground
 
 
 class MainWindow(QMainWindow):
@@ -41,11 +42,16 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color: black;")
 
         palette = QApplication.instance().palette()
-        dark_mode = palette.color(QPalette.Window).value() < 128
-        self.bg = AnimatedBackground(self, dark_mode=dark_mode)
+        self.dark_mode = palette.color(QPalette.Window).value() < 128
+        self.bg = AnimatedBackground(self, dark_mode=self.dark_mode)
         self.bg.set_opacity(0.0)
         self.bg.lower()
         self.bg.setGeometry(self.rect())
+
+        if not self.dark_mode:
+            self.wave_bg = WaveBackground(self)
+            self.wave_bg.lower()
+            self.wave_bg.setGeometry(self.rect())
 
         self.data_store = DataStore()
 
@@ -93,7 +99,8 @@ class MainWindow(QMainWindow):
         self.message_label = QLabel("Toca para empezar")
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setFont(msg_font)
-        self.message_label.setStyleSheet("color:white;")
+        text_color = "white" if self.dark_mode else "#000000"
+        self.message_label.setStyleSheet(f"color:{text_color};")
         self.message_label.setWordWrap(True)
         self.message_label.setVisible(False)
         self.message_container = QWidget()
@@ -370,6 +377,8 @@ class MainWindow(QMainWindow):
         self.position_buttons()
         if hasattr(self, "bg"):
             self.bg.setGeometry(self.rect())
+        if hasattr(self, "wave_bg"):
+            self.wave_bg.setGeometry(self.rect())
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
