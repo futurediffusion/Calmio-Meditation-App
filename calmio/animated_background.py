@@ -115,7 +115,7 @@ class AnimatedBackground(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         rect = self.rect()
-        painter.fillRect(rect, QColor("white"))
+        painter.fillRect(rect, QColor("black"))
         if self._opacity <= 0:
             return
         painter.setRenderHint(QPainter.Antialiasing)
