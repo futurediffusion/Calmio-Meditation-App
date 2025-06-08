@@ -125,6 +125,9 @@ class MainWindow(QMainWindow):
         self.session_complete = SessionComplete(self)
         self.session_complete.done.connect(self.on_session_complete_done)
         self.session_complete.closed.connect(self.on_session_complete_closed)
+        self.session_complete.badges_requested.connect(
+            lambda badges: self.open_session_badges(badges, return_to=self.session_complete)
+        )
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.main_view)
@@ -530,11 +533,13 @@ class MainWindow(QMainWindow):
         self.badges_view.show()
         self.badges_view.raise_()
 
-    def open_session_badges(self, badges):
+    def open_session_badges(self, badges, return_to=None):
         self.badges_view.title_lbl.setText("Logros de sesi\u00f3n")
         self.badges_view.set_badges(badges)
-        self._badges_return = self.session_details
-        self.session_details.hide()
+        if return_to is None:
+            return_to = self.session_details
+        self._badges_return = return_to
+        return_to.hide()
         self.badges_view.show()
         self.badges_view.raise_()
 
