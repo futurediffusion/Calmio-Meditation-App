@@ -274,20 +274,18 @@ class DataStore:
             next_month = date(year, month + 1, 1)
         days = (next_month - start).days
 
-        # minutes per week
+        # minutes per week (fixed day ranges: 1-7, 8-14, 15-21, 22-end)
         weeks = []
-        current = start
-        while current < next_month:
-            week_end = current + timedelta(days=6 - current.weekday())
-            if week_end >= next_month:
-                week_end = next_month - timedelta(days=1)
+        for start_day in (1, 8, 15, 22):
+            day_start = start + timedelta(days=start_day - 1)
+            if day_start >= next_month:
+                break
+            day_end = min(start_day + 6, days)
             total = 0
-            d = current
-            while d <= week_end:
+            for i in range(start_day, day_end + 1):
+                d = start + timedelta(days=i - 1)
                 total += self.data["daily_seconds"].get(d.isoformat(), 0)
-                d += timedelta(days=1)
             weeks.append(total / 60)
-            current = week_end + timedelta(days=1)
 
         total_minutes = sum(weeks)
         average = total_minutes / days if days else 0
