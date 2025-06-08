@@ -254,12 +254,13 @@ class DataStore:
 
         average = (total_seconds / 60) / 7 if total_seconds else 0
         return {
-            "minutes_per_day": [int(round(m)) for m in minutes_per_day],
+            "minutes_per_day": minutes_per_day,
             "total": total_seconds / 60,
             "average": average,
             "longest_day": longest_day,
             "longest_time": longest_time,
             "longest_minutes": longest_secs / 60,
+            "total_seconds": total_seconds,
         }
 
     def get_monthly_summary(self, year, month, goal=600):
