@@ -199,45 +199,20 @@ class BreathCircle(QWidget):
         r_anim = QPropertyAnimation(self, b"ripple_radius")
         r_anim.setStartValue(self._radius)
         r_anim.setEndValue(self._radius * 1.5)
-        r_anim.setDuration(1200)
+        r_anim.setDuration(2000)
         r_anim.setEasingCurve(QEasingCurve.InOutSine)
         o_anim = QPropertyAnimation(self, b"ripple_opacity")
         o_anim.setStartValue(0.4)
         o_anim.setEndValue(0.0)
-        o_anim.setDuration(1200)
+        o_anim.setDuration(2000)
         o_anim.setEasingCurve(QEasingCurve.InOutSine)
         base_group.addAnimation(r_anim)
         base_group.addAnimation(o_anim)
         base_group.finished.connect(lambda: self.setRippleOpacity(0.0))
 
-        # additional watercolor style ripples
-        seq = QSequentialAnimationGroup(self)
-        seq.addAnimation(base_group)
-
-        for i in range(2):
-            delay = 200 * (i + 1)
-            ripple = Ripple(self, self._radius)
-            self.ripples.append(ripple)
-            group = QParallelAnimationGroup(self)
-            dur = 1200 + i * 300 + random.randint(-150, 150)
-            r = QPropertyAnimation(ripple, b"radius")
-            r.setStartValue(self._radius)
-            r.setEndValue(self._radius * (1.6 + 0.4 * i))
-            r.setDuration(dur)
-            r.setEasingCurve(QEasingCurve.InOutSine)
-            o = QPropertyAnimation(ripple, b"opacity")
-            o.setStartValue(0.3)
-            o.setEndValue(0.0)
-            o.setDuration(dur)
-            o.setEasingCurve(QEasingCurve.InOutSine)
-            group.addAnimation(r)
-            group.addAnimation(o)
-            group.finished.connect(lambda r=ripple: self.ripples.remove(r) if r in self.ripples else None)
-            seq.addPause(delay)
-            seq.addAnimation(group)
-
-        self.ripple_anim = seq
-        seq.start()
+        # Play only the base ripple animation
+        self.ripple_anim = base_group
+        base_group.start()
         if self.ripple_spawned_callback:
             center = self.mapTo(self.window(), self.rect().center())
             self.ripple_spawned_callback(center, self._color)

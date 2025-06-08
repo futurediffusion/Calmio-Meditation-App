@@ -52,23 +52,18 @@ class WaveOverlay(QWidget):
         self._center = center
         self._color = QColor(color)
         diag = (self.width() ** 2 + self.height() ** 2) ** 0.5 * 1.5
-        configs = [
-            {"duration": 1500, "opacity": 0.25},
-            {"duration": 3000, "opacity": 0.2},
-            {"duration": 4500, "opacity": 0.15},
-        ]
-        for cfg in configs:
-            wave = _Wave(self)
-            wave.setRadius(0)
-            wave.setOpacity(cfg["opacity"])
-            self._waves.append(wave)
-            anim = QPropertyAnimation(wave, b"radius", self)
-            anim.setStartValue(0)
-            anim.setEndValue(diag)
-            anim.setDuration(cfg["duration"])
-            anim.setEasingCurve(QEasingCurve.OutSine)
-            anim.finished.connect(lambda w=wave: self._remove_wave(w))
-            anim.start()
+        # Create a single, slower wave instead of multiple ones
+        wave = _Wave(self)
+        wave.setRadius(0)
+        wave.setOpacity(0.2)
+        self._waves.append(wave)
+        anim = QPropertyAnimation(wave, b"radius", self)
+        anim.setStartValue(0)
+        anim.setEndValue(diag)
+        anim.setDuration(6000)
+        anim.setEasingCurve(QEasingCurve.OutSine)
+        anim.finished.connect(lambda w=wave: self._remove_wave(w))
+        anim.start()
         self.show()
 
     def _remove_wave(self, wave):
