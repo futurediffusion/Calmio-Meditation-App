@@ -27,6 +27,8 @@ class AnimatedBackground(QWidget):
 
         self._opacity = 0.0
 
+        self._ring_padding = 1.0
+
         self._angle = 0.0
         # Three halo rings rotating around the breathing circle
         # Increase spacing between rings and rotate all in the same direction
@@ -69,6 +71,15 @@ class AnimatedBackground(QWidget):
         self.update()
 
     opacity = Property(float, get_opacity, set_opacity)
+
+    def get_ring_padding(self):
+        return self._ring_padding
+
+    def set_ring_padding(self, value):
+        self._ring_padding = max(0.1, float(value))
+        self.update()
+
+    ring_padding = Property(float, get_ring_padding, set_ring_padding)
 
     def _chakra_colors(self):
         base = [
@@ -146,7 +157,11 @@ class AnimatedBackground(QWidget):
         for ring in self._rings:
             path = QPainterPath()
             steps = 120
-            base_radius = min(rect.width(), rect.height()) * ring["radius"]
+            base_radius = (
+                min(rect.width(), rect.height())
+                * ring["radius"]
+                * self._ring_padding
+            )
             amp = base_radius * 0.05
             freq = 6
             for i in range(steps + 1):

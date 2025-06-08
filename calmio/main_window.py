@@ -293,6 +293,15 @@ class MainWindow(QMainWindow):
         self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.bg_anim.start()
 
+        if hasattr(self, "bg_padding_anim") and self.bg_padding_anim.state() != QAbstractAnimation.Stopped:
+            self.bg_padding_anim.stop()
+        self.bg_padding_anim = QPropertyAnimation(self.bg, b"ring_padding", self)
+        self.bg_padding_anim.setDuration(int(self.circle.inhale_time))
+        self.bg_padding_anim.setStartValue(self.bg.ring_padding)
+        self.bg_padding_anim.setEndValue(1.25)
+        self.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.bg_padding_anim.start()
+
     def on_exhale_start(self, duration):
         if (
             hasattr(self, "count_anim")
@@ -323,6 +332,15 @@ class MainWindow(QMainWindow):
         self.bg_anim.setEndValue(0.0)
         self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.bg_anim.start()
+
+        if hasattr(self, "bg_padding_anim") and self.bg_padding_anim.state() != QAbstractAnimation.Stopped:
+            self.bg_padding_anim.stop()
+        self.bg_padding_anim = QPropertyAnimation(self.bg, b"ring_padding", self)
+        self.bg_padding_anim.setDuration(int(duration))
+        self.bg_padding_anim.setStartValue(self.bg.ring_padding)
+        self.bg_padding_anim.setEndValue(1.0)
+        self.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.bg_padding_anim.start()
 
     def on_breath_end(self, duration, inhale, exhale):
         self.last_cycle_duration = duration
