@@ -1,0 +1,602 @@
+[
+  {
+    "id": 1,
+    "nombre": "Primera respiración consciente",
+    "tipo": "creativo",
+    "emoji": "🌬️"
+  },
+  {
+    "id": 2,
+    "nombre": "Meditaste durante 1 min",
+    "tipo": "tiempo",
+    "emoji": "⏱️"
+  },
+  {
+    "id": 3,
+    "nombre": "Meditaste durante 5 min",
+    "tipo": "tiempo",
+    "emoji": "🕔"
+  },
+  {
+    "id": 4,
+    "nombre": "Meditaste durante 10 min",
+    "tipo": "tiempo",
+    "emoji": "🔟"
+  },
+  {
+    "id": 5,
+    "nombre": "Meditaste durante 15 min",
+    "tipo": "tiempo",
+    "emoji": "🕒"
+  },
+  {
+    "id": 6,
+    "nombre": "Meditaste durante 20 min",
+    "tipo": "tiempo",
+    "emoji": "🧘"
+  },
+  {
+    "id": 7,
+    "nombre": "Meditaste durante 30 min",
+    "tipo": "tiempo",
+    "emoji": "🌀"
+  },
+  {
+    "id": 8,
+    "nombre": "Meditaste durante 45 min",
+    "tipo": "tiempo",
+    "emoji": "🌅"
+  },
+  {
+    "id": 9,
+    "nombre": "Meditaste durante 60 min",
+    "tipo": "tiempo",
+    "emoji": "⛰️"
+  },
+  {
+    "id": 10,
+    "nombre": "Completaste 1 sesión",
+    "tipo": "sesiones",
+    "emoji": "🎉"
+  },
+  {
+    "id": 11,
+    "nombre": "Completaste 3 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🥉"
+  },
+  {
+    "id": 12,
+    "nombre": "Completaste 5 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🥈"
+  },
+  {
+    "id": 13,
+    "nombre": "Completaste 10 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🥇"
+  },
+  {
+    "id": 14,
+    "nombre": "Completaste 20 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🏅"
+  },
+  {
+    "id": 15,
+    "nombre": "Completaste 30 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🎖️"
+  },
+  {
+    "id": 16,
+    "nombre": "Completaste 50 sesiones",
+    "tipo": "sesiones",
+    "emoji": "🏆"
+  },
+  {
+    "id": 17,
+    "nombre": "Completaste 100 sesiones",
+    "tipo": "sesiones",
+    "emoji": "👑"
+  },
+  {
+    "id": 21,
+    "nombre": "Meditaste 3 días seguidos",
+    "tipo": "progreso",
+    "emoji": "📅"
+  },
+  {
+    "id": 22,
+    "nombre": "Meditaste una semana completa",
+    "tipo": "progreso",
+    "emoji": "🗓️"
+  },
+  {
+    "id": 23,
+    "nombre": "Meditaste 30 días seguidos",
+    "tipo": "progreso",
+    "emoji": "📆"
+  },
+  {
+    "id": 24,
+    "nombre": "Terminaste una sesión de exactamente 12 minutos",
+    "tipo": "tiempo",
+    "emoji": "🕛"
+  },
+  {
+    "id": 25,
+    "nombre": "Terminaste una sesión de exactamente 25 minutos",
+    "tipo": "tiempo",
+    "emoji": "⏲️"
+  },
+  {
+    "id": 26,
+    "nombre": "Terminaste una sesión de exactamente 33 minutos",
+    "tipo": "tiempo",
+    "emoji": "⌛"
+  },
+  {
+    "id": 27,
+    "nombre": "Completaste 2 sesiones en un mismo día",
+    "tipo": "sesiones",
+    "emoji": "🌓"
+  },
+  {
+    "id": 28,
+    "nombre": "Completaste 3 sesiones en un mismo día",
+    "tipo": "sesiones",
+    "emoji": "🌔"
+  },
+  {
+    "id": 29,
+    "nombre": "Respiraste profundamente por más de 5 minutos sin interrupción",
+    "tipo": "tiempo",
+    "emoji": "🌬️"
+  },
+  {
+    "id": 30,
+    "nombre": "Lograste meditar sin distracciones por 1 hora completa",
+    "tipo": "legendario",
+    "emoji": "🛡️"
+  },
+  {
+    "id": 28,
+    "nombre": "Logro especial #28",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 29,
+    "nombre": "Logro especial #29",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 30,
+    "nombre": "Logro especial #30",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 31,
+    "nombre": "Logro especial #31",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 32,
+    "nombre": "Logro especial #32",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 33,
+    "nombre": "Logro especial #33",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 34,
+    "nombre": "Logro especial #34",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 35,
+    "nombre": "Logro especial #35",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 36,
+    "nombre": "Logro especial #36",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 37,
+    "nombre": "Logro especial #37",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 38,
+    "nombre": "Logro especial #38",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 39,
+    "nombre": "Logro especial #39",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 40,
+    "nombre": "Logro especial #40",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 41,
+    "nombre": "Logro especial #41",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 42,
+    "nombre": "Logro especial #42",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 43,
+    "nombre": "Logro especial #43",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 44,
+    "nombre": "Logro especial #44",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 45,
+    "nombre": "Logro especial #45",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 46,
+    "nombre": "Logro especial #46",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 47,
+    "nombre": "Logro especial #47",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 48,
+    "nombre": "Logro especial #48",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 49,
+    "nombre": "Logro especial #49",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 50,
+    "nombre": "Logro especial #50",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 51,
+    "nombre": "Logro especial #51",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 52,
+    "nombre": "Logro especial #52",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 53,
+    "nombre": "Logro especial #53",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 54,
+    "nombre": "Logro especial #54",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 55,
+    "nombre": "Logro especial #55",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 56,
+    "nombre": "Logro especial #56",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 57,
+    "nombre": "Logro especial #57",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 58,
+    "nombre": "Logro especial #58",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 59,
+    "nombre": "Logro especial #59",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 60,
+    "nombre": "Logro especial #60",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 61,
+    "nombre": "Logro especial #61",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 62,
+    "nombre": "Logro especial #62",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 63,
+    "nombre": "Logro especial #63",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 64,
+    "nombre": "Logro especial #64",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 65,
+    "nombre": "Logro especial #65",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 66,
+    "nombre": "Logro especial #66",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 67,
+    "nombre": "Logro especial #67",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 68,
+    "nombre": "Logro especial #68",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 69,
+    "nombre": "Logro especial #69",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 70,
+    "nombre": "Logro especial #70",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 71,
+    "nombre": "Logro especial #71",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 72,
+    "nombre": "Logro especial #72",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 73,
+    "nombre": "Logro especial #73",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 74,
+    "nombre": "Logro especial #74",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 75,
+    "nombre": "Logro especial #75",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 76,
+    "nombre": "Logro especial #76",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 77,
+    "nombre": "Logro especial #77",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 78,
+    "nombre": "Logro especial #78",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 79,
+    "nombre": "Logro especial #79",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 80,
+    "nombre": "Logro especial #80",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 81,
+    "nombre": "Logro especial #81",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 82,
+    "nombre": "Logro especial #82",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 83,
+    "nombre": "Logro especial #83",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 84,
+    "nombre": "Logro especial #84",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 85,
+    "nombre": "Logro especial #85",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 86,
+    "nombre": "Logro especial #86",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 87,
+    "nombre": "Logro especial #87",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 88,
+    "nombre": "Logro especial #88",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 89,
+    "nombre": "Logro especial #89",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 90,
+    "nombre": "Logro especial #90",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 91,
+    "nombre": "Logro especial #91",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 92,
+    "nombre": "Logro especial #92",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 93,
+    "nombre": "Logro especial #93",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 94,
+    "nombre": "Logro especial #94",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 95,
+    "nombre": "Logro especial #95",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 96,
+    "nombre": "Logro especial #96",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 97,
+    "nombre": "Logro especial #97",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 98,
+    "nombre": "Logro especial #98",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 99,
+    "nombre": "Logro especial #99",
+    "tipo": "especial",
+    "emoji": "✨"
+  },
+  {
+    "id": 100,
+    "nombre": "Logro especial #100",
+    "tipo": "especial",
+    "emoji": "✨"
+  }
+]
