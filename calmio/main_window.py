@@ -542,6 +542,9 @@ class MainWindow(QMainWindow):
 
     def on_session_complete_done(self):
         self.stack.setCurrentWidget(self.main_view)
+        # Always reset to today's stats when showing the overlay after a
+        # session completes, regardless of the previously selected tab.
+        self.stats_overlay.show_tab(0)
         self.stats_overlay.show()
         self.stats_overlay.raise_()
         self.circle.breath_count = 0
