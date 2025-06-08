@@ -1,10 +1,16 @@
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
+from platformdirs import user_data_dir
 
 
 class DataStore:
-    def __init__(self, path="calmio_data.json"):
+    def __init__(self, path: str | Path | None = None):
+        """Initialize the data store using a writable user data directory."""
+        if path is None:
+            data_dir = Path(user_data_dir("Calmio"))
+            data_dir.mkdir(parents=True, exist_ok=True)
+            path = data_dir / "calmio_data.json"
         self.path = Path(path)
         self.data = {
             "daily_seconds": {},
