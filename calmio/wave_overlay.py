@@ -2,8 +2,6 @@ from PySide6.QtCore import (
     Qt,
     Property,
     QPropertyAnimation,
-    QParallelAnimationGroup,
-    QSequentialAnimationGroup,
     QEasingCurve,
     QPoint,
     QObject,
@@ -53,38 +51,24 @@ class WaveOverlay(QWidget):
     def start_waves(self, center: QPoint, color: QColor):
         self._center = center
         self._color = QColor(color)
-        diag = int((self.width() ** 2 + self.height() ** 2) ** 0.5)
+        diag = (self.width() ** 2 + self.height() ** 2) ** 0.5 * 1.5
         configs = [
-            {"delay": 0, "duration": 2000, "opacity": 0.25},
-            {"delay": 400, "duration": 3500, "opacity": 0.2},
-            {"delay": 800, "duration": 5000, "opacity": 0.15},
+            {"duration": 1500, "opacity": 0.25},
+            {"duration": 3000, "opacity": 0.2},
+            {"duration": 4500, "opacity": 0.15},
         ]
         for cfg in configs:
             wave = _Wave(self)
             wave.setRadius(0)
             wave.setOpacity(cfg["opacity"])
             self._waves.append(wave)
-            group = QParallelAnimationGroup(self)
-            r = QPropertyAnimation(wave, b"radius")
-            r.setStartValue(0)
-            r.setEndValue(diag)
-            r.setDuration(cfg["duration"])
-            r.setEasingCurve(QEasingCurve.OutSine)
-            o = QPropertyAnimation(wave, b"opacity")
-            o.setStartValue(cfg["opacity"])
-            o.setEndValue(0.0)
-            o.setDuration(cfg["duration"])
-            o.setEasingCurve(QEasingCurve.OutSine)
-            group.addAnimation(r)
-            group.addAnimation(o)
-            group.finished.connect(lambda w=wave: self._remove_wave(w))
-            if cfg["delay"] > 0:
-                seq = QSequentialAnimationGroup(self)
-                seq.addPause(cfg["delay"])
-                seq.addAnimation(group)
-                seq.start()
-            else:
-                group.start()
+            anim = QPropertyAnimation(wave, b"radius", self)
+            anim.setStartValue(0)
+            anim.setEndValue(diag)
+            anim.setDuration(cfg["duration"])
+            anim.setEasingCurve(QEasingCurve.OutSine)
+            anim.finished.connect(lambda w=wave: self._remove_wave(w))
+            anim.start()
         self.show()
 
     def _remove_wave(self, wave):
@@ -104,7 +88,8 @@ class WaveOverlay(QWidget):
             pen_color = QColor(self._color)
             pen_color.setAlphaF(min(1.0, max(0.0, wave._opacity)))
             pen = QPen(pen_color)
-            pen.setWidth(2)
+            pen.setWidth(4)
+            pen.setCapStyle(Qt.RoundCap)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawEllipse(self._center, int(wave._radius), int(wave._radius))
