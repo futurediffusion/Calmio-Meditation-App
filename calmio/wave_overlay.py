@@ -5,6 +5,7 @@ from PySide6.QtCore import (
     QEasingCurve,
     QPoint,
     QObject,
+    QParallelAnimationGroup,
 )
 from PySide6.QtGui import QPainter, QColor, QPen
 from PySide6.QtWidgets import QWidget
@@ -57,13 +58,25 @@ class WaveOverlay(QWidget):
         wave.setRadius(0)
         wave.setOpacity(0.2)
         self._waves.append(wave)
-        anim = QPropertyAnimation(wave, b"radius", self)
-        anim.setStartValue(0)
-        anim.setEndValue(diag)
-        anim.setDuration(6000)
-        anim.setEasingCurve(QEasingCurve.OutSine)
-        anim.finished.connect(lambda w=wave: self._remove_wave(w))
-        anim.start()
+
+        group = QParallelAnimationGroup(self)
+
+        r_anim = QPropertyAnimation(wave, b"radius", self)
+        r_anim.setStartValue(0)
+        r_anim.setEndValue(diag)
+        r_anim.setDuration(12000)
+        r_anim.setEasingCurve(QEasingCurve.OutCubic)
+        group.addAnimation(r_anim)
+
+        o_anim = QPropertyAnimation(wave, b"opacity", self)
+        o_anim.setStartValue(0.2)
+        o_anim.setEndValue(0.0)
+        o_anim.setDuration(12000)
+        o_anim.setEasingCurve(QEasingCurve.InQuad)
+        group.addAnimation(o_anim)
+
+        group.finished.connect(lambda w=wave: self._remove_wave(w))
+        group.start()
         self.show()
 
     def _remove_wave(self, wave):

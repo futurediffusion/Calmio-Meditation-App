@@ -15,6 +15,12 @@ from PySide6.QtWidgets import QWidget
 class AnimatedBackground(QWidget):
     """Widget that displays an animated gradient cycling through chakra colors."""
 
+    def _saturate(self, color: QColor, factor: float = 1.3) -> QColor:
+        """Return a more saturated version of *color* keeping its value."""
+        h, s, v, a = color.getHsv()
+        s = min(255, int(s * factor))
+        return QColor.fromHsv(h, s, v, a)
+
     def __init__(self, parent=None, dark_mode=False):
         super().__init__(parent)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -43,9 +49,8 @@ class AnimatedBackground(QWidget):
         self._colors = self._chakra_colors()
         self._chakra_index = 0
         self.set_color1(self._colors[0])
-        self.set_color2(
-            self._colors[0].lighter(150) if not self.dark_mode else self._colors[0].darker(150)
-        )
+        base2 = self._colors[0].lighter(150) if not self.dark_mode else self._colors[0].darker(150)
+        self.set_color2(self._saturate(base2))
         self.color_anim = None
         self.show()
 
@@ -97,8 +102,8 @@ class AnimatedBackground(QWidget):
             QColor(138, 43, 226),   # violet
         ]
         if self.dark_mode:
-            return [c.darker(180) for c in base]
-        return base
+            base = [c.darker(180) for c in base]
+        return [self._saturate(c) for c in base]
 
     def chakra_colors(self):
         """Return the list of chakra colors."""
@@ -123,6 +128,7 @@ class AnimatedBackground(QWidget):
         group.addAnimation(a1)
 
         target2 = target.lighter(150) if not self.dark_mode else target.darker(150)
+        target2 = self._saturate(target2)
         a2 = QPropertyAnimation(self, b"color2")
         a2.setDuration(duration)
         a2.setStartValue(self._color2)
