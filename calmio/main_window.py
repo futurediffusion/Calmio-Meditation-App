@@ -157,18 +157,14 @@ class MainWindow(QMainWindow):
         self.end_button = QPushButton("\U0001F6D1", self)
         self.dev_button = QPushButton("\U0001F41B", self)
 
-        for btn in (
+        self.control_buttons = [
             self.options_button,
             self.stats_button,
             self.end_button,
             self.dev_button,
-        ):
-            btn.setFixedSize(40, 40)
-            btn.setStyleSheet(
-                "QPushButton {background:none; border:none; font-size:20px;}"
-            )
-            btn.setFocusPolicy(Qt.NoFocus)
-            btn.hide()
+        ]
+        for btn in self.control_buttons:
+            self._setup_control_button(btn)
 
         self.end_button.clicked.connect(self.end_session)
 
@@ -393,13 +389,7 @@ class MainWindow(QMainWindow):
         self.stats_overlay.update_badges(
             self.data_store.get_badges_for_date(self.data_store.now())
         )
-        for btn in (
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-        ):
-            btn.hide()
+        self.hide_control_buttons()
         self.dev_menu.hide()
 
         if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
@@ -472,10 +462,7 @@ class MainWindow(QMainWindow):
                 or self.badges_view.geometry().contains(pos)
                 or self.options_overlay.geometry().contains(pos)
             ):
-                self.options_button.hide()
-                self.stats_button.hide()
-                self.end_button.hide()
-                self.dev_button.hide()
+                self.hide_control_buttons()
                 self.dev_menu.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
@@ -486,16 +473,10 @@ class MainWindow(QMainWindow):
 
     def toggle_menu(self):
         if self.options_button.isVisible():
-            self.options_button.hide()
-            self.stats_button.hide()
-            self.end_button.hide()
-            self.dev_button.hide()
+            self.hide_control_buttons()
             self.dev_menu.hide()
         else:
-            self.options_button.show()
-            self.stats_button.show()
-            self.end_button.show()
-            self.dev_button.show()
+            self.show_control_buttons()
 
     def toggle_stats(self):
         if self.stats_overlay.isVisible():
@@ -510,13 +491,7 @@ class MainWindow(QMainWindow):
 
     def close_stats(self):
         self.stats_overlay.hide()
-        for btn in (
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-        ):
-            btn.hide()
+        self.hide_control_buttons()
 
     def open_today_sessions(self):
         sessions = self.data_store.get_sessions_for_date(self.data_store.now())
@@ -546,10 +521,7 @@ class MainWindow(QMainWindow):
             or self.badges_view.geometry().contains(pos)
             or self.options_overlay.geometry().contains(pos)
         ):
-            self.options_button.hide()
-            self.stats_button.hide()
-            self.end_button.hide()
-            self.dev_button.hide()
+            self.hide_control_buttons()
             self.dev_menu.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
@@ -569,13 +541,7 @@ class MainWindow(QMainWindow):
         self.label.setText("")
         self.count_opacity.setOpacity(0)
         self.session_seconds = 0
-        for btn in (
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-        ):
-            btn.hide()
+        self.hide_control_buttons()
         self.start_prompt_animation()
 
     def on_session_complete_closed(self):
@@ -584,13 +550,7 @@ class MainWindow(QMainWindow):
         self.label.setText("")
         self.count_opacity.setOpacity(0)
         self.session_seconds = 0
-        for btn in (
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-        ):
-            btn.hide()
+        self.hide_control_buttons()
         self.start_prompt_animation()
 
     def open_session_details(self, session):
@@ -736,13 +696,7 @@ class MainWindow(QMainWindow):
 
     def close_options(self):
         self.options_overlay.hide()
-        for btn in (
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-        ):
-            btn.hide()
+        self.hide_control_buttons()
 
     def toggle_developer_menu(self):
         if self.dev_menu.isVisible():
@@ -770,3 +724,22 @@ class MainWindow(QMainWindow):
     def update_speed(self):
         self.circle.speed_multiplier = self.speed_multiplier
         self.timer.setInterval(int(1000 / self.speed_multiplier))
+
+    def _setup_control_button(self, button: QPushButton) -> None:
+        """Apply common styling to control buttons."""
+        button.setFixedSize(40, 40)
+        button.setStyleSheet(
+            "QPushButton {background:none; border:none; font-size:20px;}"
+        )
+        button.setFocusPolicy(Qt.NoFocus)
+        button.hide()
+
+    def hide_control_buttons(self) -> None:
+        """Hide all secondary control buttons."""
+        for btn in self.control_buttons:
+            btn.hide()
+
+    def show_control_buttons(self) -> None:
+        """Show all secondary control buttons."""
+        for btn in self.control_buttons:
+            btn.show()
