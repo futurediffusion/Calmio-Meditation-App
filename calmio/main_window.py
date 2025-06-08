@@ -31,6 +31,7 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .badges_view import BadgesView
 from .options_overlay import OptionsOverlay
+from .developer_overlay import DeveloperOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -204,7 +205,11 @@ class MainWindow(QMainWindow):
         self.options_overlay.hide()
         self.options_overlay.back_requested.connect(self.close_options)
         self.options_button.clicked.connect(self.toggle_options)
-        self.dev_button.clicked.connect(self.toggle_developer_mode)
+        self.dev_menu = DeveloperOverlay(self)
+        self.dev_menu.hide()
+        self.dev_menu.speed_toggled.connect(self.toggle_developer_speed)
+        self.dev_menu.next_day_requested.connect(self.advance_day)
+        self.dev_button.clicked.connect(self.toggle_developer_menu)
 
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
@@ -221,7 +226,7 @@ class MainWindow(QMainWindow):
             )
         self.stats_overlay.update_streak(self.data_store.get_streak())
         self.stats_overlay.update_badges(
-            self.data_store.get_badges_for_date(datetime.now())
+            self.data_store.get_badges_for_date(self.data_store.now())
         )
 
         self.position_buttons()
@@ -250,7 +255,7 @@ class MainWindow(QMainWindow):
     def on_breath_start(self):
         if not self.session_active:
             self.session_active = True
-            self.session_start = datetime.now()
+            self.session_start = self.data_store.now()
             self.session_seconds = 0
             self.cycle_durations = []
             self.stop_prompt_animation()
@@ -351,7 +356,7 @@ class MainWindow(QMainWindow):
         )
         self.stats_overlay.update_minutes(self.meditation_seconds)
 
-        end_time_str = datetime.now().strftime("%I:%M %p")
+        end_time_str = self.data_store.now().strftime("%I:%M %p")
         start_time_str = self.session_start.strftime("%I:%M %p")
         self.session_complete.set_stats(
             duration_seconds,
@@ -368,7 +373,7 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.session_complete)
         self.stats_overlay.update_streak(self.data_store.get_streak())
         self.stats_overlay.update_badges(
-            self.data_store.get_badges_for_date(datetime.now())
+            self.data_store.get_badges_for_date(self.data_store.now())
         )
         for btn in (
             self.options_button,
@@ -377,6 +382,7 @@ class MainWindow(QMainWindow):
             self.dev_button,
         ):
             btn.hide()
+        self.dev_menu.hide()
 
         if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
             self.bg_anim.stop()
@@ -410,6 +416,11 @@ class MainWindow(QMainWindow):
         self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
         self.end_button.move(x - 3 * (self.menu_button.width() + margin), y)
         self.dev_button.move(x - 4 * (self.menu_button.width() + margin), y)
+        if hasattr(self, "dev_menu"):
+            self.dev_menu.move(
+                self.dev_button.x() - self.dev_menu.width() + self.dev_button.width(),
+                self.dev_button.y() - self.dev_menu.height() - margin,
+            )
         self.stats_overlay.setGeometry(self.rect())
         self.today_sessions.setGeometry(self.rect())
         self.session_details.setGeometry(self.rect())
@@ -436,6 +447,7 @@ class MainWindow(QMainWindow):
                 or self.stats_button.geometry().contains(pos)
                 or self.end_button.geometry().contains(pos)
                 or self.dev_button.geometry().contains(pos)
+                or self.dev_menu.geometry().contains(pos)
                 or self.stats_overlay.geometry().contains(pos)
                 or self.today_sessions.geometry().contains(pos)
                 or self.session_details.geometry().contains(pos)
@@ -446,6 +458,7 @@ class MainWindow(QMainWindow):
                 self.stats_button.hide()
                 self.end_button.hide()
                 self.dev_button.hide()
+                self.dev_menu.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
                 self.session_details.hide()
@@ -459,6 +472,7 @@ class MainWindow(QMainWindow):
             self.stats_button.hide()
             self.end_button.hide()
             self.dev_button.hide()
+            self.dev_menu.hide()
         else:
             self.options_button.show()
             self.stats_button.show()
@@ -487,7 +501,7 @@ class MainWindow(QMainWindow):
             btn.hide()
 
     def open_today_sessions(self):
-        sessions = self.data_store.get_sessions_for_date(datetime.now())
+        sessions = self.data_store.get_sessions_for_date(self.data_store.now())
         self.today_sessions.set_sessions(sessions)
         self.stats_overlay.hide()
         self.session_details.hide()
@@ -507,6 +521,7 @@ class MainWindow(QMainWindow):
             or self.stats_button.geometry().contains(pos)
             or self.end_button.geometry().contains(pos)
             or self.dev_button.geometry().contains(pos)
+            or self.dev_menu.geometry().contains(pos)
             or self.stats_overlay.geometry().contains(pos)
             or self.today_sessions.geometry().contains(pos)
             or self.session_details.geometry().contains(pos)
@@ -517,6 +532,7 @@ class MainWindow(QMainWindow):
             self.stats_button.hide()
             self.end_button.hide()
             self.dev_button.hide()
+            self.dev_menu.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
             self.session_details.hide()
@@ -574,7 +590,7 @@ class MainWindow(QMainWindow):
         self.stats_overlay.raise_()
 
     def open_today_badges(self):
-        badges = self.data_store.get_badges_for_date(datetime.now())
+        badges = self.data_store.get_badges_for_date(self.data_store.now())
         self.badges_view.title_lbl.setText("Logros de hoy")
         self.badges_view.set_badges(badges)
         self._badges_return = self.stats_overlay
@@ -707,11 +723,28 @@ class MainWindow(QMainWindow):
         ):
             btn.hide()
 
-    def toggle_developer_mode(self):
+    def toggle_developer_menu(self):
+        if self.dev_menu.isVisible():
+            self.dev_menu.hide()
+        else:
+            self.dev_menu.show()
+            self.dev_menu.raise_()
+
+    def toggle_developer_speed(self):
         self.speed_multiplier = 10 if getattr(self, "speed_multiplier", 1) == 1 else 1
         self.update_speed()
+        if self.speed_multiplier == 1:
+            self.data_store.reset_offset()
         txt = "Modo desarrollador ON" if self.speed_multiplier > 1 else "Modo desarrollador OFF"
         self.display_motivational_message(txt)
+
+    def advance_day(self):
+        self.data_store.advance_day()
+        self.meditation_seconds = self.data_store.get_today_seconds()
+        self.stats_overlay.update_minutes(self.meditation_seconds)
+        self.stats_overlay.update_badges(
+            self.data_store.get_badges_for_date(self.data_store.now())
+        )
 
     def update_speed(self):
         self.circle.speed_multiplier = self.speed_multiplier
