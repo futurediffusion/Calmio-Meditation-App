@@ -31,6 +31,7 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
+from .wave_overlay import WaveOverlay
 
 
 class MainWindow(QMainWindow):
@@ -45,6 +46,9 @@ class MainWindow(QMainWindow):
         self.bg.set_opacity(0.0)
         self.bg.lower()
         self.bg.setGeometry(self.rect())
+        self.wave_overlay = WaveOverlay(self)
+        self.wave_overlay.setGeometry(self.rect())
+        self.wave_overlay.lower()
 
         self.data_store = DataStore()
 
@@ -66,6 +70,7 @@ class MainWindow(QMainWindow):
         self.circle.breath_started_callback = self.on_breath_start
         self.circle.breath_finished_callback = self.on_breath_end
         self.circle.exhale_started_callback = self.on_exhale_start
+        self.circle.ripple_spawned_callback = self.start_waves
 
         font = QFont("Sans Serif")
         font.setPointSize(32)
@@ -123,6 +128,7 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.stack.addWidget(self.main_view)
         self.stack.addWidget(self.session_complete)
+        self.wave_overlay.stackUnder(self.stack)
 
         self.setCentralWidget(self.stack)
         self.setFocusPolicy(Qt.StrongFocus)
@@ -204,6 +210,10 @@ class MainWindow(QMainWindow):
             self.meditation_seconds += 1
             self.session_seconds += 1
             self.stats_overlay.update_minutes(self.meditation_seconds)
+
+    def start_waves(self, center, color):
+        if hasattr(self, "wave_overlay"):
+            self.wave_overlay.start_waves(center, color)
 
     def on_breath_start(self):
         if not self.session_active:
@@ -369,6 +379,8 @@ class MainWindow(QMainWindow):
         self.position_buttons()
         if hasattr(self, "bg"):
             self.bg.setGeometry(self.rect())
+        if hasattr(self, "wave_overlay"):
+            self.wave_overlay.setGeometry(self.rect())
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
