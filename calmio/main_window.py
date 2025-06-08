@@ -92,6 +92,7 @@ class MainWindow(QMainWindow):
         self.message_label = QLabel("Toca para comenzar")
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setFont(msg_font)
+        self.message_label.setStyleSheet("color:#000000;")
         self.message_label.setWordWrap(True)
         self.message_label.setVisible(False)
         self.message_container = QWidget()
