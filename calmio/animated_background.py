@@ -29,10 +29,11 @@ class AnimatedBackground(QWidget):
 
         self._angle = 0.0
         # Three halo rings rotating around the breathing circle
+        # Increase spacing between rings and rotate all in the same direction
         self._rings = [
-            {"radius": 0.35, "phase": 0.0, "speed": 0.002, "dir": 1},   # inner ring
-            {"radius": 0.45, "phase": 1.0, "speed": 0.001, "dir": -1},  # middle ring
-            {"radius": 0.55, "phase": 2.0, "speed": 0.003, "dir": 1},   # outer ring
+            {"radius": 0.30, "phase": 0.0, "speed": 0.002, "dir": 1},  # inner ring
+            {"radius": 0.50, "phase": 1.0, "speed": 0.0015, "dir": 1},  # middle ring
+            {"radius": 0.70, "phase": 2.0, "speed": 0.003, "dir": 1},  # outer ring
         ]
         self._offset_timer = QTimer(self)
         self._offset_timer.timeout.connect(self._update_offset)
