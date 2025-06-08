@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup, QVariantAnimation, QColor
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup, QVariantAnimation
+from PySide6.QtGui import QColor
 
 
 class MessageHandler:
