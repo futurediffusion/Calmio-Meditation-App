@@ -118,6 +118,7 @@ class SessionDetailsView(QWidget):
     """View showing detailed breathing data for a session."""
 
     back_requested = Signal()
+    badges_requested = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -209,6 +210,15 @@ class SessionDetailsView(QWidget):
         self.graph = BreathGraph(self)
         layout.addWidget(self.graph)
 
+        self.badges_btn = QPushButton("Logros de sesi\u00f3n")
+        self.badges_btn.setStyleSheet(
+            "QPushButton{"
+            "background-color:#CCE4FF;border:none;border-radius:20px;"
+            "padding:12px 24px;font-size:14px;}"
+        )
+        self.badges_btn.clicked.connect(self._emit_badges)
+        layout.addWidget(self.badges_btn, alignment=Qt.AlignCenter)
+
         self.phrase = QLabel("Tu respiraci\u00F3n se profundiz\u00F3 progresivamente.")
         ph_font = QFont("Sans Serif")
         ph_font.setPointSize(12)
@@ -250,3 +260,12 @@ class SessionDetailsView(QWidget):
         self.tag_lbl.setVisible(is_last)
 
         self.graph.set_cycles(cycles)
+        
+        self.session_badges = session.get("badges", [])
+        self.badges_btn.setVisible(bool(self.session_badges))
+
+    def _emit_badges(self, evt=None):
+        if self.session_badges:
+            self.badges_requested.emit(self.session_badges)
+
+
