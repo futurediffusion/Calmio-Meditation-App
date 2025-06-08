@@ -9,7 +9,7 @@ from PySide6.QtCore import (
     QPropertyAnimation,
     QPointF,
 )
-from PySide6.QtGui import QColor, QPainter, QRadialGradient
+from PySide6.QtGui import QColor, QPainter, QRadialGradient, QPainterPath
 from PySide6.QtWidgets import QWidget
 
 
@@ -28,6 +28,11 @@ class AnimatedBackground(QWidget):
         self._opacity = 0.0
 
         self._angle = 0.0
+        self._waves = [
+            {"amp": 8, "length": 200, "speed": 0.0005, "phase": 0.0, "height": 0.85},
+            {"amp": 12, "length": 260, "speed": 0.0003, "phase": 1.5, "height": 0.9},
+            {"amp": 6, "length": 150, "speed": 0.0007, "phase": 3.0, "height": 0.8},
+        ]
         self._offset_timer = QTimer(self)
         self._offset_timer.timeout.connect(self._update_offset)
         self._offset_timer.start(50)
@@ -109,7 +114,9 @@ class AnimatedBackground(QWidget):
         self.anim.start()
 
     def _update_offset(self):
-        self._angle += 0.002
+        self._angle += 0.001
+        for wave in self._waves:
+            wave["phase"] += wave["speed"]
         self.update()
 
     def paintEvent(self, event):
@@ -130,4 +137,24 @@ class AnimatedBackground(QWidget):
         gradient.setColorAt(1, self._color2)
         painter.setOpacity(self._opacity)
         painter.fillRect(rect, gradient)
+
+        painter.setOpacity(self._opacity * 0.4)
+        painter.setPen(Qt.NoPen)
+        for wave in self._waves:
+            path = QPainterPath()
+            baseline = rect.height() * wave["height"]
+            path.moveTo(0, baseline)
+            step = 4
+            x = 0
+            while x <= rect.width():
+                y = baseline + wave["amp"] * math.sin(
+                    2 * math.pi * (x / wave["length"]) + wave["phase"]
+                )
+                path.lineTo(x, y)
+                x += step
+            path.lineTo(rect.width(), rect.height())
+            path.lineTo(0, rect.height())
+            path.closeSubpath()
+            color = QColor(255, 255, 255, 80)
+            painter.fillPath(path, color)
 
