@@ -52,20 +52,6 @@ class DataStore:
         with self.path.open("w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2)
 
-    def reset(self):
-        """Delete stored data and reinitialize."""
-        if self.path.exists():
-            self.path.unlink()
-        self.data = {
-            "daily_seconds": {},
-            "last_session": {},
-            "streak": 1,
-            "sessions": [],
-            "badges": {},
-            "daily_badges": {},
-        }
-        self.save()
-
     def add_session(self, start_dt, seconds, breaths, inhale, exhale, cycles=None):
         date_key = start_dt.date().isoformat()
         self.data["daily_seconds"][date_key] = (

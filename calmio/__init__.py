@@ -9,7 +9,6 @@ from .session_details import SessionDetailsView
 from .main_window import MainWindow
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
-from .options_dialog import OptionsDialog
 
 __all__ = [
     "BreathCircle",
@@ -21,5 +20,4 @@ __all__ = [
     "MainWindow",
     "AnimatedBackground",
     "WaveOverlay",
-    "OptionsDialog",
 ]
