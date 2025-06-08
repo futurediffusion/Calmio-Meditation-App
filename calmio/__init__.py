@@ -7,6 +7,7 @@ from .session_complete import SessionComplete
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .main_window import MainWindow
+from .animated_background import AnimatedBackground
 
 __all__ = [
     "BreathCircle",
@@ -16,4 +17,5 @@ __all__ = [
     "TodaySessionsView",
     "SessionDetailsView",
     "MainWindow",
+    "AnimatedBackground",
 ]
