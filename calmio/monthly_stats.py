@@ -2,6 +2,8 @@ from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QPainter, QColor, QFont, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout
 
+from .weekly_stats import format_duration
+
 
 class MonthlyLineGraph(QWidget):
     """Smooth line graph for weekly minutes."""
@@ -57,6 +59,18 @@ class MonthlyLineGraph(QWidget):
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
+
+        # draw value labels above each peak
+        value_font = QFont("Sans Serif")
+        value_font.setPointSize(9)
+        painter.setFont(value_font)
+        painter.setPen(QColor("#333"))
+        for (x, y), minutes in zip(points, self.minutes):
+            painter.drawText(
+                QRectF(x - step / 2, y - 20, step, 16),
+                Qt.AlignHCenter | Qt.AlignBottom,
+                format_duration(minutes),
+            )
 
         label_font = QFont("Sans Serif")
         label_font.setPointSize(10)
