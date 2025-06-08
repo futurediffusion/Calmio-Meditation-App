@@ -1,7 +1,44 @@
-from PySide6.QtCore import Qt, Property, QPropertyAnimation, QEasingCurve, QParallelAnimationGroup
+from PySide6.QtCore import (
+    Qt,
+    Property,
+    QPropertyAnimation,
+    QEasingCurve,
+    QParallelAnimationGroup,
+    QSequentialAnimationGroup,
+    QTimer,
+    QObject,
+)
 import time
+import random
 from PySide6.QtGui import QPainter, QBrush, QColor, QRadialGradient, QPen
 from PySide6.QtWidgets import QWidget
+
+
+class Ripple(QObject):
+    """Helper object representing a single expanding ring."""
+
+    def __init__(self, parent, radius):
+        super().__init__(parent)
+        self._radius = radius
+        self._opacity = 0.0
+
+    def getRadius(self):
+        return self._radius
+
+    def setRadius(self, value):
+        self._radius = value
+        self.parent().update()
+
+    radius = Property(float, getRadius, setRadius)
+
+    def getOpacity(self):
+        return self._opacity
+
+    def setOpacity(self, value):
+        self._opacity = value
+        self.parent().update()
+
+    opacity = Property(float, getOpacity, setOpacity)
 
 
 class BreathCircle(QWidget):
@@ -33,6 +70,7 @@ class BreathCircle(QWidget):
         self._ripple_radius = 0
         self._ripple_opacity = 0.0
         self.ripple_anim = None
+        self.ripples = []
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -78,14 +116,22 @@ class BreathCircle(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         center = self.rect().center()
 
+        ripples = list(self.ripples)
         if self._ripple_opacity > 0:
+            temp = Ripple(self, self._ripple_radius)
+            temp._opacity = self._ripple_opacity
+            ripples.append(temp)
+
+        for ripple in ripples:
+            if ripple._opacity <= 0:
+                continue
             pen_color = QColor(self._color)
-            pen_color.setAlphaF(min(1.0, max(0.0, self._ripple_opacity)))
+            pen_color.setAlphaF(min(1.0, max(0.0, ripple._opacity)))
             pen = QPen(pen_color)
-            pen.setWidth(3)
+            pen.setWidth(4)
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
-            painter.drawEllipse(center, self._ripple_radius, self._ripple_radius)
+            painter.drawEllipse(center, ripple._radius, ripple._radius)
 
         
         gradient = QRadialGradient(center, self._radius)
@@ -145,23 +191,52 @@ class BreathCircle(QWidget):
     def start_ripple(self):
         if self.ripple_anim:
             self.ripple_anim.stop()
-        self.setRippleOpacity(0.6)
-        group = QParallelAnimationGroup(self)
+
+        # base ripple using legacy properties
+        self.setRippleOpacity(0.4)
+        base_group = QParallelAnimationGroup(self)
         r_anim = QPropertyAnimation(self, b"ripple_radius")
         r_anim.setStartValue(self._radius)
-        r_anim.setEndValue(self._radius * 1.6)
-        r_anim.setDuration(600)
-        r_anim.setEasingCurve(QEasingCurve.OutQuad)
+        r_anim.setEndValue(self._radius * 1.5)
+        r_anim.setDuration(1200)
+        r_anim.setEasingCurve(QEasingCurve.InOutSine)
         o_anim = QPropertyAnimation(self, b"ripple_opacity")
-        o_anim.setStartValue(0.6)
+        o_anim.setStartValue(0.4)
         o_anim.setEndValue(0.0)
-        o_anim.setDuration(600)
-        o_anim.setEasingCurve(QEasingCurve.OutQuad)
-        group.addAnimation(r_anim)
-        group.addAnimation(o_anim)
-        group.finished.connect(lambda: self.setRippleOpacity(0.0))
-        self.ripple_anim = group
-        group.start()
+        o_anim.setDuration(1200)
+        o_anim.setEasingCurve(QEasingCurve.InOutSine)
+        base_group.addAnimation(r_anim)
+        base_group.addAnimation(o_anim)
+        base_group.finished.connect(lambda: self.setRippleOpacity(0.0))
+
+        # additional watercolor style ripples
+        seq = QSequentialAnimationGroup(self)
+        seq.addAnimation(base_group)
+
+        for i in range(2):
+            delay = 200 * (i + 1)
+            ripple = Ripple(self, self._radius)
+            self.ripples.append(ripple)
+            group = QParallelAnimationGroup(self)
+            dur = 1200 + i * 300 + random.randint(-150, 150)
+            r = QPropertyAnimation(ripple, b"radius")
+            r.setStartValue(self._radius)
+            r.setEndValue(self._radius * (1.6 + 0.4 * i))
+            r.setDuration(dur)
+            r.setEasingCurve(QEasingCurve.InOutSine)
+            o = QPropertyAnimation(ripple, b"opacity")
+            o.setStartValue(0.3)
+            o.setEndValue(0.0)
+            o.setDuration(dur)
+            o.setEasingCurve(QEasingCurve.InOutSine)
+            group.addAnimation(r)
+            group.addAnimation(o)
+            group.finished.connect(lambda r=ripple: self.ripples.remove(r) if r in self.ripples else None)
+            seq.addPause(delay)
+            seq.addAnimation(group)
+
+        self.ripple_anim = seq
+        seq.start()
 
     def animation_finished(self):
         if self.phase == 'exhaling':

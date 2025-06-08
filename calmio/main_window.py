@@ -525,11 +525,11 @@ class MainWindow(QMainWindow):
         self.fade_anim.start()
 
         self.bounce_anim = QVariantAnimation(self)
-        self.bounce_anim.setDuration(1500)
+        self.bounce_anim.setDuration(3000)
         self.bounce_anim.setStartValue(14)
         self.bounce_anim.setKeyValueAt(0.5, 18)
         self.bounce_anim.setEndValue(14)
-        self.bounce_anim.setEasingCurve(QEasingCurve.OutBounce)
+        self.bounce_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.bounce_anim.setLoopCount(-1)
         self.bounce_anim.valueChanged.connect(self._update_message_font)
         self.bounce_anim.start()
