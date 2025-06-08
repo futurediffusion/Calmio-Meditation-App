@@ -12,7 +12,7 @@ from datetime import datetime
 import json
 import time
 from pathlib import Path
-from PySide6.QtGui import QFont, QFontMetrics
+from PySide6.QtGui import QFont, QFontMetrics, QPalette
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -30,6 +30,7 @@ from .session_complete import SessionComplete
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .data_store import DataStore
+from .animated_background import AnimatedBackground
 
 
 class MainWindow(QMainWindow):
@@ -37,6 +38,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
+
+        palette = QApplication.instance().palette()
+        dark_mode = palette.color(QPalette.Window).value() < 128
+        self.bg = AnimatedBackground(self, dark_mode=dark_mode)
+        self.bg.lower()
+        self.bg.setGeometry(self.rect())
 
         self.data_store = DataStore()
 
@@ -307,6 +314,8 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.position_buttons()
+        if hasattr(self, "bg"):
+            self.bg.setGeometry(self.rect())
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
