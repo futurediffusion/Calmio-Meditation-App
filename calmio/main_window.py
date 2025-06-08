@@ -42,6 +42,7 @@ class MainWindow(QMainWindow):
         palette = QApplication.instance().palette()
         dark_mode = palette.color(QPalette.Window).value() < 128
         self.bg = AnimatedBackground(self, dark_mode=dark_mode)
+        self.bg.set_opacity(0.0)
         self.bg.lower()
         self.bg.setGeometry(self.rect())
 
@@ -102,7 +103,8 @@ class MainWindow(QMainWindow):
         max_font = QFont(msg_font)
         max_font.setPointSize(18)
         fm = QFontMetrics(max_font)
-        self.message_container.setFixedHeight(fm.height())
+        # Allow up to three lines of text while keeping layout stable
+        self.message_container.setFixedHeight(fm.height() * 3)
         # Keep container visible so layout doesn't shift when messages appear
         self.message_container.setVisible(True)
         layout.addWidget(self.message_container, alignment=Qt.AlignHCenter)
@@ -234,6 +236,15 @@ class MainWindow(QMainWindow):
         self.text_color_anim.valueChanged.connect(self._update_label_color)
         self.text_color_anim.start()
 
+        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
+            self.bg_anim.stop()
+        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
+        self.bg_anim.setDuration(int(self.circle.inhale_time))
+        self.bg_anim.setStartValue(self.bg.opacity)
+        self.bg_anim.setEndValue(1.0)
+        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.bg_anim.start()
+
     def on_exhale_start(self, duration):
         if (
             hasattr(self, "count_anim")
@@ -255,6 +266,15 @@ class MainWindow(QMainWindow):
         self.text_color_anim.setEndValue(self.base_text_color)
         self.text_color_anim.valueChanged.connect(self._update_label_color)
         self.text_color_anim.start()
+
+        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
+            self.bg_anim.stop()
+        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
+        self.bg_anim.setDuration(int(duration))
+        self.bg_anim.setStartValue(self.bg.opacity)
+        self.bg_anim.setEndValue(0.0)
+        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.bg_anim.start()
 
     def on_breath_end(self, duration, inhale, exhale):
         self.last_cycle_duration = duration
@@ -307,6 +327,15 @@ class MainWindow(QMainWindow):
         self.stats_overlay.update_badges(self.data_store.get_badges())
         for btn in (self.options_button, self.stats_button, self.end_button):
             btn.hide()
+
+        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
+            self.bg_anim.stop()
+        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
+        self.bg_anim.setDuration(1000)
+        self.bg_anim.setStartValue(self.bg.opacity)
+        self.bg_anim.setEndValue(0.0)
+        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.bg_anim.start()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():

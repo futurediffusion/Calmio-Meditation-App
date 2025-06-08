@@ -1,6 +1,14 @@
 import math
 
-from PySide6.QtCore import Qt, QTimer, Property, QSequentialAnimationGroup, QParallelAnimationGroup, QPropertyAnimation, QPointF
+from PySide6.QtCore import (
+    Qt,
+    QTimer,
+    Property,
+    QSequentialAnimationGroup,
+    QParallelAnimationGroup,
+    QPropertyAnimation,
+    QPointF,
+)
 from PySide6.QtGui import QColor, QPainter, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
@@ -16,6 +24,8 @@ class AnimatedBackground(QWidget):
         self.dark_mode = dark_mode
         self._color1 = QColor(255, 0, 0)
         self._color2 = QColor(255, 80, 80)
+
+        self._opacity = 0.0
 
         self._angle = 0.0
         self._offset_timer = QTimer(self)
@@ -43,6 +53,15 @@ class AnimatedBackground(QWidget):
         self.update()
 
     color2 = Property(QColor, get_color2, set_color2)
+
+    def get_opacity(self):
+        return self._opacity
+
+    def set_opacity(self, value):
+        self._opacity = max(0.0, min(1.0, float(value)))
+        self.update()
+
+    opacity = Property(float, get_opacity, set_opacity)
 
     def _chakra_colors(self):
         base = [
@@ -95,8 +114,11 @@ class AnimatedBackground(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect()
+        painter.fillRect(rect, QColor("white"))
+        if self._opacity <= 0:
+            return
+        painter.setRenderHint(QPainter.Antialiasing)
         radius = max(rect.width(), rect.height()) * 0.75
         center = rect.center()
         offset_center = QPointF(
@@ -106,5 +128,6 @@ class AnimatedBackground(QWidget):
         gradient = QRadialGradient(offset_center, radius)
         gradient.setColorAt(0, self._color1)
         gradient.setColorAt(1, self._color2)
+        painter.setOpacity(self._opacity)
         painter.fillRect(rect, gradient)
 
