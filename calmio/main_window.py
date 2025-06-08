@@ -270,6 +270,10 @@ class MainWindow(QMainWindow):
             self.session_seconds = 0
             self.cycle_durations = []
             self.stop_prompt_animation()
+            # Reset background color cycle for a new session
+            self._chakra_index = 0
+            if hasattr(self, "bg"):
+                self.bg.transition_to_index(0, duration=0)
         self.cycle_start = time.perf_counter()
 
         if (
