@@ -283,3 +283,20 @@ class DataStore:
             "longest_streak": longest,
             "goal": goal,
         }
+
+    def clear_data(self):
+        """Delete stored data and reset to defaults."""
+        if self.path.exists():
+            try:
+                self.path.unlink()
+            except OSError:
+                pass
+        self.data = {
+            "daily_seconds": {},
+            "last_session": {},
+            "streak": 1,
+            "sessions": [],
+            "badges": {},
+            "daily_badges": {},
+        }
+        self.save()

@@ -30,6 +30,7 @@ from .session_complete import SessionComplete
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .badges_view import BadgesView
+from .options_overlay import OptionsOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -62,6 +63,7 @@ class MainWindow(QMainWindow):
 
         self.meditation_seconds = self.data_store.get_today_seconds()
         self.session_seconds = 0
+        self.speed_multiplier = 1
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
         self.timer.start(1000)
@@ -72,6 +74,7 @@ class MainWindow(QMainWindow):
         self.circle.breath_finished_callback = self.on_breath_end
         self.circle.exhale_started_callback = self.on_exhale_start
         self.circle.ripple_spawned_callback = self.start_waves
+        self.update_speed()
 
         font = QFont("Sans Serif")
         font.setPointSize(32)
@@ -151,8 +154,14 @@ class MainWindow(QMainWindow):
         self.options_button = QPushButton("\u2699\ufe0f", self)
         self.stats_button = QPushButton("\ud83d\udcca", self)
         self.end_button = QPushButton("\U0001F6D1", self)
+        self.dev_button = QPushButton("\U0001F41B", self)
 
-        for btn in (self.options_button, self.stats_button, self.end_button):
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
             btn.setFixedSize(40, 40)
             btn.setStyleSheet(
                 "QPushButton {background:none; border:none; font-size:20px;}"
@@ -189,6 +198,13 @@ class MainWindow(QMainWindow):
         self.badges_view.hide()
         self.badges_view.back_requested.connect(self.close_badges_view)
         self._badges_return = self.stats_overlay
+
+        self.options_overlay = OptionsOverlay(self)
+        self.options_overlay.setGeometry(self.rect())
+        self.options_overlay.hide()
+        self.options_overlay.back_requested.connect(self.close_options)
+        self.options_button.clicked.connect(self.toggle_options)
+        self.dev_button.clicked.connect(self.toggle_developer_mode)
 
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
@@ -354,7 +370,12 @@ class MainWindow(QMainWindow):
         self.stats_overlay.update_badges(
             self.data_store.get_badges_for_date(datetime.now())
         )
-        for btn in (self.options_button, self.stats_button, self.end_button):
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
             btn.hide()
 
         if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
@@ -388,9 +409,12 @@ class MainWindow(QMainWindow):
         self.options_button.move(x - self.options_button.width() - margin, y)
         self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
         self.end_button.move(x - 3 * (self.menu_button.width() + margin), y)
+        self.dev_button.move(x - 4 * (self.menu_button.width() + margin), y)
         self.stats_overlay.setGeometry(self.rect())
         self.today_sessions.setGeometry(self.rect())
         self.session_details.setGeometry(self.rect())
+        if hasattr(self, "options_overlay"):
+            self.options_overlay.setGeometry(self.rect())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -411,18 +435,22 @@ class MainWindow(QMainWindow):
                 or self.options_button.geometry().contains(pos)
                 or self.stats_button.geometry().contains(pos)
                 or self.end_button.geometry().contains(pos)
+                or self.dev_button.geometry().contains(pos)
                 or self.stats_overlay.geometry().contains(pos)
                 or self.today_sessions.geometry().contains(pos)
                 or self.session_details.geometry().contains(pos)
                 or self.badges_view.geometry().contains(pos)
+                or self.options_overlay.geometry().contains(pos)
             ):
                 self.options_button.hide()
                 self.stats_button.hide()
                 self.end_button.hide()
+                self.dev_button.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
                 self.session_details.hide()
                 self.badges_view.hide()
+                self.options_overlay.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -430,10 +458,12 @@ class MainWindow(QMainWindow):
             self.options_button.hide()
             self.stats_button.hide()
             self.end_button.hide()
+            self.dev_button.hide()
         else:
             self.options_button.show()
             self.stats_button.show()
             self.end_button.show()
+            self.dev_button.show()
 
     def toggle_stats(self):
         if self.stats_overlay.isVisible():
@@ -448,7 +478,12 @@ class MainWindow(QMainWindow):
 
     def close_stats(self):
         self.stats_overlay.hide()
-        for btn in (self.options_button, self.stats_button, self.end_button):
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
             btn.hide()
 
     def open_today_sessions(self):
@@ -471,18 +506,22 @@ class MainWindow(QMainWindow):
             or self.options_button.geometry().contains(pos)
             or self.stats_button.geometry().contains(pos)
             or self.end_button.geometry().contains(pos)
+            or self.dev_button.geometry().contains(pos)
             or self.stats_overlay.geometry().contains(pos)
             or self.today_sessions.geometry().contains(pos)
             or self.session_details.geometry().contains(pos)
             or self.badges_view.geometry().contains(pos)
+            or self.options_overlay.geometry().contains(pos)
         ):
             self.options_button.hide()
             self.stats_button.hide()
             self.end_button.hide()
+            self.dev_button.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
             self.session_details.hide()
             self.badges_view.hide()
+            self.options_overlay.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
@@ -493,7 +532,12 @@ class MainWindow(QMainWindow):
         self.label.setText("")
         self.count_opacity.setOpacity(0)
         self.session_seconds = 0
-        for btn in (self.options_button, self.stats_button, self.end_button):
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
             btn.hide()
         self.start_prompt_animation()
 
@@ -503,7 +547,12 @@ class MainWindow(QMainWindow):
         self.label.setText("")
         self.count_opacity.setOpacity(0)
         self.session_seconds = 0
-        for btn in (self.options_button, self.stats_button, self.end_button):
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
             btn.hide()
         self.start_prompt_animation()
 
@@ -640,3 +689,30 @@ class MainWindow(QMainWindow):
             msg = self.motivational_messages[self.message_index % len(self.motivational_messages)]
             self.message_index += 1
             self.display_motivational_message(msg)
+
+    def toggle_options(self):
+        if self.options_overlay.isVisible():
+            self.close_options()
+        else:
+            self.options_overlay.show()
+            self.options_overlay.raise_()
+
+    def close_options(self):
+        self.options_overlay.hide()
+        for btn in (
+            self.options_button,
+            self.stats_button,
+            self.end_button,
+            self.dev_button,
+        ):
+            btn.hide()
+
+    def toggle_developer_mode(self):
+        self.speed_multiplier = 10 if getattr(self, "speed_multiplier", 1) == 1 else 1
+        self.update_speed()
+        txt = "Modo desarrollador ON" if self.speed_multiplier > 1 else "Modo desarrollador OFF"
+        self.display_motivational_message(txt)
+
+    def update_speed(self):
+        self.circle.speed_multiplier = self.speed_multiplier
+        self.timer.setInterval(int(1000 / self.speed_multiplier))

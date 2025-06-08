@@ -56,6 +56,7 @@ class BreathCircle(QWidget):
         # Third inhale should be around 4.3 seconds (150ms per cycle)
         # Reduce progression speed by half
         self.increment = 75
+        self.speed_multiplier = 1.0
         self.animation = None
         self.phase = 'idle'
         self.breath_count = 0
@@ -152,8 +153,13 @@ class BreathCircle(QWidget):
         if self.breath_started_callback:
             self.breath_started_callback()
         self.cycle_valid = False
-        self.animate(self._radius, self.max_radius, self.inhale_time,
-                     target_color=self.complement_color)
+        dur = self.inhale_time / self.speed_multiplier
+        self.animate(
+            self._radius,
+            self.max_radius,
+            dur,
+            target_color=self.complement_color,
+        )
 
     def start_exhale(self):
         if self.phase != 'inhaling':
@@ -162,6 +168,7 @@ class BreathCircle(QWidget):
         self.exhale_start_time = time.perf_counter()
         self.phase = 'exhaling'
         duration = self.exhale_time if self.cycle_valid else 2000
+        duration /= self.speed_multiplier
         if self.exhale_started_callback:
             self.exhale_started_callback(duration)
         self.animate(self._radius, self.min_radius, duration,
@@ -175,13 +182,13 @@ class BreathCircle(QWidget):
         radius_anim = QPropertyAnimation(self, b"radius")
         radius_anim.setStartValue(start)
         radius_anim.setEndValue(end)
-        radius_anim.setDuration(int(duration))
+        radius_anim.setDuration(int(duration / self.speed_multiplier))
         radius_anim.setEasingCurve(QEasingCurve.InOutSine)
 
         color_anim = QPropertyAnimation(self, b"color")
         color_anim.setStartValue(self._color)
         color_anim.setEndValue(target_color)
-        color_anim.setDuration(int(duration))
+        color_anim.setDuration(int(duration / self.speed_multiplier))
         color_anim.setEasingCurve(QEasingCurve.InOutSine)
 
         self.animation.addAnimation(radius_anim)
@@ -199,12 +206,12 @@ class BreathCircle(QWidget):
         r_anim = QPropertyAnimation(self, b"ripple_radius")
         r_anim.setStartValue(self._radius)
         r_anim.setEndValue(self._radius * 1.5)
-        r_anim.setDuration(2000)
+        r_anim.setDuration(int(2000 / self.speed_multiplier))
         r_anim.setEasingCurve(QEasingCurve.InOutSine)
         o_anim = QPropertyAnimation(self, b"ripple_opacity")
         o_anim.setStartValue(0.4)
         o_anim.setEndValue(0.0)
-        o_anim.setDuration(2000)
+        o_anim.setDuration(int(2000 / self.speed_multiplier))
         o_anim.setEasingCurve(QEasingCurve.InOutSine)
         base_group.addAnimation(r_anim)
         base_group.addAnimation(o_anim)
