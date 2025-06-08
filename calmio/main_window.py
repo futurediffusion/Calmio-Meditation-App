@@ -38,7 +38,6 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
-        self.setStyleSheet("background-color: black;")
 
         palette = QApplication.instance().palette()
         dark_mode = palette.color(QPalette.Window).value() < 128
@@ -90,10 +89,9 @@ class MainWindow(QMainWindow):
 
         msg_font = QFont("Sans Serif")
         msg_font.setPointSize(14)
-        self.message_label = QLabel("Toca para empezar")
+        self.message_label = QLabel("Toca para comenzar")
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setFont(msg_font)
-        self.message_label.setStyleSheet("color:white;")
         self.message_label.setWordWrap(True)
         self.message_label.setVisible(False)
         self.message_container = QWidget()
@@ -513,7 +511,7 @@ class MainWindow(QMainWindow):
         self.message_schedule = set(schedule)
 
     def start_prompt_animation(self):
-        self.message_label.setText("Toca para empezar")
+        self.message_label.setText("Toca para comenzar")
         self.message_label.show()
         self.message_container.show()
         self.msg_opacity.setOpacity(0.2)
