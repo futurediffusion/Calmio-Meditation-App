@@ -85,7 +85,6 @@ class StatsOverlay(QWidget):
             "padding:12px 24px;font-size:14px;}"
         )
         self.badges_btn.clicked.connect(self.view_badges_today.emit)
-        self.badges_btn.hide()
 
         self.last_session = QFrame()
         self.last_session.setStyleSheet(
@@ -168,12 +167,9 @@ class StatsOverlay(QWidget):
         self.progress.set_seconds(seconds)
 
     def update_badges(self, badges):
-        if badges:
-            self.badges_btn.setText(f"Logros alcanzados hoy ({len(badges)})")
-            self.badges_btn.show()
-        else:
-            self.badges_btn.setText("Logros alcanzados hoy")
-            self.badges_btn.hide()
+        count = len(badges)
+        self.badges_btn.setText(f"Logros de hoy ({count})")
+        self.badges_btn.setEnabled(bool(badges))
 
     def update_last_session(self, start, duration, breaths, inhale, exhale, cycles=None):
         self._last_session_data = {
