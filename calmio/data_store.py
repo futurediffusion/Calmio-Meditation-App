@@ -16,7 +16,20 @@ class DataStore:
             # badges earned today {date: {code: count}}
             "daily_badges": {},
         }
+        self.time_offset = timedelta()
         self.load()
+
+    def now(self):
+        """Return the current datetime adjusted by any developer offset."""
+        return datetime.now() + self.time_offset
+
+    def advance_day(self, days: int = 1):
+        """Shift the virtual clock forward by the given number of days."""
+        self.time_offset += timedelta(days=days)
+
+    def reset_offset(self):
+        """Clear any developer time offset."""
+        self.time_offset = timedelta()
 
     def load(self):
         if self.path.exists():
@@ -77,8 +90,17 @@ class DataStore:
             }
         )
         new_badges = self._check_badges(start_dt, seconds, breaths)
-        # store badges with session
-        self.data["sessions"][-1]["badges"] = list(new_badges)
+        daily_only = {
+            "1_session_day",
+            "2_sessions_day",
+            "3_sessions_day",
+            "3_day_streak",
+            "7_day_streak",
+            "30_day_streak",
+        }
+        session_badges = [b for b in new_badges if b not in daily_only]
+        # store only session-related badges with the session
+        self.data["sessions"][-1]["badges"] = list(session_badges)
         if new_badges:
             day_badges = self.data.setdefault("daily_badges", {}).get(date_key, {})
             for b in new_badges:
@@ -86,10 +108,10 @@ class DataStore:
                 self.data["badges"][b] = self.data["badges"].get(b, 0) + 1
             self.data["daily_badges"][date_key] = day_badges
         self.save()
-        return new_badges
+        return session_badges
 
     def get_today_seconds(self):
-        today_key = datetime.now().date().isoformat()
+        today_key = self.now().date().isoformat()
         return self.data["daily_seconds"].get(today_key, 0)
 
     def get_last_session(self):
@@ -189,7 +211,7 @@ class DataStore:
     def get_weekly_summary(self, reference_date=None):
         """Return stats for the week of the given date (default today)."""
         if reference_date is None:
-            reference_date = datetime.now().date()
+            reference_date = self.now().date()
         start = reference_date - timedelta(days=reference_date.weekday())
         minutes_per_day = []
         total_seconds = 0

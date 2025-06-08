@@ -1,6 +1,5 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
-from datetime import datetime
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -257,7 +256,7 @@ class StatsOverlay(QWidget):
         store = getattr(self.parent(), "data_store", None)
         if not store:
             return
-        dt = datetime.now()
+        dt = store.now()
         data = store.get_monthly_summary(dt.year, dt.month)
         self.month_view.set_stats(
             data["minutes_per_week"],
