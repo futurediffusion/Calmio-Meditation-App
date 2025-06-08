@@ -32,6 +32,7 @@ from .session_details import SessionDetailsView
 from .badges_view import BadgesView
 from .options_overlay import OptionsOverlay
 from .developer_overlay import DeveloperOverlay
+from .sound_overlay import SoundOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -39,6 +40,7 @@ from .menu_handler import MenuHandler
 from .session_manager import SessionManager
 from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
+from .sound_manager import SoundManager
 
 
 class MainWindow(QMainWindow):
@@ -75,6 +77,7 @@ class MainWindow(QMainWindow):
         self.menu_handler = MenuHandler(self)
         self.overlay_manager = OverlayManager(self)
         self.message_handler = MessageHandler(self)
+        self.sound_manager = SoundManager(self)
 
         self.timer.timeout.connect(self.session_manager.update_timer)
         self.timer.start(1000)
@@ -168,12 +171,14 @@ class MainWindow(QMainWindow):
         self.stats_button = QPushButton("\ud83d\udcca", self)
         self.end_button = QPushButton("\U0001F6D1", self)
         self.dev_button = QPushButton("\U0001F41B", self)
+        self.sound_button = QPushButton("\U0001F3B5", self)
 
         self.control_buttons = [
             self.options_button,
             self.stats_button,
             self.end_button,
             self.dev_button,
+            self.sound_button,
         ]
         for btn in self.control_buttons:
             self._setup_control_button(btn)
@@ -219,6 +224,18 @@ class MainWindow(QMainWindow):
         self.dev_menu.next_day_requested.connect(self.session_manager.advance_day)
         self.dev_button.clicked.connect(self.menu_handler.toggle_developer_menu)
 
+        self.sound_overlay = SoundOverlay(self)
+        self.sound_overlay.setGeometry(self.rect())
+        self.sound_overlay.hide()
+        self.sound_overlay.back_requested.connect(self.menu_handler.close_sound)
+        self.sound_overlay.environment_changed.connect(self.sound_manager.set_environment)
+        self.sound_overlay.music_toggled.connect(self.sound_manager.set_music_enabled)
+        self.sound_overlay.bell_toggled.connect(self.sound_manager.set_bell_enabled)
+        self.sound_overlay.volume_changed.connect(self.sound_manager.set_volume)
+        self.sound_overlay.bell_volume_changed.connect(self.sound_manager.set_bell_volume)
+        self.sound_overlay.mute_all.connect(self.sound_manager.mute_all)
+        self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
+
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
         last = self.data_store.get_last_session()
@@ -249,6 +266,8 @@ class MainWindow(QMainWindow):
     def update_count(self, count):
         """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
+        if hasattr(self, "sound_manager"):
+            self.sound_manager.maybe_play_bell(count)
         index = self._chakra_index_for_count(count)
         if getattr(self, "_chakra_index", None) != index:
             self._chakra_index = index
@@ -324,7 +343,8 @@ class MainWindow(QMainWindow):
                 or self.session_details.geometry().contains(pos)
                 or self.badges_view.geometry().contains(pos)
                 or self.options_overlay.geometry().contains(pos)
-            ):
+                or self.sound_overlay.geometry().contains(pos)
+                ):
                 self.menu_handler.hide_control_buttons()
                 self.dev_menu.hide()
                 self.stats_overlay.hide()
@@ -332,6 +352,7 @@ class MainWindow(QMainWindow):
                 self.session_details.hide()
                 self.badges_view.hide()
                 self.options_overlay.hide()
+                self.sound_overlay.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -363,6 +384,7 @@ class MainWindow(QMainWindow):
             or self.session_details.geometry().contains(pos)
             or self.badges_view.geometry().contains(pos)
             or self.options_overlay.geometry().contains(pos)
+            or self.sound_overlay.geometry().contains(pos)
         ):
             self.menu_handler.hide_control_buttons()
             self.dev_menu.hide()
@@ -371,6 +393,7 @@ class MainWindow(QMainWindow):
             self.session_details.hide()
             self.badges_view.hide()
             self.options_overlay.hide()
+            self.sound_overlay.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):

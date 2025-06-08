@@ -45,7 +45,7 @@ En Windows puede ejecutarse `run_app.bat`, el script creará un entorno virtual 
 ## Menú y controles
 
 - Botón de tres puntos abre o cierra los botones secundarios:
-  - Estadísticas (`📊`), Configuración (`⚙️`), Finalizar sesión (`🛑`) y menú de desarrollador (`🐛`).
+  - Estadísticas (`📊`), Configuración (`⚙️`), Sonido (`🎵`), Finalizar sesión (`🛑`) y menú de desarrollador (`🐛`).
   - Los botones se ocultan cuando se pulsa fuera de ellos o al cerrar overlays.
 - Finalizar sesión cierra la respiración en curso y muestra la vista de **Finalización de sesión**.
 - El menú de configuración permite borrar todos los datos guardados.
@@ -117,6 +117,13 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
 - **WaveOverlay** (`wave_overlay.py`)
   - Al final de una inhalación se generan ondas circulares que se expanden desde el centro durante varios segundos.
   - Estas ondas se dibujan sobre la interfaz pero no bloquean la interacción.
+
+## Sistema de sonido opcional
+
+- El overlay `SoundOverlay` permite activar un ambiente (bosque, lluvia, fuego o mar).
+- Se puede activar un tono musical continuo y una campana que suena cada 10 respiraciones.
+- Dos sliders controlan el volumen general y el de la campana.
+- El botón **Silenciar todo** detiene cualquier sonido en reproducción.
 
 ## Modo desarrollador
 
