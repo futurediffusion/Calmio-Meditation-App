@@ -64,7 +64,7 @@ class DataStore:
                 "cycles": cycles or [],
             }
         )
-        new_badges = self._check_badges(seconds, breaths)
+        new_badges = self._check_badges(start_dt, seconds, breaths)
         # store badges with session
         self.data["sessions"][-1]["badges"] = list(new_badges)
         if new_badges:
@@ -122,19 +122,60 @@ class DataStore:
                 break
         self.data["streak"] = streak
 
-    def _check_badges(self, session_seconds, breaths):
-        """Check and award badges based on totals and streak."""
+    def _check_badges(self, start_dt, session_seconds, breaths):
+        """Check and award badges based on totals, session data and streak."""
         new_badges = []
+
+        # total meditation time badges
         total_minutes = sum(self.data["daily_seconds"].values()) / 60
         if total_minutes >= 5 and "5_min_total" not in self.data["badges"]:
             self.data["badges"].append("5_min_total")
             new_badges.append("5_min_total")
-        if breaths >= 10 and "10_breaths" not in self.data["badges"]:
-            self.data["badges"].append("10_breaths")
-            new_badges.append("10_breaths")
+
+        # breaths per session badges
+        breath_levels = [
+            (1, "1_breath_session"),
+            (5, "5_breaths_session"),
+            (10, "10_breaths"),
+            (20, "20_breaths_session"),
+            (30, "30_breaths_session"),
+            (40, "40_breaths_session"),
+            (50, "50_breaths_session"),
+            (60, "60_breaths_session"),
+            (80, "80_breaths_session"),
+            (100, "100_breaths_session"),
+        ]
+        for count, code in breath_levels:
+            if breaths >= count and code not in self.data["badges"]:
+                self.data["badges"].append(code)
+                new_badges.append(code)
+
+        # number of sessions in a day badges
+        date_key = start_dt.date().isoformat()
+        sessions_today = len(
+            [s for s in self.data.get("sessions", []) if s.get("start", "").startswith(date_key)]
+        )
+        session_levels = [
+            (1, "1_session_day"),
+            (2, "2_sessions_day"),
+            (3, "3_sessions_day"),
+        ]
+        for count, code in session_levels:
+            if sessions_today >= count and code not in self.data["badges"]:
+                self.data["badges"].append(code)
+                new_badges.append(code)
+
+        # streak based badges
         if self.data.get("streak", 1) >= 3 and "3_day_streak" not in self.data["badges"]:
             self.data["badges"].append("3_day_streak")
             new_badges.append("3_day_streak")
+        if self.data.get("streak", 1) >= 7 and "7_day_streak" not in self.data["badges"]:
+            self.data["badges"].append("7_day_streak")
+            new_badges.append("7_day_streak")
+        if self.data.get("streak", 1) >= 30 and "30_day_streak" not in self.data["badges"]:
+            self.data["badges"].append("30_day_streak")
+            new_badges.append("30_day_streak")
+
         return new_badges
 
     def get_weekly_summary(self, reference_date=None):
