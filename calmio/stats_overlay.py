@@ -259,11 +259,13 @@ class StatsOverlay(QWidget):
             return
         dt = store.now()
         data = store.get_monthly_summary(dt.year, dt.month)
+        weeks = data["minutes_per_week"][:4]
+        best_idx = weeks.index(max(weeks)) + 1 if weeks else 0
         self.month_view.set_stats(
-            data["minutes_per_week"],
+            weeks,
             data["total"],
             data["average"],
-            data["best_week"],
+            best_idx,
             data["longest_streak"],
             data.get("goal", 600),
         )
