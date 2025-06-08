@@ -4,7 +4,6 @@ from PySide6.QtCore import (
     Qt,
     QTimer,
     Property,
-    QSequentialAnimationGroup,
     QParallelAnimationGroup,
     QPropertyAnimation,
     QPointF,
@@ -41,7 +40,13 @@ class AnimatedBackground(QWidget):
         self._offset_timer.timeout.connect(self._update_offset)
         self._offset_timer.start(50)
 
-        self._build_animation()
+        self._colors = self._chakra_colors()
+        self._chakra_index = 0
+        self.set_color1(self._colors[0])
+        self.set_color2(
+            self._colors[0].lighter(150) if not self.dark_mode else self._colors[0].darker(150)
+        )
+        self.color_anim = None
         self.show()
 
     # Property definitions
@@ -95,36 +100,38 @@ class AnimatedBackground(QWidget):
             return [c.darker(180) for c in base]
         return base
 
-    def _build_animation(self):
-        colors = self._chakra_colors()
-        duration = 255000  # 4 min 15 sec per color
+    def chakra_colors(self):
+        """Return the list of chakra colors."""
+        return list(self._colors)
 
-        self.anim = QSequentialAnimationGroup(self)
-        for i in range(len(colors)):
-            start = colors[i]
-            end = colors[(i + 1) % len(colors)]
+    def chakra_index(self):
+        """Return the current chakra index."""
+        return self._chakra_index
 
-            group = QParallelAnimationGroup(self)
+    def transition_to_index(self, index: int, duration: int = 2000):
+        """Animate the gradient to the chakra color at the given index."""
+        index %= len(self._colors)
+        target = self._colors[index]
+        if self.color_anim:
+            self.color_anim.stop()
+        group = QParallelAnimationGroup(self)
 
-            a1 = QPropertyAnimation(self, b"color1")
-            a1.setDuration(duration)
-            a1.setStartValue(start)
-            a1.setEndValue(end)
-            group.addAnimation(a1)
+        a1 = QPropertyAnimation(self, b"color1")
+        a1.setDuration(duration)
+        a1.setStartValue(self._color1)
+        a1.setEndValue(target)
+        group.addAnimation(a1)
 
-            start2 = start.lighter(150) if not self.dark_mode else start.darker(150)
-            end2 = end.lighter(150) if not self.dark_mode else end.darker(150)
+        target2 = target.lighter(150) if not self.dark_mode else target.darker(150)
+        a2 = QPropertyAnimation(self, b"color2")
+        a2.setDuration(duration)
+        a2.setStartValue(self._color2)
+        a2.setEndValue(target2)
+        group.addAnimation(a2)
 
-            a2 = QPropertyAnimation(self, b"color2")
-            a2.setDuration(duration)
-            a2.setStartValue(start2)
-            a2.setEndValue(end2)
-            group.addAnimation(a2)
-
-            self.anim.addAnimation(group)
-
-        self.anim.setLoopCount(-1)
-        self.anim.start()
+        self.color_anim = group
+        group.finished.connect(lambda: setattr(self, "_chakra_index", index))
+        group.start()
 
     def _update_offset(self):
         self._angle += 0.001
