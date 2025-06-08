@@ -69,6 +69,8 @@ class MainWindow(QMainWindow):
         self.timer.timeout.connect(self.update_timer)
         self.timer.start(1000)
 
+        self._chakra_index = 0
+
         self.circle = BreathCircle()
         self.circle.count_changed_callback = self.update_count
         self.circle.breath_started_callback = self.on_breath_start
@@ -237,6 +239,19 @@ class MainWindow(QMainWindow):
     def update_count(self, count):
         """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
+        index = self._chakra_index_for_count(count)
+        if getattr(self, "_chakra_index", None) != index:
+            self._chakra_index = index
+            self.bg.transition_to_index(index)
+
+    def _chakra_index_for_count(self, count: int) -> int:
+        """Return chakra index for the given breath count within the 30-cycle."""
+        count = ((count - 1) % 30) + 1
+        thresholds = [4, 8, 12, 16, 20, 25, 30]
+        for i, t in enumerate(thresholds):
+            if count <= t:
+                return i
+        return 0
 
     def update_timer(self):
         if self.session_active and self.circle.phase != 'idle':
