@@ -55,6 +55,8 @@ class BadgesView(QWidget):
         self.list_layout.addStretch()
         self.scroll.setWidget(self.container)
 
+    LEVEL_EMOJIS = ["\ud83e\udd49", "\ud83e\udd49", "\ud83e\udd49", "\ud83e\udd48", "\ud83e\udd48", "\ud83e\udd47", "\ud83e\udd47", "\ud83d\udc8e", "\ud83d\udc8e", "\ud83c\udfc6"]
+
     def set_badges(self, badges):
         from .badges import BADGE_NAMES
 
@@ -64,7 +66,13 @@ class BadgesView(QWidget):
             if w is not None:
                 w.deleteLater()
 
-        for idx, b in enumerate(badges):
+        if isinstance(badges, dict):
+            items = badges.items()
+        else:
+            from collections import Counter
+            items = Counter(badges).items()
+
+        for idx, (code, count) in enumerate(items):
             card = QFrame()
             card.setStyleSheet("background:#E0F0FF;border-radius:15px;padding:6px;")
             eff = QGraphicsDropShadowEffect(self)
@@ -73,7 +81,9 @@ class BadgesView(QWidget):
             card.setGraphicsEffect(eff)
             row = QHBoxLayout(card)
             row.setContentsMargins(6, 2, 6, 2)
-            label = QLabel(BADGE_NAMES.get(b, b))
+            level = min(count, len(self.LEVEL_EMOJIS))
+            medal = self.LEVEL_EMOJIS[level - 1]
+            label = QLabel(f"{medal} {BADGE_NAMES.get(code, code)} - Nivel {level}")
             label.setAlignment(Qt.AlignLeft)
             label.setWordWrap(True)
             row.addWidget(label)
