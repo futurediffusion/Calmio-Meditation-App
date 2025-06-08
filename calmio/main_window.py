@@ -35,6 +35,10 @@ from .developer_overlay import DeveloperOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
+from .menu_handler import MenuHandler
+from .session_manager import SessionManager
+from .overlay_manager import OverlayManager
+from .message_utils import MessageHandler
 
 
 class MainWindow(QMainWindow):
@@ -66,17 +70,23 @@ class MainWindow(QMainWindow):
         self.session_seconds = 0
         self.speed_multiplier = 1
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_timer)
+        # Handlers
+        self.session_manager = SessionManager(self)
+        self.menu_handler = MenuHandler(self)
+        self.overlay_manager = OverlayManager(self)
+        self.message_handler = MessageHandler(self)
+
+        self.timer.timeout.connect(self.session_manager.update_timer)
         self.timer.start(1000)
 
         self._chakra_index = 0
 
         self.circle = BreathCircle()
         self.circle.count_changed_callback = self.update_count
-        self.circle.breath_started_callback = self.on_breath_start
-        self.circle.breath_finished_callback = self.on_breath_end
-        self.circle.exhale_started_callback = self.on_exhale_start
-        self.circle.ripple_spawned_callback = self.start_waves
+        self.circle.breath_started_callback = self.session_manager.on_breath_start
+        self.circle.breath_finished_callback = self.session_manager.on_breath_end
+        self.circle.exhale_started_callback = self.session_manager.on_exhale_start
+        self.circle.ripple_spawned_callback = self.session_manager.start_waves
         self.update_speed()
 
         font = QFont("Sans Serif")
@@ -129,10 +139,10 @@ class MainWindow(QMainWindow):
         self.main_view = container
 
         self.session_complete = SessionComplete(self)
-        self.session_complete.done.connect(self.on_session_complete_done)
-        self.session_complete.closed.connect(self.on_session_complete_closed)
+        self.session_complete.done.connect(self.overlay_manager.on_session_complete_done)
+        self.session_complete.closed.connect(self.overlay_manager.on_session_complete_closed)
         self.session_complete.badges_requested.connect(
-            lambda badges: self.open_session_badges(badges, return_to=self.session_complete)
+            lambda badges: self.overlay_manager.open_session_badges(badges, return_to=self.session_complete)
         )
 
         self.stack = QStackedWidget()
@@ -168,46 +178,46 @@ class MainWindow(QMainWindow):
         for btn in self.control_buttons:
             self._setup_control_button(btn)
 
-        self.end_button.clicked.connect(self.end_session)
+        self.end_button.clicked.connect(self.session_manager.end_session)
 
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
         self.stats_overlay = StatsOverlay(self)
         self.stats_overlay.setGeometry(self.rect())
         self.stats_overlay.hide()
-        self.stats_button.clicked.connect(self.toggle_stats)
-        self.stats_overlay.view_sessions.connect(self.open_today_sessions)
-        self.stats_overlay.session_requested.connect(self.open_session_details)
-        self.stats_overlay.view_badges_today.connect(self.open_today_badges)
+        self.stats_button.clicked.connect(self.overlay_manager.toggle_stats)
+        self.stats_overlay.view_sessions.connect(self.overlay_manager.open_today_sessions)
+        self.stats_overlay.session_requested.connect(self.overlay_manager.open_session_details)
+        self.stats_overlay.view_badges_today.connect(self.overlay_manager.open_today_badges)
 
         self.today_sessions = TodaySessionsView(self)
         self.today_sessions.setGeometry(self.rect())
         self.today_sessions.hide()
-        self.today_sessions.back_requested.connect(self.close_today_sessions)
-        self.today_sessions.session_selected.connect(self.open_session_details)
+        self.today_sessions.back_requested.connect(self.overlay_manager.close_today_sessions)
+        self.today_sessions.session_selected.connect(self.overlay_manager.open_session_details)
 
         self.session_details = SessionDetailsView(self)
         self.session_details.setGeometry(self.rect())
         self.session_details.hide()
-        self.session_details.back_requested.connect(self.close_session_details)
-        self.session_details.badges_requested.connect(self.open_session_badges)
+        self.session_details.back_requested.connect(self.overlay_manager.close_session_details)
+        self.session_details.badges_requested.connect(self.overlay_manager.open_session_badges)
 
         self.badges_view = BadgesView(self)
         self.badges_view.setGeometry(self.rect())
         self.badges_view.hide()
-        self.badges_view.back_requested.connect(self.close_badges_view)
+        self.badges_view.back_requested.connect(self.overlay_manager.close_badges_view)
         self._badges_return = self.stats_overlay
 
         self.options_overlay = OptionsOverlay(self)
         self.options_overlay.setGeometry(self.rect())
         self.options_overlay.hide()
-        self.options_overlay.back_requested.connect(self.close_options)
-        self.options_button.clicked.connect(self.toggle_options)
+        self.options_overlay.back_requested.connect(self.menu_handler.close_options)
+        self.options_button.clicked.connect(self.menu_handler.toggle_options)
         self.dev_menu = DeveloperOverlay(self)
         self.dev_menu.hide()
-        self.dev_menu.speed_toggled.connect(self.toggle_developer_speed)
-        self.dev_menu.next_day_requested.connect(self.advance_day)
-        self.dev_button.clicked.connect(self.toggle_developer_menu)
+        self.dev_menu.speed_toggled.connect(self.session_manager.toggle_developer_speed)
+        self.dev_menu.next_day_requested.connect(self.session_manager.advance_day)
+        self.dev_button.clicked.connect(self.menu_handler.toggle_developer_menu)
 
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
@@ -227,14 +237,14 @@ class MainWindow(QMainWindow):
             self.data_store.get_badges_for_date(self.data_store.now())
         )
 
-        self.position_buttons()
+        self.menu_handler.position_buttons()
 
-        self.load_messages()
-        self.build_message_schedule()
-        self.message_index = 0
+        self.message_handler.load_messages()
+        self.message_handler.build_message_schedule()
+        self.message_handler.message_index = 0
         self.msg_opacity = QGraphicsOpacityEffect(self.message_label)
         self.message_label.setGraphicsEffect(self.msg_opacity)
-        self.start_prompt_animation()
+        self.message_handler.start_prompt_animation()
 
     def update_count(self, count):
         """Handle breath count updates after a full cycle."""
@@ -254,171 +264,22 @@ class MainWindow(QMainWindow):
         return 0
 
     def update_timer(self):
-        if self.session_active and self.circle.phase != 'idle':
-            self.meditation_seconds += 1
-            self.session_seconds += 1
-            self.stats_overlay.update_minutes(self.meditation_seconds)
+        self.session_manager.update_timer()
 
     def start_waves(self, center, color):
-        if hasattr(self, "wave_overlay"):
-            self.wave_overlay.start_waves(center, color)
+        self.session_manager.start_waves(center, color)
 
     def on_breath_start(self):
-        if not self.session_active:
-            self.session_active = True
-            self.session_start = self.data_store.now()
-            self.session_seconds = 0
-            self.cycle_durations = []
-            self.stop_prompt_animation()
-            # Reset background color cycle for a new session
-            self._chakra_index = 0
-            if hasattr(self, "bg"):
-                self.bg.transition_to_index(0, duration=0)
-        self.cycle_start = time.perf_counter()
-
-        if (
-            hasattr(self, "count_anim")
-            and self.count_anim.state() != QAbstractAnimation.Stopped
-        ):
-            self.count_anim.stop()
-
-        self.label.setText(str(self.circle.breath_count + 1))
-        self.count_opacity.setOpacity(0)
-        self.count_anim = QPropertyAnimation(self.count_opacity, b"opacity", self)
-        self.count_anim.setDuration(int(self.circle.inhale_time))
-        self.count_anim.setStartValue(0)
-        self.count_anim.setEndValue(1)
-        self.count_anim.start()
-
-        if self.text_color_anim and self.text_color_anim.state() != QAbstractAnimation.Stopped:
-            self.text_color_anim.stop()
-        self.text_color_anim = QVariantAnimation(self)
-        self.text_color_anim.setDuration(int(self.circle.inhale_time))
-        self.text_color_anim.setStartValue(self.base_text_color)
-        self.text_color_anim.setEndValue(self.active_text_color)
-        self.text_color_anim.valueChanged.connect(self._update_label_color)
-        self.text_color_anim.start()
-
-        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
-            self.bg_anim.stop()
-        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
-        self.bg_anim.setDuration(int(self.circle.inhale_time))
-        self.bg_anim.setStartValue(self.bg.opacity)
-        self.bg_anim.setEndValue(1.0)
-        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bg_anim.start()
-
-        if hasattr(self, "bg_padding_anim") and self.bg_padding_anim.state() != QAbstractAnimation.Stopped:
-            self.bg_padding_anim.stop()
-        self.bg_padding_anim = QPropertyAnimation(self.bg, b"ring_padding", self)
-        self.bg_padding_anim.setDuration(int(self.circle.inhale_time))
-        self.bg_padding_anim.setStartValue(self.bg.ring_padding)
-        self.bg_padding_anim.setEndValue(1.25)
-        self.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bg_padding_anim.start()
+        self.session_manager.on_breath_start()
 
     def on_exhale_start(self, duration):
-        if (
-            hasattr(self, "count_anim")
-            and self.count_anim.state() != QAbstractAnimation.Stopped
-        ):
-            self.count_anim.stop()
-
-        self.count_anim = QPropertyAnimation(self.count_opacity, b"opacity", self)
-        self.count_anim.setDuration(int(duration))
-        self.count_anim.setStartValue(self.count_opacity.opacity())
-        self.count_anim.setEndValue(0)
-        self.count_anim.start()
-
-        if self.text_color_anim and self.text_color_anim.state() != QAbstractAnimation.Stopped:
-            self.text_color_anim.stop()
-        self.text_color_anim = QVariantAnimation(self)
-        self.text_color_anim.setDuration(int(duration))
-        self.text_color_anim.setStartValue(self.active_text_color)
-        self.text_color_anim.setEndValue(self.base_text_color)
-        self.text_color_anim.valueChanged.connect(self._update_label_color)
-        self.text_color_anim.start()
-
-        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
-            self.bg_anim.stop()
-        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
-        self.bg_anim.setDuration(int(duration))
-        self.bg_anim.setStartValue(self.bg.opacity)
-        self.bg_anim.setEndValue(0.0)
-        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bg_anim.start()
-
-        if hasattr(self, "bg_padding_anim") and self.bg_padding_anim.state() != QAbstractAnimation.Stopped:
-            self.bg_padding_anim.stop()
-        self.bg_padding_anim = QPropertyAnimation(self.bg, b"ring_padding", self)
-        self.bg_padding_anim.setDuration(int(duration))
-        self.bg_padding_anim.setStartValue(self.bg.ring_padding)
-        self.bg_padding_anim.setEndValue(1.0)
-        self.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bg_padding_anim.start()
+        self.session_manager.on_exhale_start(duration)
 
     def on_breath_end(self, duration, inhale, exhale):
-        self.last_cycle_duration = duration
-        self.last_inhale = inhale
-        self.last_exhale = exhale
-        self.cycle_durations.append({"inhale": inhale, "exhale": exhale})
-        self.stats_overlay.update_minutes(self.meditation_seconds)
+        self.session_manager.on_breath_end(duration, inhale, exhale)
 
     def end_session(self):
-        if not self.session_active:
-            return
-        self.session_active = False
-        start_str = self.session_start.strftime("%H:%M:%S") if self.session_start else ""
-        duration_seconds = self.session_seconds
-        breaths = self.circle.breath_count
-        new_badges = self.data_store.add_session(
-            self.session_start,
-            duration_seconds,
-            breaths,
-            self.last_inhale,
-            self.last_exhale,
-            self.cycle_durations,
-        )
-        self.stats_overlay.update_last_session(
-            start_str,
-            duration_seconds,
-            breaths,
-            self.last_inhale,
-            self.last_exhale,
-            self.cycle_durations,
-        )
-        self.stats_overlay.update_minutes(self.meditation_seconds)
-
-        end_time_str = self.data_store.now().strftime("%I:%M %p")
-        start_time_str = self.session_start.strftime("%I:%M %p")
-        self.session_complete.set_stats(
-            duration_seconds,
-            breaths,
-            self.last_inhale,
-            self.last_exhale,
-            start_time_str,
-            end_time_str,
-        )
-        if new_badges:
-            self.session_complete.show_badges(new_badges)
-        else:
-            self.session_complete.show_badges([])
-        self.stack.setCurrentWidget(self.session_complete)
-        self.stats_overlay.update_streak(self.data_store.get_streak())
-        self.stats_overlay.update_badges(
-            self.data_store.get_badges_for_date(self.data_store.now())
-        )
-        self.hide_control_buttons()
-        self.dev_menu.hide()
-
-        if hasattr(self, "bg_anim") and self.bg_anim.state() != QAbstractAnimation.Stopped:
-            self.bg_anim.stop()
-        self.bg_anim = QPropertyAnimation(self.bg, b"opacity", self)
-        self.bg_anim.setDuration(1000)
-        self.bg_anim.setStartValue(self.bg.opacity)
-        self.bg_anim.setEndValue(0.0)
-        self.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bg_anim.start()
+        self.session_manager.end_session()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
@@ -435,28 +296,11 @@ class MainWindow(QMainWindow):
             super().keyReleaseEvent(event)
 
     def position_buttons(self):
-        margin = 10
-        x = self.width() - self.menu_button.width() - margin
-        y = self.height() - self.menu_button.height() - margin
-        self.menu_button.move(x, y)
-        self.options_button.move(x - self.options_button.width() - margin, y)
-        self.stats_button.move(x - 2 * (self.menu_button.width() + margin), y)
-        self.end_button.move(x - 3 * (self.menu_button.width() + margin), y)
-        self.dev_button.move(x - 4 * (self.menu_button.width() + margin), y)
-        if hasattr(self, "dev_menu"):
-            self.dev_menu.move(
-                self.dev_button.x() - self.dev_menu.width() + self.dev_button.width(),
-                self.dev_button.y() - self.dev_menu.height() - margin,
-            )
-        self.stats_overlay.setGeometry(self.rect())
-        self.today_sessions.setGeometry(self.rect())
-        self.session_details.setGeometry(self.rect())
-        if hasattr(self, "options_overlay"):
-            self.options_overlay.setGeometry(self.rect())
+        self.menu_handler.position_buttons()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.position_buttons()
+        self.menu_handler.position_buttons()
         if hasattr(self, "bg"):
             self.bg.setGeometry(self.rect())
         if hasattr(self, "wave_overlay"):
@@ -481,7 +325,7 @@ class MainWindow(QMainWindow):
                 or self.badges_view.geometry().contains(pos)
                 or self.options_overlay.geometry().contains(pos)
             ):
-                self.hide_control_buttons()
+                self.menu_handler.hide_control_buttons()
                 self.dev_menu.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
@@ -491,39 +335,19 @@ class MainWindow(QMainWindow):
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
-        if self.options_button.isVisible():
-            self.hide_control_buttons()
-            self.dev_menu.hide()
-        else:
-            self.show_control_buttons()
+        self.menu_handler.toggle_menu()
 
     def toggle_stats(self):
-        if self.stats_overlay.isVisible():
-            self.stats_overlay.hide()
-            self.today_sessions.hide()
-            self.session_details.hide()
-        else:
-            self.today_sessions.hide()
-            self.session_details.hide()
-            self.stats_overlay.show()
-            self.stats_overlay.raise_()
+        self.overlay_manager.toggle_stats()
 
     def close_stats(self):
-        self.stats_overlay.hide()
-        self.hide_control_buttons()
+        self.overlay_manager.close_stats()
 
     def open_today_sessions(self):
-        sessions = self.data_store.get_sessions_for_date(self.data_store.now())
-        self.today_sessions.set_sessions(sessions)
-        self.stats_overlay.hide()
-        self.session_details.hide()
-        self.today_sessions.show()
-        self.today_sessions.raise_()
+        self.overlay_manager.open_today_sessions()
 
     def close_today_sessions(self):
-        self.today_sessions.hide()
-        self.stats_overlay.show()
-        self.stats_overlay.raise_()
+        self.overlay_manager.close_today_sessions()
 
     def mousePressEvent(self, event):
         pos = event.pos()
@@ -540,7 +364,7 @@ class MainWindow(QMainWindow):
             or self.badges_view.geometry().contains(pos)
             or self.options_overlay.geometry().contains(pos)
         ):
-            self.hide_control_buttons()
+            self.menu_handler.hide_control_buttons()
             self.dev_menu.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
@@ -550,215 +374,74 @@ class MainWindow(QMainWindow):
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
-        self.stack.setCurrentWidget(self.main_view)
-        # Always reset to today's stats when showing the overlay after a
-        # session completes, regardless of the previously selected tab.
-        self.stats_overlay.show_tab(0)
-        self.stats_overlay.show()
-        self.stats_overlay.raise_()
-        self.circle.breath_count = 0
-        self.label.setText("")
-        self.count_opacity.setOpacity(0)
-        self.session_seconds = 0
-        self.hide_control_buttons()
-        self.start_prompt_animation()
+        self.overlay_manager.on_session_complete_done()
 
     def on_session_complete_closed(self):
-        self.stack.setCurrentWidget(self.main_view)
-        self.circle.breath_count = 0
-        self.label.setText("")
-        self.count_opacity.setOpacity(0)
-        self.session_seconds = 0
-        self.hide_control_buttons()
-        self.start_prompt_animation()
+        self.overlay_manager.on_session_complete_closed()
 
     def open_session_details(self, session):
-        is_last = False
-        try:
-            is_last = session == self.data_store.get_last_session()
-        except Exception:
-            pass
-        self.session_details.set_session(session, is_last=is_last)
-        self.stats_overlay.hide()
-        self.today_sessions.hide()
-        self.session_details.show()
-        self.session_details.raise_()
+        self.overlay_manager.open_session_details(session)
 
     def close_session_details(self):
-        self.session_details.hide()
-        self.stats_overlay.show()
-        self.stats_overlay.raise_()
+        self.overlay_manager.close_session_details()
 
     def open_today_badges(self):
-        badges = self.data_store.get_badges_for_date(self.data_store.now())
-        self.badges_view.title_lbl.setText("Logros de hoy")
-        self.badges_view.set_badges(badges)
-        self._badges_return = self.stats_overlay
-        self.stats_overlay.hide()
-        self.badges_view.show()
-        self.badges_view.raise_()
+        self.overlay_manager.open_today_badges()
 
     def open_session_badges(self, badges, return_to=None):
-        self.badges_view.title_lbl.setText("Logros de sesi\u00f3n")
-        self.badges_view.set_badges(badges)
-        if return_to is None:
-            return_to = self.session_details
-        self._badges_return = return_to
-        return_to.hide()
-        self.badges_view.show()
-        self.badges_view.raise_()
+        self.overlay_manager.open_session_badges(badges, return_to=return_to)
 
     def close_badges_view(self):
-        self.badges_view.hide()
-        if self._badges_return:
-            self._badges_return.show()
-            self._badges_return.raise_()
+        self.overlay_manager.close_badges_view()
 
     def load_messages(self):
-        path = Path(__file__).resolve().parent / "motivational_messages.json"
-        try:
-            with path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-                self.motivational_messages = data.get("messages", [])
-        except Exception:
-            self.motivational_messages = []
+        self.message_handler.load_messages()
 
     def build_message_schedule(self, max_count: int = 150):
-        """Generate an increasing interval schedule for motivational messages."""
-        schedule = []
-        interval = 3
-        total = 0
-        while total < max_count:
-            for _ in range(3):
-                total += interval
-                schedule.append(total)
-            interval += 1
-        self.message_schedule = set(schedule)
+        self.message_handler.build_message_schedule(max_count)
 
     def start_prompt_animation(self):
-        self.message_label.setText("Toca para comenzar")
-        self.message_label.show()
-        self.message_container.show()
-        self.msg_opacity.setOpacity(0.2)
-        self.fade_anim = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        self.fade_anim.setDuration(1500)
-        self.fade_anim.setStartValue(0.2)
-        self.fade_anim.setKeyValueAt(0.5, 1)
-        self.fade_anim.setEndValue(0.2)
-        self.fade_anim.setLoopCount(-1)
-        self.fade_anim.start()
-
-        self.bounce_anim = QVariantAnimation(self)
-        self.bounce_anim.setDuration(3000)
-        self.bounce_anim.setStartValue(14)
-        self.bounce_anim.setKeyValueAt(0.5, 18)
-        self.bounce_anim.setEndValue(14)
-        self.bounce_anim.setEasingCurve(QEasingCurve.InOutSine)
-        self.bounce_anim.setLoopCount(-1)
-        self.bounce_anim.valueChanged.connect(self._update_message_font)
-        self.bounce_anim.start()
+        self.message_handler.start_prompt_animation()
 
     def _update_message_font(self, value):
-        font = self.message_label.font()
-        font.setPointSize(int(value))
-        self.message_label.setFont(font)
+        self.message_handler._update_message_font(value)
 
     def _update_label_color(self, color):
         if isinstance(color, QColor):
             self.label.setStyleSheet(f"color:{color.name()};")
 
     def stop_prompt_animation(self):
-        if hasattr(self, "fade_anim"):
-            self.fade_anim.stop()
-        if hasattr(self, "bounce_anim"):
-            self.bounce_anim.stop()
-        hide = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        hide.setDuration(4000)
-        hide.setStartValue(self.msg_opacity.opacity())
-        hide.setEndValue(0)
-        hide.finished.connect(self.message_label.hide)
-        hide.start()
-        self.fade_anim = hide
+        self.message_handler.stop_prompt_animation()
 
     def display_motivational_message(self, text):
-        self.msg_opacity.setOpacity(0)
-        self.message_label.setText(text)
-        self.message_label.show()
-        fade_in = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        fade_in.setDuration(600)
-        fade_in.setStartValue(0)
-        fade_in.setEndValue(1)
-        fade_out = QPropertyAnimation(self.msg_opacity, b"opacity", self)
-        fade_out.setDuration(4000)
-        fade_out.setStartValue(1)
-        fade_out.setEndValue(0)
-        group = QSequentialAnimationGroup(self)
-        group.addAnimation(fade_in)
-        group.addPause(1000)
-        group.addAnimation(fade_out)
-        group.finished.connect(self.message_label.hide)
-        group.start()
-        self.temp_msg_anim = group
+        self.message_handler.display_motivational_message(text)
 
     def check_motivational_message(self, count):
-        if count in self.message_schedule and self.motivational_messages:
-            msg = self.motivational_messages[self.message_index % len(self.motivational_messages)]
-            self.message_index += 1
-            self.display_motivational_message(msg)
+        self.message_handler.check_motivational_message(count)
 
     def toggle_options(self):
-        if self.options_overlay.isVisible():
-            self.close_options()
-        else:
-            self.options_overlay.show()
-            self.options_overlay.raise_()
+        self.menu_handler.toggle_options()
 
     def close_options(self):
-        self.options_overlay.hide()
-        self.hide_control_buttons()
+        self.menu_handler.close_options()
 
     def toggle_developer_menu(self):
-        if self.dev_menu.isVisible():
-            self.dev_menu.hide()
-        else:
-            self.dev_menu.show()
-            self.dev_menu.raise_()
+        self.menu_handler.toggle_developer_menu()
 
     def toggle_developer_speed(self):
-        self.speed_multiplier = 10 if getattr(self, "speed_multiplier", 1) == 1 else 1
-        self.update_speed()
-        if self.speed_multiplier == 1:
-            self.data_store.reset_offset()
-        txt = "Modo desarrollador ON" if self.speed_multiplier > 1 else "Modo desarrollador OFF"
-        self.display_motivational_message(txt)
+        self.session_manager.toggle_developer_speed()
 
     def advance_day(self):
-        self.data_store.advance_day()
-        self.meditation_seconds = self.data_store.get_today_seconds()
-        self.stats_overlay.update_minutes(self.meditation_seconds)
-        self.stats_overlay.update_badges(
-            self.data_store.get_badges_for_date(self.data_store.now())
-        )
+        self.session_manager.advance_day()
 
     def update_speed(self):
-        self.circle.speed_multiplier = self.speed_multiplier
-        self.timer.setInterval(int(1000 / self.speed_multiplier))
+        self.session_manager.update_speed()
 
     def _setup_control_button(self, button: QPushButton) -> None:
-        """Apply common styling to control buttons."""
-        button.setFixedSize(40, 40)
-        button.setStyleSheet(
-            "QPushButton {background:none; border:none; font-size:20px;}"
-        )
-        button.setFocusPolicy(Qt.NoFocus)
-        button.hide()
+        self.menu_handler._setup_control_button(button)
 
     def hide_control_buttons(self) -> None:
-        """Hide all secondary control buttons."""
-        for btn in self.control_buttons:
-            btn.hide()
+        self.menu_handler.hide_control_buttons()
 
     def show_control_buttons(self) -> None:
-        """Show all secondary control buttons."""
-        for btn in self.control_buttons:
-            btn.show()
+        self.menu_handler.show_control_buttons()
