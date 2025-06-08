@@ -161,6 +161,10 @@ class MainWindow(QMainWindow):
             btn.hide()
 
         self.end_button.clicked.connect(self.end_session)
+        self.options_button.clicked.connect(self.open_options)
+
+        self.click_times = []
+        self.developer_mode = False
 
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
@@ -435,6 +439,12 @@ class MainWindow(QMainWindow):
             self.stats_button.show()
             self.end_button.show()
 
+    def open_options(self):
+        from .options_dialog import OptionsDialog
+
+        dlg = OptionsDialog(self, self.data_store)
+        dlg.exec()
+
     def toggle_stats(self):
         if self.stats_overlay.isVisible():
             self.stats_overlay.hide()
@@ -483,6 +493,7 @@ class MainWindow(QMainWindow):
             self.today_sessions.hide()
             self.session_details.hide()
             self.badges_view.hide()
+        self._check_dev_click()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
@@ -640,3 +651,15 @@ class MainWindow(QMainWindow):
             msg = self.motivational_messages[self.message_index % len(self.motivational_messages)]
             self.message_index += 1
             self.display_motivational_message(msg)
+
+    def _check_dev_click(self):
+        now = time.perf_counter()
+        self.click_times = [t for t in self.click_times if now - t < 2]
+        self.click_times.append(now)
+        if len(self.click_times) >= 5 and not self.developer_mode:
+            self.enable_developer_mode()
+
+    def enable_developer_mode(self):
+        self.developer_mode = True
+        self.circle.set_speed_multiplier(10.0)
+        self.display_motivational_message("Modo desarrollador x10 activado")
