@@ -105,6 +105,17 @@ class AnimatedBackground(QWidget):
             base = [c.darker(180) for c in base]
         return [self._saturate(c) for c in base]
 
+    def set_dark_mode(self, value: bool) -> None:
+        """Update dark mode setting and refresh colors."""
+        if self.dark_mode == bool(value):
+            return
+        self.dark_mode = bool(value)
+        self._colors = self._chakra_colors()
+        current = self._colors[self._chakra_index]
+        self.set_color1(current)
+        base2 = current.lighter(150) if not self.dark_mode else current.darker(150)
+        self.set_color2(self._saturate(base2))
+
     def chakra_colors(self):
         """Return the list of chakra colors."""
         return list(self._colors)

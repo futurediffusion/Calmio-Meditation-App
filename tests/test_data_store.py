@@ -69,3 +69,16 @@ def test_breath_volume_setting(tmp_path):
     # ensure persistence
     ds2 = DataStore(data_file)
     assert ds2.get_sound_setting("breath_volume") is True
+
+
+def test_dark_mode_setting(tmp_path):
+    data_file = tmp_path / "data.json"
+    ds = DataStore(data_file)
+
+    assert ds.get_visual_setting("dark_mode", False) is False
+
+    ds.set_visual_setting("dark_mode", True)
+    assert ds.get_visual_setting("dark_mode") is True
+
+    ds2 = DataStore(data_file)
+    assert ds2.get_visual_setting("dark_mode") is True
