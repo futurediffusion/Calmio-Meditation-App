@@ -174,9 +174,13 @@ class BreathCircle(QWidget):
         )
 
     def start_exhale(self, color=None, duration=None):
-        if self.phase not in ('inhaling', 'holding'):
+        if self.phase not in ("inhaling", "holding"):
             return
-        self.cycle_valid = self._radius >= self.max_radius - 1
+        # Treat early release during the hold phase as an incomplete cycle
+        self.cycle_valid = (
+            self._radius >= self.max_radius - 1
+            and (self.phase != "holding" or not self.hold_timer.isActive())
+        )
         self.exhale_start_time = time.perf_counter()
         self.phase = 'exhaling'
         dur = (duration if duration is not None else (self.exhale_time if self.cycle_valid else 2000))
