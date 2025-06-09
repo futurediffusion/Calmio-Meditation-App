@@ -25,7 +25,6 @@ class MenuOverlay(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setWindowFlags(Qt.Popup)
         self.setStyleSheet(
             "background:rgba(255,255,255,0.8);border-radius:24px;color:#444;"
         )
@@ -100,6 +99,7 @@ class MenuOverlay(QWidget):
         self.adjust_position()
         self.opacity.setOpacity(0)
         super().show()
+        self.raise_()
         anim = QPropertyAnimation(self.opacity, b"opacity", self)
         anim.setDuration(200)
         anim.setStartValue(0)
