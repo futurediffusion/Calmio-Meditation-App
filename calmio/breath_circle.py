@@ -324,6 +324,8 @@ class BreathCircle(QWidget):
             pg = QParallelAnimationGroup()
             pg.addAnimation(r_anim)
             pg.addAnimation(c_anim)
+            if idx < len(self.pattern) - 1:
+                pg.finished.connect(self.start_ripple)
             group.addAnimation(pg)
             radius = end_radius
             color = target_color

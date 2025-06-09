@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFrame,
     QScrollArea,
+    QSizePolicy,
 )
 import json
 from pathlib import Path
@@ -81,23 +82,28 @@ class BreathModesOverlay(QWidget):
         row.setStyleSheet(
             "background:white;border-radius:15px;padding:10px;"
         )
+        row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         r_layout = QHBoxLayout(row)
+        r_layout.setSpacing(8)
         name_lbl = QLabel(pat.get("name", ""))
         name_font = QFont("Sans Serif")
         name_font.setPointSize(14)
         name_lbl.setFont(name_font)
+        name_lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         desc = pat.get("description", "")
         count_str = " / ".join(str(p.get("duration", 0)) for p in pat.get("phases", []))
         info_lbl = QLabel(f"{count_str}s – {desc}")
         info_lbl.setWordWrap(True)
+        info_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sel_btn = QPushButton("Usar")
         sel_btn.setStyleSheet(
-            "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;" "padding:6px 12px;}"
+            "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;padding:6px 12px;}"
         )
+        sel_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         sel_btn.clicked.connect(lambda _, p=pat: self.pattern_selected.emit(p))
         r_layout.addWidget(name_lbl)
-        r_layout.addStretch()
-        r_layout.addWidget(info_lbl)
+        r_layout.addStretch(1)
+        r_layout.addWidget(info_lbl, stretch=2)
         r_layout.addWidget(sel_btn)
         self.pattern_container.addWidget(row)
 
