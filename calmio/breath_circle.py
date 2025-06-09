@@ -417,6 +417,9 @@ class BreathCircle(QWidget):
             if self.inhale_finished_callback:
                 self.inhale_finished_callback()
         elif self.phase == 'exhaling':
+            # Trigger a ripple when the exhale completes so the user
+            # knows the contraction finished (used by box breathing)
+            self.start_ripple()
             if self.cycle_valid:
                 exhale_end = time.perf_counter()
                 duration = exhale_end - self.breath_start_time
