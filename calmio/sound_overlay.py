@@ -22,6 +22,8 @@ class SoundOverlay(QWidget):
     bell_toggled = Signal(bool)
     volume_changed = Signal(int)
     bell_volume_changed = Signal(int)
+    music_volume_changed = Signal(int)
+    drop_volume_changed = Signal(int)
     mute_all = Signal()
 
     def __init__(self, parent=None):
@@ -71,10 +73,14 @@ class SoundOverlay(QWidget):
             layout.addWidget(rb)
         self.env_group.buttonClicked.connect(self._on_env_changed)
 
-        self.music_chk = QCheckBox("\U0001F3B9 Modo m\u00fasica")
-        self.bell_chk = QCheckBox("\U0001F514 Campana cada 10 respiraciones")
+        self.music_chk = QCheckBox("\U0001F3B9 Modo m\u00fasica [OFF]")
+        self.bell_chk = QCheckBox("\U0001F514 Campana cada 10 [OFF]")
         self.music_chk.toggled.connect(self.music_toggled.emit)
         self.bell_chk.toggled.connect(self.bell_toggled.emit)
+        self.music_chk.toggled.connect(self._update_music_label)
+        self.bell_chk.toggled.connect(self._update_bell_label)
+        self._update_music_label(self.music_chk.isChecked())
+        self._update_bell_label(self.bell_chk.isChecked())
         layout.addWidget(self.music_chk)
         layout.addWidget(self.bell_chk)
 
@@ -92,6 +98,20 @@ class SoundOverlay(QWidget):
         self.bell_slider.valueChanged.connect(self.bell_volume_changed.emit)
         layout.addWidget(self.bell_slider)
 
+        layout.addWidget(QLabel("Volumen m\u00fasica"))
+        self.music_slider = QSlider(Qt.Horizontal)
+        self.music_slider.setRange(0, 100)
+        self.music_slider.setValue(50)
+        self.music_slider.valueChanged.connect(self.music_volume_changed.emit)
+        layout.addWidget(self.music_slider)
+
+        layout.addWidget(QLabel("Volumen drop"))
+        self.drop_slider = QSlider(Qt.Horizontal)
+        self.drop_slider.setRange(0, 100)
+        self.drop_slider.setValue(50)
+        self.drop_slider.valueChanged.connect(self.drop_volume_changed.emit)
+        layout.addWidget(self.drop_slider)
+
         self.mute_btn = QPushButton("Silenciar todo")
         self.mute_btn.setStyleSheet(
             "QPushButton{" "background-color:#CCE4FF;border:none;border-radius:20px;"
@@ -101,6 +121,14 @@ class SoundOverlay(QWidget):
         layout.addWidget(self.mute_btn, alignment=Qt.AlignCenter)
 
         layout.addStretch()
+
+    def _update_music_label(self, checked: bool) -> None:
+        state = "ON" if checked else "OFF"
+        self.music_chk.setText(f"\U0001F3B9 Modo m\u00fasica [{state}]")
+
+    def _update_bell_label(self, checked: bool) -> None:
+        state = "ON" if checked else "OFF"
+        self.bell_chk.setText(f"\U0001F514 Campana cada 10 [{state}]")
 
     def _on_env_changed(self):
         if self.env_bosque.isChecked():

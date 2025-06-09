@@ -236,6 +236,8 @@ class MainWindow(QMainWindow):
         self.sound_overlay.bell_toggled.connect(self.sound_manager.set_bell_enabled)
         self.sound_overlay.volume_changed.connect(self.sound_manager.set_volume)
         self.sound_overlay.bell_volume_changed.connect(self.sound_manager.set_bell_volume)
+        self.sound_overlay.music_volume_changed.connect(self.sound_manager.set_music_volume)
+        self.sound_overlay.drop_volume_changed.connect(self.sound_manager.set_drop_volume)
         self.sound_overlay.mute_all.connect(self.sound_manager.mute_all)
         self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
 
