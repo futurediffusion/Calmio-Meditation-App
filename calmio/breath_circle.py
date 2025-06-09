@@ -182,6 +182,9 @@ class BreathCircle(QWidget):
             and (self.phase != "holding" or not self.hold_timer.isActive())
         )
         self.exhale_start_time = time.perf_counter()
+        if self.phase == "holding" and self.hold_timer.isActive():
+            # Trigger ripple/wave when exiting a hold early
+            self.start_ripple()
         self.phase = 'exhaling'
         dur = (duration if duration is not None else (self.exhale_time if self.cycle_valid else 2000))
         dur /= self.speed_multiplier
