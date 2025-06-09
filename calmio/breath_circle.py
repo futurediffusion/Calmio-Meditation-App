@@ -344,8 +344,7 @@ class BreathCircle(QWidget):
     def _on_hold_finished(self):
         current = self.phase_index
         self.start_ripple()
-        if current == len(self.pattern) - 1 and self.inhale_finished_callback:
-            # Only trigger the cue when the final hold of the pattern ends
+        if self.inhale_finished_callback:
             self.inhale_finished_callback()
         self.phase_index += 1
         if self.phase_index >= len(self.pattern):
@@ -436,7 +435,12 @@ class BreathCircle(QWidget):
             pass
         if self.phase == 'inhaling':
             self.start_ripple()
-            if self.inhale_finished_callback:
+            next_is_hold = False
+            if self.pattern:
+                next_index = (self.phase_index + 1) % len(self.pattern)
+                next_name = self.pattern[next_index].get("name", "").lower()
+                next_is_hold = "ret" in next_name or "hold" in next_name
+            if not next_is_hold and self.inhale_finished_callback:
                 self.inhale_finished_callback()
         elif self.phase == 'exhaling':
             # Trigger a ripple when the exhale completes so the user
