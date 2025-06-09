@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLayout,
     QGraphicsDropShadowEffect,
 )
+from .font_utils import get_emoji_font
 import json
 from pathlib import Path
 
@@ -103,9 +104,7 @@ class BreathModesOverlay(QWidget):
         layout.setSpacing(12)
 
         icon_lbl = QLabel(pat.get("icon", ""))
-        icon_font = QFont("Sans Serif")
-        icon_font.setPointSize(18)
-        icon_lbl.setFont(icon_font)
+        icon_lbl.setFont(get_emoji_font(18))
         icon_lbl.setAlignment(Qt.AlignCenter)
 
         text_col = QVBoxLayout()

@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QGraphicsOpacityEffect,
 )
+from .font_utils import get_emoji_font
 
 
 class MenuOverlay(QWidget):
@@ -26,7 +27,7 @@ class MenuOverlay(QWidget):
         super().__init__(parent)
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setStyleSheet(
-            "background:rgba(255,255,255,0.8);border-radius:24px;color:#444;"
+            "background:rgba(255,255,255,0.95);border-radius:24px;color:#444;"
         )
 
         self.opacity = QGraphicsOpacityEffect(self)
@@ -72,7 +73,7 @@ class MenuOverlay(QWidget):
         b_layout.setContentsMargins(10, 10, 10, 10)
         icon_lbl = QLabel(icon)
         icon_lbl.setAlignment(Qt.AlignCenter)
-        icon_lbl.setStyleSheet("font-size:32px;")
+        icon_lbl.setFont(get_emoji_font(32))
         txt_lbl = QLabel(text)
         txt_lbl.setAlignment(Qt.AlignCenter)
         txt_lbl.setWordWrap(True)

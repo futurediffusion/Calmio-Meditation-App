@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QSlider,
     QScrollArea,
 )
+from .font_utils import get_emoji_font
 
 
 class SoundOverlay(QWidget):
@@ -90,6 +91,7 @@ class SoundOverlay(QWidget):
 
         music_row = QHBoxLayout()
         self.music_chk = QCheckBox("\U0001F3B9 Modo m\u00fasica [OFF]")
+        self.music_chk.setFont(get_emoji_font(12))
         self.music_opts_btn = QPushButton("\u25BC")
         self.music_opts_btn.setFixedSize(20, 20)
         self.music_opts_btn.setStyleSheet(
@@ -101,6 +103,7 @@ class SoundOverlay(QWidget):
         music_row.addStretch()
         layout.addLayout(music_row)
         self.bell_chk = QCheckBox("\U0001F514 Campana cada 10 [OFF]")
+        self.bell_chk.setFont(get_emoji_font(12))
         self.music_chk.toggled.connect(self.music_toggled.emit)
         self.bell_chk.toggled.connect(self.bell_toggled.emit)
         self.music_chk.toggled.connect(self._update_music_label)
@@ -110,6 +113,7 @@ class SoundOverlay(QWidget):
         layout.addWidget(self.bell_chk)
 
         self.breath_chk = QCheckBox("\U0001FAC1 Modo respiraci\u00f3n [OFF]")
+        self.breath_chk.setFont(get_emoji_font(12))
         self.breath_chk.toggled.connect(self.breath_volume_toggled.emit)
         self.breath_chk.toggled.connect(self._update_breath_label)
         self._update_breath_label(self.breath_chk.isChecked())
