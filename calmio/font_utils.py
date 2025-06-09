@@ -7,5 +7,9 @@ def get_emoji_font(size: int = 12) -> QFont:
     families = set(QFontDatabase().families())
     for fam in preferred:
         if fam in families:
-            return QFont(fam, point_size=size)
-    return QFont("Sans Serif", point_size=size)
+            font = QFont(fam)
+            font.setPointSize(size)
+            return font
+    font = QFont("Sans Serif")
+    font.setPointSize(size)
+    return font
