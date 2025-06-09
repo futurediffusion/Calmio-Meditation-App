@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
         self.circle.breath_started_callback = self.session_manager.on_breath_start
         self.circle.breath_finished_callback = self.session_manager.on_breath_end
         self.circle.exhale_started_callback = self.session_manager.on_exhale_start
+        self.circle.hold_started_callback = self.session_manager.on_hold_start
         self.circle.ripple_spawned_callback = self.session_manager.start_waves
         self.circle.inhale_finished_callback = self.on_inhale_finished
         self.update_speed()
@@ -104,6 +105,7 @@ class MainWindow(QMainWindow):
         self.label.setStyleSheet("color:white;")
         self.base_text_color = QColor("white")
         self.active_text_color = self.circle.complement_color
+        self.current_text_color = self.base_text_color
         self.text_color_anim = None
         self.count_opacity = QGraphicsOpacityEffect(self.label)
         self.label.setGraphicsEffect(self.count_opacity)
@@ -343,11 +345,14 @@ class MainWindow(QMainWindow):
     def start_waves(self, center, color):
         self.session_manager.start_waves(center, color)
 
-    def on_breath_start(self):
-        self.session_manager.on_breath_start()
+    def on_breath_start(self, color, duration):
+        self.session_manager.on_breath_start(color, duration)
 
-    def on_exhale_start(self, duration):
-        self.session_manager.on_exhale_start(duration)
+    def on_exhale_start(self, duration, color):
+        self.session_manager.on_exhale_start(duration, color)
+
+    def on_hold_start(self, duration, color):
+        self.session_manager.on_hold_start(duration, color)
 
     def on_inhale_finished(self):
         """Handle actions when a breathing phase ends."""
@@ -506,6 +511,7 @@ class MainWindow(QMainWindow):
     def _update_label_color(self, color):
         if isinstance(color, QColor):
             self.label.setStyleSheet(f"color:{color.name()};")
+            self.current_text_color = color
 
     def stop_prompt_animation(self):
         self.message_handler.stop_prompt_animation()

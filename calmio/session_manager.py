@@ -19,7 +19,7 @@ class SessionManager:
         if hasattr(self.window, "wave_overlay"):
             self.window.wave_overlay.start_waves(center, color)
 
-    def on_breath_start(self):
+    def on_breath_start(self, color, duration):
         if not self.window.session_active:
             self.window.session_active = True
             self.window.session_start = self.window.data_store.now()
@@ -40,7 +40,7 @@ class SessionManager:
         self.window.label.setText(str(self.window.circle.breath_count + 1))
         self.window.count_opacity.setOpacity(0)
         self.window.count_anim = QPropertyAnimation(self.window.count_opacity, b"opacity", self.window)
-        self.window.count_anim.setDuration(int(self.window.circle.inhale_time))
+        self.window.count_anim.setDuration(int(duration))
         self.window.count_anim.setStartValue(0)
         self.window.count_anim.setEndValue(1)
         self.window.count_anim.start()
@@ -48,16 +48,16 @@ class SessionManager:
         if self.window.text_color_anim and self.window.text_color_anim.state() != QAbstractAnimation.Stopped:
             self.window.text_color_anim.stop()
         self.window.text_color_anim = QVariantAnimation(self.window)
-        self.window.text_color_anim.setDuration(int(self.window.circle.inhale_time))
-        self.window.text_color_anim.setStartValue(self.window.base_text_color)
-        self.window.text_color_anim.setEndValue(self.window.active_text_color)
+        self.window.text_color_anim.setDuration(int(duration))
+        self.window.text_color_anim.setStartValue(self.window.current_text_color)
+        self.window.text_color_anim.setEndValue(color)
         self.window.text_color_anim.valueChanged.connect(self.window._update_label_color)
         self.window.text_color_anim.start()
 
         if hasattr(self.window, "bg_anim") and self.window.bg_anim.state() != QAbstractAnimation.Stopped:
             self.window.bg_anim.stop()
         self.window.bg_anim = QPropertyAnimation(self.window.bg, b"opacity", self.window)
-        self.window.bg_anim.setDuration(int(self.window.circle.inhale_time))
+        self.window.bg_anim.setDuration(int(duration))
         self.window.bg_anim.setStartValue(self.window.bg.opacity)
         self.window.bg_anim.setEndValue(1.0)
         self.window.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
@@ -66,13 +66,13 @@ class SessionManager:
         if hasattr(self.window, "bg_padding_anim") and self.window.bg_padding_anim.state() != QAbstractAnimation.Stopped:
             self.window.bg_padding_anim.stop()
         self.window.bg_padding_anim = QPropertyAnimation(self.window.bg, b"ring_padding", self.window)
-        self.window.bg_padding_anim.setDuration(int(self.window.circle.inhale_time))
+        self.window.bg_padding_anim.setDuration(int(duration))
         self.window.bg_padding_anim.setStartValue(self.window.bg.ring_padding)
         self.window.bg_padding_anim.setEndValue(1.25)
         self.window.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.window.bg_padding_anim.start()
 
-    def on_exhale_start(self, duration):
+    def on_exhale_start(self, duration, color):
         if (
             hasattr(self.window, "count_anim")
             and self.window.count_anim.state() != QAbstractAnimation.Stopped
@@ -89,8 +89,8 @@ class SessionManager:
             self.window.text_color_anim.stop()
         self.window.text_color_anim = QVariantAnimation(self.window)
         self.window.text_color_anim.setDuration(int(duration))
-        self.window.text_color_anim.setStartValue(self.window.active_text_color)
-        self.window.text_color_anim.setEndValue(self.window.base_text_color)
+        self.window.text_color_anim.setStartValue(self.window.current_text_color)
+        self.window.text_color_anim.setEndValue(color)
         self.window.text_color_anim.valueChanged.connect(self.window._update_label_color)
         self.window.text_color_anim.start()
 
@@ -111,6 +111,16 @@ class SessionManager:
         self.window.bg_padding_anim.setEndValue(1.0)
         self.window.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.window.bg_padding_anim.start()
+
+    def on_hold_start(self, duration, color):
+        if self.window.text_color_anim and self.window.text_color_anim.state() != QAbstractAnimation.Stopped:
+            self.window.text_color_anim.stop()
+        self.window.text_color_anim = QVariantAnimation(self.window)
+        self.window.text_color_anim.setDuration(int(duration))
+        self.window.text_color_anim.setStartValue(self.window.current_text_color)
+        self.window.text_color_anim.setEndValue(color)
+        self.window.text_color_anim.valueChanged.connect(self.window._update_label_color)
+        self.window.text_color_anim.start()
 
     def on_breath_end(self, duration, inhale, exhale):
         self.window.last_cycle_duration = duration
