@@ -21,6 +21,9 @@ class DataStore:
             "badges": {},
             # badges earned today {date: {code: count}}
             "daily_badges": {},
+            "visual_settings": {
+                "dark_mode": False,
+            },
             "sound_settings": {
                 "music_enabled": False,
                 "bell_enabled": False,
@@ -71,6 +74,8 @@ class DataStore:
                                 for b in v:
                                     counts[b] = counts.get(b, 0) + 1
                                 self.data["daily_badges"][k] = counts
+                    if "visual_settings" not in self.data:
+                        self.data["visual_settings"] = {"dark_mode": False}
                     if "sound_settings" not in self.data:
                         self.data["sound_settings"] = {
                             "music_enabled": False,
@@ -89,6 +94,14 @@ class DataStore:
     def save(self):
         with self.path.open("w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2)
+
+    # ------------------------------------------------------------------
+    def get_visual_setting(self, name: str, default=None):
+        return self.data.get("visual_settings", {}).get(name, default)
+
+    def set_visual_setting(self, name: str, value) -> None:
+        self.data.setdefault("visual_settings", {})[name] = value
+        self.save()
 
     # ------------------------------------------------------------------
     def get_sound_setting(self, name: str, default=None):
@@ -352,11 +365,15 @@ class DataStore:
             "sessions": [],
             "badges": {},
             "daily_badges": {},
+            "visual_settings": {
+                "dark_mode": False,
+            },
             "sound_settings": {
                 "music_enabled": False,
                 "bell_enabled": False,
                 "music_mode": "scale",
                 "scale_type": "major",
+                "breath_volume": False,
             },
         }
         self.save()

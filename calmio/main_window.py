@@ -52,17 +52,19 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Calmio")
         self.resize(360, 640)
 
+        self.data_store = DataStore()
         palette = QApplication.instance().palette()
-        dark_mode = palette.color(QPalette.Window).value() < 128
+        default_dark = palette.color(QPalette.Window).value() < 128
+        dark_mode = self.data_store.get_visual_setting("dark_mode", default_dark)
         self.bg = AnimatedBackground(self, dark_mode=dark_mode)
+        if self.data_store.get_visual_setting("dark_mode") is None:
+            self.data_store.set_visual_setting("dark_mode", dark_mode)
         self.bg.set_opacity(0.0)
         self.bg.lower()
         self.bg.setGeometry(self.rect())
         self.wave_overlay = WaveOverlay(self)
         self.wave_overlay.setGeometry(self.rect())
         self.wave_overlay.lower()
-
-        self.data_store = DataStore()
 
         self.session_active = False
         self.session_start = None

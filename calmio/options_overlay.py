@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QMessageBox,
+    QCheckBox,
 )
 
 
@@ -42,6 +43,14 @@ class OptionsOverlay(QWidget):
         header.addStretch()
         layout.addLayout(header)
 
+        self.dark_chk = QCheckBox("Modo oscuro")
+        self.dark_chk.setStyleSheet("font-size:14px;")
+        store = getattr(parent, "data_store", None)
+        if store:
+            self.dark_chk.setChecked(store.get_visual_setting("dark_mode", False))
+        self.dark_chk.stateChanged.connect(self._dark_mode_changed)
+        layout.addWidget(self.dark_chk, alignment=Qt.AlignLeft)
+
         self.reset_btn = QPushButton("Borrar todos los datos")
         self.reset_btn.setStyleSheet(
             "QPushButton{" "background-color:#CCE4FF;border:none;border-radius:20px;"
@@ -51,6 +60,15 @@ class OptionsOverlay(QWidget):
         layout.addWidget(self.reset_btn, alignment=Qt.AlignCenter)
 
         layout.addStretch()
+
+    def _dark_mode_changed(self, state: int) -> None:
+        is_dark = state == Qt.Checked
+        parent = self.parent()
+        store = getattr(parent, "data_store", None)
+        if store:
+            store.set_visual_setting("dark_mode", is_dark)
+        if hasattr(parent, "bg"):
+            parent.bg.set_dark_mode(is_dark)
 
     def confirm_reset(self):
         reply = QMessageBox.question(
