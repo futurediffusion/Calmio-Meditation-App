@@ -49,6 +49,8 @@ class BreathCircle(QWidget):
         self.max_radius = 140
         self.base_color = QColor(255, 140, 0)
         self.complement_color = QColor(0, 150, 136)
+        # Third color completing a balanced triad
+        self.retention_color = QColor(139, 0, 255)
         self._color = self.base_color
         self.inhale_time = 4000
         self.exhale_time = 6000
@@ -183,6 +185,20 @@ class BreathCircle(QWidget):
         self.animate(self._radius, self.min_radius, dur,
                      target_color=color or self.base_color)
 
+    def start_hold(self, color=None, duration=None):
+        """Animate color transition during the retention phase."""
+        if self.animation:
+            self.animation.stop()
+        self.phase = 'holding'
+        self.animation = QPropertyAnimation(self, b"color")
+        self.animation.setStartValue(self._color)
+        self.animation.setEndValue(color or self.retention_color)
+        dur = int((duration or 0) / self.speed_multiplier)
+        self.animation.setDuration(dur)
+        self.animation.setEasingCurve(QEasingCurve.InOutSine)
+        self.animation.start()
+        self.hold_timer.start(dur)
+
     def animate(self, start, end, duration, target_color):
         if self.animation:
             self.animation.stop()
@@ -268,32 +284,23 @@ class BreathCircle(QWidget):
         else:
             super().mouseReleaseEvent(event)
 
-    # ------------------------------------------------------------------
-    def _generate_phase_colors(self, n: int):
-        colors = [self.base_color, self.complement_color]
-        if n <= 2:
-            return colors[:n]
-        extra = []
-        for i in range(n - 2):
-            if i % 2 == 0:
-                extra.append(self.base_color.lighter(120 + i * 10))
-            else:
-                extra.append(self.complement_color.darker(120 + i * 10))
-        return colors + extra
-
     def set_pattern(self, pattern: list[dict]):
         self.pattern = pattern
         self.phase_index = 0
-        self.phase_colors = self._generate_phase_colors(len(pattern))
+        self.phase_colors = []
         self.pattern_states = []
         state = False
         for ph in pattern:
             name = ph.get("name", "").lower()
             if "inh" in name:
                 state = True
+                self.phase_colors.append(self.complement_color)
             elif "exh" in name:
                 state = False
-            # holds keep previous state
+                self.phase_colors.append(self.base_color)
+            else:
+                # hold phase color
+                self.phase_colors.append(self.retention_color)
             self.pattern_states.append(state)
         self.stop_animation()
 
@@ -360,10 +367,7 @@ class BreathCircle(QWidget):
             self.animation.finished.connect(self._on_phase_animation_finished)
         else:
             # Hold phase
-            self.phase = "holding"
-            self.setColor(color)
-            self.update()
-            self.hold_timer.start(int(dur / self.speed_multiplier))
+            self.start_hold(color=color, duration=dur)
             return
 
     def _on_phase_animation_finished(self):
