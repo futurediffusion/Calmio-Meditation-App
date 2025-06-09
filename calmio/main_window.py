@@ -325,7 +325,6 @@ class MainWindow(QMainWindow):
 
     def update_count(self, count):
         """Handle breath count updates after a full cycle."""
-        self.check_motivational_message(count)
         if hasattr(self, "sound_manager"):
             play_music = True
             if self.current_pattern_id == "triple":
