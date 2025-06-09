@@ -79,6 +79,7 @@ class MainWindow(QMainWindow):
         self.overlay_manager = OverlayManager(self)
         self.message_handler = MessageHandler(self)
         self.sound_manager = SoundManager(self)
+        self.current_pattern_id = None
 
         self.timer.timeout.connect(self.session_manager.update_timer)
         self.timer.start(1000)
@@ -307,7 +308,13 @@ class MainWindow(QMainWindow):
         """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
         if hasattr(self, "sound_manager"):
-            self.sound_manager.maybe_play_music(count)
+            skip_music = (
+                self.current_pattern_id == "triple"
+                and self.circle.released_during_exhale
+            )
+            if not skip_music:
+                self.sound_manager.maybe_play_music(count)
+            self.circle.released_during_exhale = False
         index = self._chakra_index_for_count(count)
         if getattr(self, "_chakra_index", None) != index:
             self._chakra_index = index
@@ -527,4 +534,5 @@ class MainWindow(QMainWindow):
     def _on_pattern_selected(self, pattern: dict) -> None:
         phases = pattern.get("phases", [])
         self.circle.set_pattern(phases)
+        self.current_pattern_id = pattern.get("id")
         self.menu_handler.close_breath_modes()

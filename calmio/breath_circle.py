@@ -81,6 +81,7 @@ class BreathCircle(QWidget):
         self.phase_colors = []
         self.pattern_states = []
         self.key_pressed = False
+        self.released_during_exhale = False
         self.hold_timer = QTimer(self)
         self.hold_timer.setSingleShot(True)
         self.hold_timer.timeout.connect(self._on_hold_finished)
@@ -265,6 +266,7 @@ class BreathCircle(QWidget):
                 self.exhale_time += self.increment
             self.breath_start_time = 0
             self.phase = 'idle'
+        self.released_during_exhale = False
         elif self.phase == 'inhaling':
             self.start_ripple()
             if self.inhale_finished_callback:
@@ -338,6 +340,8 @@ class BreathCircle(QWidget):
 
     def on_release(self):
         self.key_pressed = False
+        if self.phase == "exhaling" and self.animation:
+            self.released_during_exhale = True
         if not self.pattern:
             self.start_exhale()
         else:
@@ -398,6 +402,7 @@ class BreathCircle(QWidget):
                     self.breath_finished_callback(duration, inhale_dur, exhale_dur)
             self.breath_start_time = 0
             self.phase = 'idle'
+        self.released_during_exhale = False
         self.phase_index += 1
         if self.phase_index >= len(self.pattern):
             self.phase_index = 0
