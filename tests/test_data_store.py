@@ -82,3 +82,26 @@ def test_dark_mode_setting(tmp_path):
 
     ds2 = DataStore(data_file)
     assert ds2.get_visual_setting("dark_mode") is True
+
+from datetime import timedelta
+from achievements import BADGE_MAP
+
+
+def test_badge_awarded_and_lookup(tmp_path):
+    data_file = tmp_path / "data.json"
+    ds = DataStore(data_file)
+    start = datetime(2023, 1, 1, 8, 0)
+    ds.add_session(start, seconds=300, breaths=10, inhale=3, exhale=3)
+    badges = ds.get_badges_for_date(start)
+    assert BADGE_MAP["5_min_total"] in badges
+    assert BADGE_MAP["1_breath_session"] in badges
+
+
+def test_three_day_streak_badge(tmp_path):
+    data_file = tmp_path / "data.json"
+    ds = DataStore(data_file)
+    start = datetime(2023, 1, 1, 8, 0)
+    for i in range(3):
+        ds.add_session(start + timedelta(days=i), seconds=60, breaths=1, inhale=3, exhale=3)
+    third_day_badges = ds.get_badges_for_date(start + timedelta(days=2))
+    assert BADGE_MAP["3_day_streak"] in third_day_badges
