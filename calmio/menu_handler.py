@@ -1,5 +1,4 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QPushButton
 
 
 class MenuHandler:
@@ -15,22 +14,10 @@ class MenuHandler:
         x = self.window.width() - self.window.menu_button.width() - margin
         y = self.window.height() - self.window.menu_button.height() - margin
         self.window.menu_button.move(x, y)
-        buttons = [
-            self.window.options_button,
-            self.window.stats_button,
-            self.window.end_button,
-            self.window.dev_button,
-        ]
-        if hasattr(self.window, "sound_button"):
-            buttons.append(self.window.sound_button)
-        if hasattr(self.window, "patterns_button"):
-            buttons.append(self.window.patterns_button)
-        for i, btn in enumerate(buttons, start=1):
-            btn.move(x - i * (self.window.menu_button.width() + margin), y)
         if hasattr(self.window, "dev_menu"):
             self.window.dev_menu.move(
-                self.window.dev_button.x() - self.window.dev_menu.width() + self.window.dev_button.width(),
-                self.window.dev_button.y() - self.window.dev_menu.height() - margin,
+                x - self.window.dev_menu.width() + self.window.menu_button.width(),
+                y - self.window.dev_menu.height() - margin,
             )
         if hasattr(self.window, "menu_overlay"):
             self.window.menu_overlay.adjust_position()
@@ -44,12 +31,6 @@ class MenuHandler:
         if hasattr(self.window, "breath_modes"):
             self.window.breath_modes.setGeometry(self.window.rect())
 
-    def _setup_control_button(self, button: QPushButton) -> None:
-        """Apply common styling to control buttons."""
-        button.setFixedSize(40, 40)
-        button.setStyleSheet("QPushButton {background:none; border:none; font-size:20px;}")
-        button.setFocusPolicy(Qt.NoFocus)
-        button.hide()
 
     # --- visibility toggles --------------------------------------------
     def toggle_menu(self) -> None:
@@ -104,13 +85,6 @@ class MenuHandler:
         self.window.menu_overlay.hide()
 
     def hide_control_buttons(self) -> None:
-        for btn in self.window.control_buttons:
-            btn.hide()
         if hasattr(self.window, "menu_overlay"):
             self.window.menu_overlay.hide()
 
-    def show_control_buttons(self) -> None:
-        for btn in self.window.control_buttons:
-            btn.show()
-        if hasattr(self.window, "menu_overlay"):
-            self.window.menu_overlay.show_with_anim()
