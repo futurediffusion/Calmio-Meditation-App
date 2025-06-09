@@ -25,6 +25,8 @@ class SoundOverlay(QWidget):
     music_volume_changed = Signal(int)
     drop_volume_changed = Signal(int)
     mute_all = Signal()
+    music_mode_changed = Signal(str)
+    scale_changed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -73,7 +75,18 @@ class SoundOverlay(QWidget):
             layout.addWidget(rb)
         self.env_group.buttonClicked.connect(self._on_env_changed)
 
+        music_row = QHBoxLayout()
         self.music_chk = QCheckBox("\U0001F3B9 Modo m\u00fasica [OFF]")
+        self.music_opts_btn = QPushButton("\u25BC")
+        self.music_opts_btn.setFixedSize(20, 20)
+        self.music_opts_btn.setStyleSheet(
+            "QPushButton{background:none;border:none;font-size:14px;}"
+        )
+        self.music_opts_btn.clicked.connect(self._toggle_music_options)
+        music_row.addWidget(self.music_chk)
+        music_row.addWidget(self.music_opts_btn)
+        music_row.addStretch()
+        layout.addLayout(music_row)
         self.bell_chk = QCheckBox("\U0001F514 Campana cada 10 [OFF]")
         self.music_chk.toggled.connect(self.music_toggled.emit)
         self.bell_chk.toggled.connect(self.bell_toggled.emit)
@@ -81,8 +94,38 @@ class SoundOverlay(QWidget):
         self.bell_chk.toggled.connect(self._update_bell_label)
         self._update_music_label(self.music_chk.isChecked())
         self._update_bell_label(self.bell_chk.isChecked())
-        layout.addWidget(self.music_chk)
         layout.addWidget(self.bell_chk)
+
+        self.adv_widget = QWidget()
+        self.adv_widget.setStyleSheet(
+            "background-color:#FFFFFF;border-radius:10px;padding:10px;"
+        )
+        adv_layout = QVBoxLayout(self.adv_widget)
+        adv_layout.setContentsMargins(10, 10, 10, 10)
+        adv_layout.setSpacing(5)
+        adv_layout.addWidget(QLabel("Modo musical:"))
+        self.mode_group = QButtonGroup(self)
+        self.mode_scale = QRadioButton("Modo normal (escala)")
+        self.mode_harmonic = QRadioButton("Modo arm\u00f3nico")
+        self.mode_scale.setChecked(True)
+        for rb in (self.mode_scale, self.mode_harmonic):
+            self.mode_group.addButton(rb)
+            adv_layout.addWidget(rb)
+        self.mode_group.buttonClicked.connect(self._on_mode_changed)
+
+        scale_row = QHBoxLayout()
+        self.scale_group = QButtonGroup(self)
+        self.scale_major = QRadioButton("Escala mayor")
+        self.scale_minor = QRadioButton("Escala menor")
+        self.scale_major.setChecked(True)
+        for rb in (self.scale_major, self.scale_minor):
+            self.scale_group.addButton(rb)
+            scale_row.addWidget(rb)
+        adv_layout.addLayout(scale_row)
+        self.scale_group.buttonClicked.connect(self._on_scale_changed)
+
+        self.adv_widget.hide()
+        layout.addWidget(self.adv_widget)
 
         layout.addWidget(QLabel("Volumen general"))
         self.vol_slider = QSlider(Qt.Horizontal)
@@ -142,4 +185,29 @@ class SoundOverlay(QWidget):
         else:
             env = "none"
         self.environment_changed.emit(env)
+
+    def _toggle_music_options(self) -> None:
+        visible = self.adv_widget.isVisible()
+        self.adv_widget.setVisible(not visible)
+        self.music_opts_btn.setText("\u25B2" if not visible else "\u25BC")
+
+    def _on_mode_changed(self) -> None:
+        mode = "harmonic" if self.mode_harmonic.isChecked() else "scale"
+        self.music_mode_changed.emit(mode)
+
+    def _on_scale_changed(self) -> None:
+        scale = "minor" if self.scale_minor.isChecked() else "major"
+        self.scale_changed.emit(scale)
+
+    def set_music_mode(self, mode: str) -> None:
+        if mode == "harmonic":
+            self.mode_harmonic.setChecked(True)
+        else:
+            self.mode_scale.setChecked(True)
+
+    def set_scale_type(self, scale: str) -> None:
+        if scale == "minor":
+            self.scale_minor.setChecked(True)
+        else:
+            self.scale_major.setChecked(True)
 
