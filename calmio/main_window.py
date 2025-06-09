@@ -239,6 +239,19 @@ class MainWindow(QMainWindow):
         self.sound_overlay.mute_all.connect(self.sound_manager.mute_all)
         self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
 
+        music_enabled = self.data_store.get_sound_setting("music_enabled", False)
+        bell_enabled = self.data_store.get_sound_setting("bell_enabled", False)
+        self.sound_overlay.music_chk.setChecked(music_enabled)
+        self.sound_overlay.bell_chk.setChecked(bell_enabled)
+        self.sound_manager.set_music_enabled(music_enabled)
+        self.sound_manager.set_bell_enabled(bell_enabled)
+        self.sound_overlay.music_toggled.connect(
+            lambda v: self.data_store.set_sound_setting("music_enabled", v)
+        )
+        self.sound_overlay.bell_toggled.connect(
+            lambda v: self.data_store.set_sound_setting("bell_enabled", v)
+        )
+
         # Initialize overlay with stored data
         self.stats_overlay.update_minutes(self.meditation_seconds)
         last = self.data_store.get_last_session()

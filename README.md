@@ -125,6 +125,7 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
   cambiando el tono en cada respiración (DO, RE, MI, FA, SOL, LA, SI, DO).
 - Al llegar al punto máximo de cada inhalación suena `drop.mp3`.
 - Una campana con fundido de salida suave (`bell.mp3`) se reproduce cada 10 respiraciones.
+- Dos casillas permiten activar o desactivar tanto el modo música como la campana.
 - Dos sliders controlan el volumen general y el de la campana.
 - El botón **Silenciar todo** detiene cualquier sonido en reproducción.
 - Los archivos `bosque.mp3`, `LLUVIA.mp3`, `fuego.mp3`, `mar.mp3`, `notado.mp3`,
