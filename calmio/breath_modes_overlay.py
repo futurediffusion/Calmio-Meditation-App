@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QLayout,
+    QGraphicsDropShadowEffect,
 )
 import json
 from pathlib import Path
@@ -71,9 +72,9 @@ class BreathModesOverlay(QWidget):
         c_layout.addLayout(self.pattern_container)
         c_layout.addStretch()
 
-        self.pattern_rows = []
-        self.info_labels = []
-        self.use_buttons = []
+        self.cards = []
+        self.name_labels = []
+        self.desc_labels = []
         self._load_patterns()
 
     def _load_patterns(self):
@@ -86,62 +87,60 @@ class BreathModesOverlay(QWidget):
             self._add_pattern_row(pat)
 
     def _add_pattern_row(self, pat: dict) -> None:
-        row = QFrame()
-        row.setObjectName("patternRow")
-        row.setStyleSheet(
-            "QFrame#patternRow{background:white;border-radius:15px;}"
-            "QFrame#patternRow:hover{background:#F2F2F2;border:1px solid #CCE4FF;}"
+        card = QFrame()
+        card.setObjectName("patternCard")
+        card.setCursor(Qt.PointingHandCursor)
+        card.setStyleSheet(
+            "QFrame#patternCard{background:white;border-radius:15px;}"
+            "QFrame#patternCard:hover{background:#F2F2F2;}"
         )
-        row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        r_layout = QHBoxLayout(row)
-        r_layout.setContentsMargins(10, 10, 10, 10)
-        r_layout.setSpacing(8)
+        eff = QGraphicsDropShadowEffect(self)
+        eff.setBlurRadius(8)
+        eff.setOffset(0, 2)
+        card.setGraphicsEffect(eff)
+        layout = QHBoxLayout(card)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
+        icon_lbl = QLabel(pat.get("icon", ""))
+        icon_font = QFont("Sans Serif")
+        icon_font.setPointSize(18)
+        icon_lbl.setFont(icon_font)
+        icon_lbl.setAlignment(Qt.AlignCenter)
+
+        text_col = QVBoxLayout()
         name_lbl = QLabel(pat.get("name", ""))
         name_font = QFont("Sans Serif")
         name_font.setPointSize(14)
+        name_font.setWeight(QFont.Bold)
         name_lbl.setFont(name_font)
-        name_lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
-        desc = pat.get("description", "")
-        count_str = " / ".join(str(p.get("duration", 0)) for p in pat.get("phases", []))
-        info_lbl = QLabel(f"{count_str}s – {desc}")
-        info_lbl.setWordWrap(True)
-        info_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        sel_btn = QPushButton("Usar")
-        sel_btn.setStyleSheet(
-            "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
-            "padding:6px 12px;min-width:60px;}"
-        )
-        sel_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        sel_btn.clicked.connect(lambda _, p=pat: self.pattern_selected.emit(p))
-        r_layout.addWidget(name_lbl)
-        r_layout.addStretch(1)
-        r_layout.addWidget(info_lbl, stretch=2)
-        r_layout.addWidget(sel_btn, alignment=Qt.AlignRight)
-        self.pattern_container.addWidget(row)
-        self.pattern_rows.append(row)
-        self.info_labels.append(info_lbl)
-        self.use_buttons.append(sel_btn)
+        desc_lbl = QLabel(pat.get("description", ""))
+        desc_lbl.setWordWrap(True)
+        desc_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        text_col.addWidget(name_lbl)
+        text_col.addWidget(desc_lbl)
+
+        layout.addWidget(icon_lbl)
+        layout.addLayout(text_col)
+
+        card.mouseReleaseEvent = lambda e, p=pat: self.pattern_selected.emit(p)
+
+        self.pattern_container.addWidget(card)
+        self.cards.append(card)
+        self.name_labels.append(name_lbl)
+        self.desc_labels.append(desc_lbl)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         max_w = int(self.width() * 0.9)
         font_size = 12 if self.width() < 400 else 14
-        for row in self.pattern_rows:
-            row.setMaximumWidth(max_w)
-        for lbl in self.info_labels:
+        for card in self.cards:
+            card.setMaximumWidth(max_w)
+        for lbl in self.name_labels + self.desc_labels:
             f = lbl.font()
             f.setPointSize(font_size)
             lbl.setFont(f)
-        for btn in self.use_buttons:
-            if self.width() < 400:
-                btn.setStyleSheet(
-                    "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
-                    "padding:4px 8px;min-width:60px;}"
-                )
-            else:
-                btn.setStyleSheet(
-                    "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
-                    "padding:6px 12px;min-width:60px;}"
-                )
+
 
 
