@@ -32,6 +32,8 @@ class MenuHandler:
                 self.window.dev_button.x() - self.window.dev_menu.width() + self.window.dev_button.width(),
                 self.window.dev_button.y() - self.window.dev_menu.height() - margin,
             )
+        if hasattr(self.window, "menu_overlay"):
+            self.window.menu_overlay.adjust_position()
         self.window.stats_overlay.setGeometry(self.window.rect())
         self.window.today_sessions.setGeometry(self.window.rect())
         self.window.session_details.setGeometry(self.window.rect())
@@ -51,11 +53,11 @@ class MenuHandler:
 
     # --- visibility toggles --------------------------------------------
     def toggle_menu(self) -> None:
-        if self.window.options_button.isVisible():
-            self.hide_control_buttons()
+        if self.window.menu_overlay.isVisible():
+            self.window.menu_overlay.hide_with_anim()
             self.window.dev_menu.hide()
         else:
-            self.show_control_buttons()
+            self.window.menu_overlay.show_with_anim()
 
     def toggle_options(self) -> None:
         if self.window.options_overlay.isVisible():
@@ -63,10 +65,11 @@ class MenuHandler:
         else:
             self.window.options_overlay.show()
             self.window.options_overlay.raise_()
+            self.window.menu_overlay.hide()
 
     def close_options(self) -> None:
         self.window.options_overlay.hide()
-        self.hide_control_buttons()
+        self.window.menu_overlay.hide()
 
     def toggle_developer_menu(self) -> None:
         if self.window.dev_menu.isVisible():
@@ -74,6 +77,7 @@ class MenuHandler:
         else:
             self.window.dev_menu.show()
             self.window.dev_menu.raise_()
+        self.window.menu_overlay.hide()
 
     def toggle_sound(self) -> None:
         if self.window.sound_overlay.isVisible():
@@ -81,10 +85,11 @@ class MenuHandler:
         else:
             self.window.sound_overlay.show()
             self.window.sound_overlay.raise_()
+            self.window.menu_overlay.hide()
 
     def close_sound(self) -> None:
         self.window.sound_overlay.hide()
-        self.hide_control_buttons()
+        self.window.menu_overlay.hide()
 
     def toggle_breath_modes(self) -> None:
         if self.window.breath_modes.isVisible():
@@ -92,15 +97,20 @@ class MenuHandler:
         else:
             self.window.breath_modes.show()
             self.window.breath_modes.raise_()
+            self.window.menu_overlay.hide()
 
     def close_breath_modes(self) -> None:
         self.window.breath_modes.hide()
-        self.hide_control_buttons()
+        self.window.menu_overlay.hide()
 
     def hide_control_buttons(self) -> None:
         for btn in self.window.control_buttons:
             btn.hide()
+        if hasattr(self.window, "menu_overlay"):
+            self.window.menu_overlay.hide()
 
     def show_control_buttons(self) -> None:
         for btn in self.window.control_buttons:
             btn.show()
+        if hasattr(self.window, "menu_overlay"):
+            self.window.menu_overlay.show_with_anim()

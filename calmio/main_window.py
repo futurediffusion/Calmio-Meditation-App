@@ -39,6 +39,7 @@ from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
 from .menu_handler import MenuHandler
+from .menu_overlay import MenuOverlay
 from .session_manager import SessionManager
 from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
@@ -268,6 +269,17 @@ class MainWindow(QMainWindow):
         self.breath_modes.pattern_selected.connect(self._on_pattern_selected)
         self.patterns_button.clicked.connect(self.menu_handler.toggle_breath_modes)
 
+        self.menu_overlay = MenuOverlay(self)
+        self.menu_overlay.hide()
+        self.menu_overlay.breath_modes_requested.connect(self.menu_handler.toggle_breath_modes)
+        self.menu_overlay.sound_requested.connect(self.menu_handler.toggle_sound)
+        self.menu_overlay.stats_requested.connect(self.overlay_manager.toggle_stats)
+        self.menu_overlay.end_requested.connect(self.session_manager.end_session)
+        self.menu_overlay.achievements_requested.connect(self.overlay_manager.open_today_badges)
+        self.menu_overlay.settings_requested.connect(self.menu_handler.toggle_options)
+        self.menu_overlay.developer_requested.connect(self.menu_handler.toggle_developer_menu)
+        self.menu_overlay.close_requested.connect(self.menu_handler.hide_control_buttons)
+
         music_enabled = self.data_store.get_sound_setting("music_enabled", False)
         bell_enabled = self.data_store.get_sound_setting("bell_enabled", False)
         breath_volume = self.data_store.get_sound_setting("breath_volume", False)
@@ -432,6 +444,7 @@ class MainWindow(QMainWindow):
                 pos = self.mapFromGlobal(event.globalPos())
             if not (
                 self.menu_button.geometry().contains(pos)
+                or self.menu_overlay.geometry().contains(pos)
                 or self.options_button.geometry().contains(pos)
                 or self.stats_button.geometry().contains(pos)
                 or self.end_button.geometry().contains(pos)
@@ -481,6 +494,7 @@ class MainWindow(QMainWindow):
         pos = event.pos()
         if not (
             self.menu_button.geometry().contains(pos)
+            or self.menu_overlay.geometry().contains(pos)
             or self.options_button.geometry().contains(pos)
             or self.stats_button.geometry().contains(pos)
             or self.end_button.geometry().contains(pos)
