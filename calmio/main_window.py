@@ -186,6 +186,7 @@ class MainWindow(QMainWindow):
 
         self.setFocus()
 
+        self.control_buttons = []
 
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
@@ -565,6 +566,15 @@ class MainWindow(QMainWindow):
 
     def update_speed(self):
         self.session_manager.update_speed()
+
+    def _setup_control_button(self, button: QPushButton) -> None:
+        self.menu_handler._setup_control_button(button)
+
+    def hide_control_buttons(self) -> None:
+        self.menu_handler.hide_control_buttons()
+
+    def show_control_buttons(self) -> None:
+        self.menu_handler.show_control_buttons()
 
     def toggle_breath_modes(self) -> None:
         self.menu_handler.toggle_breath_modes()
