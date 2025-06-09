@@ -90,9 +90,7 @@ class MainWindow(QMainWindow):
         self.circle.breath_finished_callback = self.session_manager.on_breath_end
         self.circle.exhale_started_callback = self.session_manager.on_exhale_start
         self.circle.ripple_spawned_callback = self.session_manager.start_waves
-        self.circle.inhale_finished_callback = (
-            self.sound_manager.play_drop
-        )
+        self.circle.inhale_finished_callback = self.on_inhale_finished
         self.update_speed()
 
         font = QFont("Sans Serif")
@@ -299,7 +297,6 @@ class MainWindow(QMainWindow):
         """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
         if hasattr(self, "sound_manager"):
-            self.sound_manager.maybe_play_bell(count)
             self.sound_manager.maybe_play_music(count)
         index = self._chakra_index_for_count(count)
         if getattr(self, "_chakra_index", None) != index:
@@ -326,6 +323,11 @@ class MainWindow(QMainWindow):
 
     def on_exhale_start(self, duration):
         self.session_manager.on_exhale_start(duration)
+
+    def on_inhale_finished(self):
+        """Handle actions at the peak of an inhale."""
+        self.sound_manager.play_drop()
+        self.sound_manager.maybe_play_bell(self.circle.breath_count + 1)
 
     def on_breath_end(self, duration, inhale, exhale):
         self.session_manager.on_breath_end(duration, inhale, exhale)
