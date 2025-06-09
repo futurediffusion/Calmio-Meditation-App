@@ -15,6 +15,8 @@ Calmio es un prototipo de aplicación de respiración construido con **PySide6**
 - [Sistema de logros](#sistema-de-logros)
 - [Lista de sesiones y detalles](#lista-de-sesiones-y-detalles)
 - [Animaciones de fondo y ondas](#animaciones-de-fondo-y-ondas)
+- [Sistema de sonido opcional](#sistema-de-sonido-opcional)
+- [Modos de respiración](#modos-de-respiración)
 - [Modo desarrollador](#modo-desarrollador)
 - [Resumen técnico del sistema](#resumen-técnico-del-sistema)
 
@@ -46,7 +48,7 @@ En Windows puede ejecutarse `run_app.bat`, el script creará un entorno virtual 
 ## Menú y controles
 
 - Botón de tres puntos abre o cierra los botones secundarios:
-  - Estadísticas (`📊`), Configuración (`⚙️`), Sonido (`🎵`), Finalizar sesión (`🛑`) y menú de desarrollador (`🐛`).
+  - Estadísticas (`📊`), Configuración (`⚙️`), Sonido (`🎵`), Modos de respiración (`🫁`), Finalizar sesión (`🛑`) y menú de desarrollador (`🐛`).
   - Los botones se ocultan cuando se pulsa fuera de ellos o al cerrar overlays.
 - Finalizar sesión cierra la respiración en curso y muestra la vista de **Finalización de sesión**.
 - El menú de configuración permite borrar todos los datos guardados.
@@ -85,6 +87,7 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
   - Muestra hora de inicio y fin de la sesión.
   - Si se obtuvieron logros durante la sesión aparece un botón resaltando el último badge.
   - Animación de estrellas efímeras al completar la sesión.
+  - Antes de mostrar la tarjeta aparece un mensaje de **biofeedback** aleatorio (`BioFeedbackOverlay`).
   - Botón **Listo** vuelve a la pantalla principal y actualiza las estadísticas del día.
 
 ## Sistema de logros
@@ -132,6 +135,16 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
 - Los archivos `bosque.mp3`, `LLUVIA.mp3`, `fuego.mp3`, `mar.mp3`, `notado.mp3`,
   `bell.mp3` y `drop.mp3` deben ubicarse en `assets/sounds/`.
 
+## Modos de respiración
+
+- El overlay `BreathModesOverlay` muestra diferentes patrones científicos
+  definidos en `breath_patterns.json`.
+- Cada tarjeta incluye ícono, nombre y descripción del modo.
+- Al seleccionar uno se ajustan los tiempos y fases del `BreathCircle`.
+- Ejemplos incluidos: "Libre", "4-7-8", "Box Breathing", "Tres Respiraciones",
+  "Coherencia Cardíaca" y "6-2-7".
+- Se accede desde el botón de pulmones (`🫁`) en el menú principal.
+
 ## Modo desarrollador
 
 - El **DeveloperOverlay** ofrece dos funciones:
@@ -143,6 +156,12 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
 
 - `MainWindow` orquesta todos los widgets y controla el estado global de la sesión.
 - `DataStore` persiste la información en `calmio_data.json` dentro del directorio de usuario mediante `platformdirs`.
+- `SessionManager` separa la lógica de temporización y animaciones del círculo.
+- `MenuHandler` posiciona y muestra u oculta los botones de control.
+- `OverlayManager` abre y cierra las vistas secundarias.
+- `MessageHandler` administra los mensajes motivacionales.
+- `SoundManager` reproduce ambientes, notas y campanas.
+- `BioFeedbackOverlay` muestra un mensaje final antes del resumen de sesión.
 - Los tiempos de respiración se incrementan ligeramente con cada ciclo para guiar una respiración cada vez más profunda.
 - Las animaciones de fondo, texto y ondas se sincronizan con la fase de inhalación/exhalación.
 - El sistema admite modo claro u oscuro adaptándose a la paleta de Qt, modificando colores del fondo animado.
