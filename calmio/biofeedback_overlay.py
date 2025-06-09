@@ -22,6 +22,7 @@ class BioFeedbackOverlay(QWidget):
         font.setWeight(QFont.Bold)
         self.label.setFont(font)
         self.label.setAlignment(Qt.AlignCenter)
+        self.label.setWordWrap(True)
 
         self.opacity = QGraphicsOpacityEffect(self.label)
         self.label.setGraphicsEffect(self.opacity)
