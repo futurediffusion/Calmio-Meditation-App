@@ -65,6 +65,7 @@ class BreathCircle(QWidget):
         self.breath_started_callback = None
         self.breath_finished_callback = None
         self.exhale_started_callback = None
+        self.inhale_finished_callback = None
         self.ripple_spawned_callback = None
         self.breath_start_time = 0
         self.inhale_start_time = 0
@@ -242,6 +243,8 @@ class BreathCircle(QWidget):
             self.phase = 'idle'
         elif self.phase == 'inhaling':
             self.start_ripple()
+            if self.inhale_finished_callback:
+                self.inhale_finished_callback()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

@@ -90,6 +90,9 @@ class MainWindow(QMainWindow):
         self.circle.breath_finished_callback = self.session_manager.on_breath_end
         self.circle.exhale_started_callback = self.session_manager.on_exhale_start
         self.circle.ripple_spawned_callback = self.session_manager.start_waves
+        self.circle.inhale_finished_callback = (
+            self.sound_manager.play_drop
+        )
         self.update_speed()
 
         font = QFont("Sans Serif")
@@ -268,6 +271,7 @@ class MainWindow(QMainWindow):
         self.check_motivational_message(count)
         if hasattr(self, "sound_manager"):
             self.sound_manager.maybe_play_bell(count)
+            self.sound_manager.maybe_play_music(count)
         index = self._chakra_index_for_count(count)
         if getattr(self, "_chakra_index", None) != index:
             self._chakra_index = index
