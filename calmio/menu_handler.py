@@ -43,8 +43,6 @@ class MenuHandler:
         if self.window.main_menu_overlay.isVisible():
             self.close_main_menu()
         else:
-            # Hide any legacy control buttons before showing the modal
-            self.hide_control_buttons()
             self.window.main_menu_overlay.open()
 
     def close_main_menu(self) -> None:
