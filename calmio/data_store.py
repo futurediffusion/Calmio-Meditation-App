@@ -26,6 +26,7 @@ class DataStore:
                 "bell_enabled": False,
                 "music_mode": "scale",
                 "scale_type": "major",
+                "breath_volume": False,
             },
         }
         self.time_offset = timedelta()
@@ -76,10 +77,12 @@ class DataStore:
                             "bell_enabled": False,
                             "music_mode": "scale",
                             "scale_type": "major",
+                            "breath_volume": False,
                         }
                     else:
                         self.data["sound_settings"].setdefault("music_mode", "scale")
                         self.data["sound_settings"].setdefault("scale_type", "major")
+                        self.data["sound_settings"].setdefault("breath_volume", False)
             except (json.JSONDecodeError, IOError):
                 pass
 

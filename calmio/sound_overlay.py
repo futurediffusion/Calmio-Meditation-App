@@ -21,6 +21,7 @@ class SoundOverlay(QWidget):
     environment_changed = Signal(str)
     music_toggled = Signal(bool)
     bell_toggled = Signal(bool)
+    breath_volume_toggled = Signal(bool)
     volume_changed = Signal(int)
     bell_volume_changed = Signal(int)
     music_volume_changed = Signal(int)
@@ -108,6 +109,12 @@ class SoundOverlay(QWidget):
         self._update_bell_label(self.bell_chk.isChecked())
         layout.addWidget(self.bell_chk)
 
+        self.breath_chk = QCheckBox("\U0001FAC1 Modo respiraci\u00f3n [OFF]")
+        self.breath_chk.toggled.connect(self.breath_volume_toggled.emit)
+        self.breath_chk.toggled.connect(self._update_breath_label)
+        self._update_breath_label(self.breath_chk.isChecked())
+        layout.addWidget(self.breath_chk)
+
         self.adv_widget = QWidget()
         self.adv_widget.setStyleSheet(
             "background-color:#FFFFFF;border-radius:10px;padding:10px;"
@@ -185,6 +192,10 @@ class SoundOverlay(QWidget):
         state = "ON" if checked else "OFF"
         self.bell_chk.setText(f"\U0001F514 Campana cada 10 [{state}]")
 
+    def _update_breath_label(self, checked: bool) -> None:
+        state = "ON" if checked else "OFF"
+        self.breath_chk.setText(f"\U0001FAC1 Modo respiraci\u00f3n [{state}]")
+
     def _on_env_changed(self):
         if self.env_bosque.isChecked():
             env = "bosque"
@@ -222,4 +233,7 @@ class SoundOverlay(QWidget):
             self.scale_minor.setChecked(True)
         else:
             self.scale_major.setChecked(True)
+
+    def set_breath_volume(self, enabled: bool) -> None:
+        self.breath_chk.setChecked(enabled)
 

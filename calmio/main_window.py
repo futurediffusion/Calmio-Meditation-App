@@ -255,6 +255,7 @@ class MainWindow(QMainWindow):
         self.sound_overlay.mute_all.connect(self.sound_manager.mute_all)
         self.sound_overlay.music_mode_changed.connect(self.sound_manager.set_music_mode)
         self.sound_overlay.scale_changed.connect(self.sound_manager.set_scale_type)
+        self.sound_overlay.breath_volume_toggled.connect(self.sound_manager.set_breath_volume_enabled)
         self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
 
         self.breath_modes = BreathModesOverlay(self)
@@ -266,8 +267,10 @@ class MainWindow(QMainWindow):
 
         music_enabled = self.data_store.get_sound_setting("music_enabled", False)
         bell_enabled = self.data_store.get_sound_setting("bell_enabled", False)
+        breath_volume = self.data_store.get_sound_setting("breath_volume", False)
         self.sound_overlay.music_chk.setChecked(music_enabled)
         self.sound_overlay.bell_chk.setChecked(bell_enabled)
+        self.sound_overlay.set_breath_volume(breath_volume)
         mode = self.data_store.get_sound_setting("music_mode", "scale")
         scale = self.data_store.get_sound_setting("scale_type", "major")
         self.sound_overlay.set_music_mode(mode)
@@ -276,6 +279,7 @@ class MainWindow(QMainWindow):
         self.sound_manager.set_scale_type(scale)
         self.sound_manager.set_music_enabled(music_enabled)
         self.sound_manager.set_bell_enabled(bell_enabled)
+        self.sound_manager.set_breath_volume_enabled(breath_volume)
         self.sound_overlay.music_toggled.connect(
             lambda v: self.data_store.set_sound_setting("music_enabled", v)
         )
@@ -287,6 +291,9 @@ class MainWindow(QMainWindow):
         )
         self.sound_overlay.scale_changed.connect(
             lambda v: self.data_store.set_sound_setting("scale_type", v)
+        )
+        self.sound_overlay.breath_volume_toggled.connect(
+            lambda v: self.data_store.set_sound_setting("breath_volume", v)
         )
 
         # Initialize overlay with stored data
