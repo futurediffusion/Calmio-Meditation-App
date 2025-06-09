@@ -173,11 +173,7 @@ class SoundManager(QObject):
         player.setPosition(0)
         self._outputs["notado"].setVolume(self.music_volume / 100)
         player.play()
-        self._music_fade_start = time.monotonic()
-        if self._music_fade_timer is None:
-            self._music_fade_timer = QTimer(self)
-            self._music_fade_timer.timeout.connect(self._update_music_fade)
-        self._music_fade_timer.start(100)
+        # Fade-out removed so the note plays at full length
 
     def _update_music_fade(self) -> None:
         duration = 1.0
