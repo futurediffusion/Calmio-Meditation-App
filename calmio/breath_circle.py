@@ -349,13 +349,19 @@ class BreathCircle(QWidget):
         if not self.pattern:
             self.start_exhale()
         else:
-            if self.hold_timer.isActive():
-                self.hold_timer.stop()
+            hold_active = self.hold_timer.isActive()
             if self.phase in ("inhaling", "holding"):
                 # Interrupt cycle and reset
+                # Call start_exhale before stopping the hold timer so the
+                # cycle is marked invalid when releasing early from a hold
+                self.released_during_exhale = True
                 self.start_exhale()
+                if hold_active:
+                    self.hold_timer.stop()
                 self.phase_index = 0
             else:
+                if hold_active:
+                    self.hold_timer.stop()
                 self._maybe_start_phase()
 
     def _maybe_start_phase(self):

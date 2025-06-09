@@ -308,11 +308,15 @@ class MainWindow(QMainWindow):
         """Handle breath count updates after a full cycle."""
         self.check_motivational_message(count)
         if hasattr(self, "sound_manager"):
-            skip_music = (
-                self.current_pattern_id == "triple"
-                and self.circle.released_during_exhale
-            )
-            if not skip_music:
+            play_music = True
+            if self.current_pattern_id == "triple":
+                # Only play a note after completing three full breaths
+                play_music = (
+                    count % 3 == 0 and not self.circle.released_during_exhale
+                )
+            elif self.circle.released_during_exhale:
+                play_music = False
+            if play_music:
                 self.sound_manager.maybe_play_music(count)
             self.circle.released_during_exhale = False
         index = self._chakra_index_for_count(count)
