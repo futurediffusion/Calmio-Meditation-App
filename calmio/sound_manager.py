@@ -42,6 +42,7 @@ class SoundManager(QObject):
             1.887,
             2.0,
         ]
+        # Harmonic minor scale ratios (C D Eb F G Ab B C)
         self._minor_ratios = [
             1.0,
             1.122,
@@ -49,7 +50,7 @@ class SoundManager(QObject):
             1.335,
             1.498,
             1.587,
-            1.782,
+            1.887,
             2.0,
         ]
         sound_files = {
