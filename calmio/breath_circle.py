@@ -299,12 +299,12 @@ class BreathCircle(QWidget):
                 self.phase_colors.append(self.base_color)
                 expected = False
             else:
-                # hold phase color
+                # Hold phase keeps the current key state
                 self.phase_colors.append(self.retention_color)
-                # Expected state follows next phase
-                next_ph = pattern[(i + 1) % total]
-                next_name = next_ph.get("name", "").lower()
-                expected = "inh" in next_name
+                if i == 0:
+                    expected = True
+                else:
+                    expected = self.pattern_states[i - 1]
             self.pattern_states.append(expected)
         self.stop_animation()
 
@@ -343,7 +343,12 @@ class BreathCircle(QWidget):
         else:
             if self.hold_timer.isActive():
                 self.hold_timer.stop()
-            self._maybe_start_phase()
+            if self.phase in ("inhaling", "holding"):
+                # Interrupt cycle and reset
+                self.start_exhale()
+                self.phase_index = 0
+            else:
+                self._maybe_start_phase()
 
     def _maybe_start_phase(self):
         if not self.pattern:
