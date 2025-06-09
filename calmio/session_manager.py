@@ -14,6 +14,7 @@ class SessionManager:
             self.window.meditation_seconds += 1
             self.window.session_seconds += 1
             self.window.stats_overlay.update_minutes(self.window.meditation_seconds)
+            self.window.check_motivational_message(self.window.session_seconds)
 
     def start_waves(self, center, color):
         if hasattr(self.window, "wave_overlay"):
@@ -29,6 +30,7 @@ class SessionManager:
             self.window._chakra_index = 0
             if hasattr(self.window, "bg"):
                 self.window.bg.transition_to_index(0, duration=0)
+            self.window.message_handler.start_session()
         self.window.cycle_start = time.perf_counter()
 
         if (
@@ -139,6 +141,7 @@ class SessionManager:
         if not self.window.session_active:
             return
         self.window.session_active = False
+        self.window.message_handler.end_session()
         start_str = self.window.session_start.strftime("%H:%M:%S") if self.window.session_start else ""
         duration_seconds = self.window.session_seconds
         breaths = self.window.circle.breath_count

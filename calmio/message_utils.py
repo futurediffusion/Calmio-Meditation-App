@@ -1,4 +1,6 @@
 import json
+import random
+import time
 from pathlib import Path
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup, QVariantAnimation
 from PySide6.QtGui import QColor
@@ -12,6 +14,9 @@ class MessageHandler:
         self.motivational_messages = []
         self.message_schedule = set()
         self.message_index = 0
+        self.next_message_time = float("inf")
+        self.last_shown = {}
+        self.active = False
 
     # ------------------------------------------------------------------
     def load_messages(self):
@@ -33,6 +38,14 @@ class MessageHandler:
                 schedule.append(total)
             interval += 1
         self.message_schedule = set(schedule)
+
+    def start_session(self):
+        self.active = True
+        self.next_message_time = time.monotonic() + random.uniform(25, 60)
+
+    def end_session(self):
+        self.active = False
+        self.next_message_time = float("inf")
 
     def start_prompt_animation(self):
         self.window.message_label.setText("Toca para comenzar")
@@ -95,8 +108,23 @@ class MessageHandler:
         group.start()
         self.window.temp_msg_anim = group
 
-    def check_motivational_message(self, count):
-        if count in self.message_schedule and self.motivational_messages:
-            msg = self.motivational_messages[self.message_index % len(self.motivational_messages)]
-            self.message_index += 1
-            self.display_motivational_message(msg)
+    def check_motivational_message(self, _count=None):
+        if not self.active or not self.motivational_messages:
+            return
+
+        now = time.monotonic()
+        if now < self.next_message_time:
+            return
+
+        available = [
+            m
+            for m in self.motivational_messages
+            if now - self.last_shown.get(m, -float("inf")) >= 30
+        ]
+        if not available:
+            available = self.motivational_messages
+
+        msg = random.choice(available)
+        self.last_shown[msg] = now
+        self.display_motivational_message(msg)
+        self.next_message_time = now + random.uniform(25, 60)
