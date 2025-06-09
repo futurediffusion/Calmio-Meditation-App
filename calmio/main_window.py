@@ -315,10 +315,9 @@ class MainWindow(QMainWindow):
                     count % 3 == 0 and not self.circle.released_during_exhale
                 )
             elif self.current_pattern_id == "box":
-                # Play note only when the four-phase box cycle completes
-                play_music = (
-                    count % 4 == 0 and not self.circle.released_during_exhale
-                )
+                # For box breathing the note is triggered when the final hold
+                # ends, so don't play it here on exhale completion
+                play_music = False
             elif self.circle.released_during_exhale:
                 play_music = False
             if play_music:
@@ -351,9 +350,19 @@ class MainWindow(QMainWindow):
         self.session_manager.on_exhale_start(duration)
 
     def on_inhale_finished(self):
-        """Handle actions at the peak of an inhale."""
-        self.sound_manager.play_drop()
-        self.sound_manager.maybe_play_bell(self.circle.breath_count + 1)
+        """Handle actions when an inhale or final hold ends."""
+        # During box breathing play the musical note when the last hold
+        # completes instead of the usual drop cue.
+        if (
+            self.current_pattern_id == "box"
+            and self.circle.phase == "holding"
+            and self.circle.pattern
+            and self.circle.phase_index == len(self.circle.pattern) - 1
+        ):
+            self.sound_manager.maybe_play_music(self.circle.breath_count)
+        else:
+            self.sound_manager.play_drop()
+            self.sound_manager.maybe_play_bell(self.circle.breath_count + 1)
 
     def on_breath_end(self, duration, inhale, exhale):
         self.session_manager.on_breath_end(duration, inhale, exhale)
