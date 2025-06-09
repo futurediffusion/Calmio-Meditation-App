@@ -95,3 +95,15 @@ class OverlayManager:
         if self.window._badges_return:
             self.window._badges_return.show()
             self.window._badges_return.raise_()
+
+    # ------------------------------------------------------------------
+    def show_daily_challenge(self):
+        if not hasattr(self.window, "daily_challenge_overlay"):
+            return
+        self.window.daily_challenge_overlay.setGeometry(self.window.rect())
+        self.window.daily_challenge_overlay.show()
+        self.window.daily_challenge_overlay.raise_()
+
+    def close_daily_challenge(self):
+        if hasattr(self.window, "daily_challenge_overlay"):
+            self.window.daily_challenge_overlay.hide()

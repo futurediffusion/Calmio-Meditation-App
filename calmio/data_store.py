@@ -31,6 +31,7 @@ class DataStore:
                 "scale_type": "major",
                 "breath_volume": False,
             },
+            "daily_challenges": {},
         }
         self.time_offset = timedelta()
         self.load()
@@ -84,6 +85,8 @@ class DataStore:
                             "scale_type": "major",
                             "breath_volume": False,
                         }
+                    if "daily_challenges" not in self.data:
+                        self.data["daily_challenges"] = {}
                     else:
                         self.data["sound_settings"].setdefault("music_mode", "scale")
                         self.data["sound_settings"].setdefault("scale_type", "major")
@@ -171,6 +174,41 @@ class DataStore:
 
     def get_badges(self):
         return self.data.get("badges", {})
+
+    # ------------------------------------------------------------------
+    def get_challenge_for_date(self, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        if hasattr(date_obj, "date"):
+            date_obj = date_obj.date()
+        date_key = date_obj.isoformat()
+        return self.data.get("daily_challenges", {}).get(date_key)
+
+    def set_daily_challenge(self, text: str, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        if hasattr(date_obj, "date"):
+            date_obj = date_obj.date()
+        date_key = date_obj.isoformat()
+        self.data.setdefault("daily_challenges", {})[date_key] = {
+            "text": text,
+            "completed": False,
+        }
+        self.save()
+
+    def mark_challenge_completed(self, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        if hasattr(date_obj, "date"):
+            date_obj = date_obj.date()
+        date_key = date_obj.isoformat()
+        ch = self.data.setdefault("daily_challenges", {}).get(date_key)
+        if ch is None:
+            ch = {"text": "", "completed": True}
+            self.data["daily_challenges"][date_key] = ch
+        else:
+            ch["completed"] = True
+        self.save()
 
     def get_badges_for_date(self, date_obj):
         date_key = (
@@ -387,5 +425,6 @@ class DataStore:
                 "scale_type": "major",
                 "breath_volume": False,
             },
+            "daily_challenges": {},
         }
         self.save()

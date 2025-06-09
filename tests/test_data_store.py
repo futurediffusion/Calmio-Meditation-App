@@ -105,3 +105,21 @@ def test_three_day_streak_badge(tmp_path):
         ds.add_session(start + timedelta(days=i), seconds=60, breaths=1, inhale=3, exhale=3)
     third_day_badges = ds.get_badges_for_date(start + timedelta(days=2))
     assert BADGE_MAP["3_day_streak"] in third_day_badges
+
+
+def test_daily_challenge_persistence(tmp_path):
+    data_file = tmp_path / "data.json"
+    ds = DataStore(data_file)
+
+    ds.set_daily_challenge("Respira", date(2023, 1, 1))
+    ch = ds.get_challenge_for_date(date(2023, 1, 1))
+    assert ch["text"] == "Respira"
+    assert ch["completed"] is False
+
+    ds.mark_challenge_completed(date(2023, 1, 1))
+    ch2 = ds.get_challenge_for_date(date(2023, 1, 1))
+    assert ch2["completed"] is True
+
+    ds2 = DataStore(data_file)
+    ch3 = ds2.get_challenge_for_date(date(2023, 1, 1))
+    assert ch3["completed"] is True
