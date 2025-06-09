@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import random
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, QUrl
@@ -21,12 +22,36 @@ class SoundManager(QObject):
         self.bell_volume = 50
         self.bell_enabled = False
         self.music_enabled = False
+        self.music_mode = "scale"
+        self.scale_type = "major"
         self.current_env: str | None = None
         self._bell_fade_timer: QTimer | None = None
         self._bell_fade_start: float = 0.0
         self._fade_timer: QTimer | None = None  # legacy, kept for compatibility
         self._fade_start: float = 0.0
         self.note_index = 0
+        self._music_fade_timer: QTimer | None = None
+        self._music_fade_start: float = 0.0
+        self._major_ratios = [
+            1.0,
+            1.122,
+            1.26,
+            1.335,
+            1.498,
+            1.682,
+            1.887,
+            2.0,
+        ]
+        self._minor_ratios = [
+            1.0,
+            1.122,
+            1.189,
+            1.335,
+            1.498,
+            1.587,
+            1.782,
+            2.0,
+        ]
         sound_files = {
             "bosque": "bosque.mp3",
             "lluvia": "LLUVIA.mp3",
@@ -92,6 +117,14 @@ class SoundManager(QObject):
     def set_bell_enabled(self, enabled: bool) -> None:
         self.bell_enabled = enabled
 
+    def set_music_mode(self, mode: str) -> None:
+        self.music_mode = mode
+        self.note_index = 0
+
+    def set_scale_type(self, scale: str) -> None:
+        self.scale_type = scale
+        self.note_index = 0
+
     def set_music_enabled(self, enabled: bool) -> None:
         if self.music_enabled == enabled:
             return
@@ -128,23 +161,34 @@ class SoundManager(QObject):
     def maybe_play_music(self, count: int) -> None:
         if not self.music_enabled:
             return
-        ratios = [
-            1.0,
-            1.122,
-            1.26,
-            1.335,
-            1.498,
-            1.682,
-            1.887,
-            2.0,
-        ]
+        scale = self._major_ratios if self.scale_type == "major" else self._minor_ratios
+        if self.music_mode == "harmonic":
+            ratio = random.choice(scale)
+        else:
+            ratio = scale[self.note_index]
+            self.note_index = (self.note_index + 1) % len(scale)
         player = self._players["notado"]
         player.stop()
-        player.setPlaybackRate(ratios[self.note_index])
+        player.setPlaybackRate(ratio)
         player.setPosition(0)
         self._outputs["notado"].setVolume(self.music_volume / 100)
         player.play()
-        self.note_index = (self.note_index + 1) % len(ratios)
+        self._music_fade_start = time.monotonic()
+        if self._music_fade_timer is None:
+            self._music_fade_timer = QTimer(self)
+            self._music_fade_timer.timeout.connect(self._update_music_fade)
+        self._music_fade_timer.start(100)
+
+    def _update_music_fade(self) -> None:
+        duration = 1.0
+        elapsed = time.monotonic() - self._music_fade_start
+        if elapsed >= duration:
+            self._outputs["notado"].setVolume(0.0)
+            if self._music_fade_timer:
+                self._music_fade_timer.stop()
+            return
+        volume = (1 - elapsed / duration) * (self.music_volume / 100)
+        self._outputs["notado"].setVolume(volume)
 
     def play_drop(self) -> None:
         drop = self._players["drop"]
