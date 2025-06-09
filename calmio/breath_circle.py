@@ -164,10 +164,10 @@ class BreathCircle(QWidget):
         self.breath_start_time = time.perf_counter()
         self.inhale_start_time = self.breath_start_time
         target_color = color or self.complement_color
+        dur = (duration or self.inhale_time) / self.speed_multiplier
         if self.breath_started_callback:
             self.breath_started_callback(target_color, dur)
         self.cycle_valid = False
-        dur = (duration or self.inhale_time) / self.speed_multiplier
         target_r = self.max_radius if end_radius is None else end_radius
         self.animate(
             self._radius,
