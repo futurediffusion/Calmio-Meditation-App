@@ -15,10 +15,22 @@ class MenuHandler:
         x = self.window.width() - self.window.menu_button.width() - margin
         y = self.window.height() - self.window.menu_button.height() - margin
         self.window.menu_button.move(x, y)
+        buttons = [
+            self.window.options_button,
+            self.window.stats_button,
+            self.window.end_button,
+            self.window.dev_button,
+        ]
+        if hasattr(self.window, "sound_button"):
+            buttons.append(self.window.sound_button)
+        if hasattr(self.window, "patterns_button"):
+            buttons.append(self.window.patterns_button)
+        for i, btn in enumerate(buttons, start=1):
+            btn.move(x - i * (self.window.menu_button.width() + margin), y)
         if hasattr(self.window, "dev_menu"):
             self.window.dev_menu.move(
-                x - self.window.dev_menu.width() + self.window.menu_button.width(),
-                y - self.window.dev_menu.height() - margin,
+                self.window.dev_button.x() - self.window.dev_menu.width() + self.window.dev_button.width(),
+                self.window.dev_button.y() - self.window.dev_menu.height() - margin,
             )
         self.window.stats_overlay.setGeometry(self.window.rect())
         self.window.today_sessions.setGeometry(self.window.rect())
@@ -60,7 +72,11 @@ class MenuHandler:
         self.hide_control_buttons()
 
     def toggle_developer_menu(self) -> None:
-        pass
+        if self.window.dev_menu.isVisible():
+            self.window.dev_menu.hide()
+        else:
+            self.window.dev_menu.show()
+            self.window.dev_menu.raise_()
 
     def toggle_sound(self) -> None:
         if self.window.sound_overlay.isVisible():

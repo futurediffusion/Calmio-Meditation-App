@@ -182,6 +182,7 @@ class SessionManager:
             self.window.data_store.get_badges_for_date(self.window.data_store.now())
         )
         self.window.menu_handler.hide_control_buttons()
+        self.window.dev_menu.hide()
 
         if hasattr(self.window, "bg_anim") and self.window.bg_anim.state() != QAbstractAnimation.Stopped:
             self.window.bg_anim.stop()
