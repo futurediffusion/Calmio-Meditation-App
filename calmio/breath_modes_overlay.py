@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QSizePolicy,
+    QLayout,
 )
 import json
 from pathlib import Path
@@ -31,10 +32,12 @@ class BreathModesOverlay(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+        layout.setSizeConstraint(QLayout.SetMinimumSize)
 
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("QScrollArea{border:none;}")
+        self.scroll.setFrameShape(QFrame.NoFrame)
         layout.addWidget(self.scroll)
 
         container = QWidget()
@@ -42,6 +45,7 @@ class BreathModesOverlay(QWidget):
         c_layout = QVBoxLayout(container)
         c_layout.setContentsMargins(20, 20, 20, 20)
         c_layout.setSpacing(15)
+        c_layout.setSizeConstraint(QLayout.SetMinimumSize)
 
         header = QHBoxLayout()
         self.back_btn = QPushButton("\u2190")
@@ -63,9 +67,13 @@ class BreathModesOverlay(QWidget):
 
         self.pattern_container = QVBoxLayout()
         self.pattern_container.setSpacing(10)
+        self.pattern_container.setSizeConstraint(QLayout.SetMinimumSize)
         c_layout.addLayout(self.pattern_container)
         c_layout.addStretch()
 
+        self.pattern_rows = []
+        self.info_labels = []
+        self.use_buttons = []
         self._load_patterns()
 
     def _load_patterns(self):
@@ -79,11 +87,14 @@ class BreathModesOverlay(QWidget):
 
     def _add_pattern_row(self, pat: dict) -> None:
         row = QFrame()
+        row.setObjectName("patternRow")
         row.setStyleSheet(
-            "background:white;border-radius:15px;padding:10px;"
+            "QFrame#patternRow{background:white;border-radius:15px;}"
+            "QFrame#patternRow:hover{background:#F2F2F2;border:1px solid #CCE4FF;}"
         )
-        row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         r_layout = QHBoxLayout(row)
+        r_layout.setContentsMargins(10, 10, 10, 10)
         r_layout.setSpacing(8)
         name_lbl = QLabel(pat.get("name", ""))
         name_font = QFont("Sans Serif")
@@ -97,14 +108,40 @@ class BreathModesOverlay(QWidget):
         info_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sel_btn = QPushButton("Usar")
         sel_btn.setStyleSheet(
-            "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;padding:6px 12px;}"
+            "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
+            "padding:6px 12px;min-width:60px;}"
         )
         sel_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         sel_btn.clicked.connect(lambda _, p=pat: self.pattern_selected.emit(p))
         r_layout.addWidget(name_lbl)
         r_layout.addStretch(1)
         r_layout.addWidget(info_lbl, stretch=2)
-        r_layout.addWidget(sel_btn)
+        r_layout.addWidget(sel_btn, alignment=Qt.AlignRight)
         self.pattern_container.addWidget(row)
+        self.pattern_rows.append(row)
+        self.info_labels.append(info_lbl)
+        self.use_buttons.append(sel_btn)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        max_w = int(self.width() * 0.9)
+        font_size = 12 if self.width() < 400 else 14
+        for row in self.pattern_rows:
+            row.setMaximumWidth(max_w)
+        for lbl in self.info_labels:
+            f = lbl.font()
+            f.setPointSize(font_size)
+            lbl.setFont(f)
+        for btn in self.use_buttons:
+            if self.width() < 400:
+                btn.setStyleSheet(
+                    "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
+                    "padding:4px 8px;min-width:60px;}"
+                )
+            else:
+                btn.setStyleSheet(
+                    "QPushButton{background-color:#CCE4FF;border:none;border-radius:10px;"
+                    "padding:6px 12px;min-width:60px;}"
+                )
 
 
