@@ -8,6 +8,7 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .options_overlay import OptionsOverlay
 from .sound_overlay import SoundOverlay
+from .breath_modes_overlay import BreathModesOverlay
 from .main_window import MainWindow
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -26,6 +27,7 @@ __all__ = [
     "SessionDetailsView",
     "OptionsOverlay",
     "SoundOverlay",
+    "BreathModesOverlay",
     "MainWindow",
     "AnimatedBackground",
     "WaveOverlay",

@@ -74,6 +74,10 @@ class BreathCircle(QWidget):
         self._ripple_opacity = 0.0
         self.ripple_anim = None
         self.ripples = []
+        self.pattern = None
+        self.phase_index = 0
+        self.phase_colors = []
+        self.pattern_anim = None
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -259,3 +263,69 @@ class BreathCircle(QWidget):
             event.accept()
         else:
             super().mouseReleaseEvent(event)
+
+    # ------------------------------------------------------------------
+    def _generate_phase_colors(self, n: int):
+        colors = [self.base_color, self.complement_color]
+        if n <= 2:
+            return colors[:n]
+        extra = []
+        for i in range(n - 2):
+            if i % 2 == 0:
+                extra.append(self.base_color.lighter(120 + i * 10))
+            else:
+                extra.append(self.complement_color.darker(120 + i * 10))
+        return colors + extra
+
+    def set_pattern(self, pattern: list[dict]):
+        self.pattern = pattern
+        self.phase_colors = self._generate_phase_colors(len(pattern))
+        if self.pattern_anim:
+            self.pattern_anim.stop()
+            self.pattern_anim = None
+
+    def start_pattern(self):
+        if not self.pattern:
+            return
+        if self.pattern_anim and self.pattern_anim.state() != QPropertyAnimation.Stopped:
+            self.pattern_anim.stop()
+        self.pattern_anim = self._build_pattern_animation()
+        self.pattern_anim.start()
+
+    def stop_pattern(self):
+        if self.pattern_anim:
+            self.pattern_anim.stop()
+            self.pattern_anim = None
+
+    def _build_pattern_animation(self):
+        group = QSequentialAnimationGroup(self)
+        radius = self.min_radius
+        color = self.base_color
+        for idx, phase in enumerate(self.pattern):
+            dur = int(phase.get("duration", 1) * 1000 / self.speed_multiplier)
+            target_color = self.phase_colors[idx]
+            name = phase.get("name", "").lower()
+            start_radius = radius
+            end_radius = radius
+            if "inh" in name:
+                end_radius = self.max_radius
+            elif "exh" in name:
+                end_radius = self.min_radius
+            r_anim = QPropertyAnimation(self, b"radius")
+            r_anim.setDuration(dur)
+            r_anim.setStartValue(start_radius)
+            r_anim.setEndValue(end_radius)
+            r_anim.setEasingCurve(QEasingCurve.InOutSine)
+            c_anim = QPropertyAnimation(self, b"color")
+            c_anim.setDuration(dur)
+            c_anim.setStartValue(color)
+            c_anim.setEndValue(target_color)
+            c_anim.setEasingCurve(QEasingCurve.InOutSine)
+            pg = QParallelAnimationGroup()
+            pg.addAnimation(r_anim)
+            pg.addAnimation(c_anim)
+            group.addAnimation(pg)
+            radius = end_radius
+            color = target_color
+        group.finished.connect(self.start_pattern)
+        return group

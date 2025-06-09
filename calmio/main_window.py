@@ -33,6 +33,7 @@ from .badges_view import BadgesView
 from .options_overlay import OptionsOverlay
 from .developer_overlay import DeveloperOverlay
 from .sound_overlay import SoundOverlay
+from .breath_modes_overlay import BreathModesOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -173,6 +174,7 @@ class MainWindow(QMainWindow):
         self.end_button = QPushButton("\U0001F6D1", self)
         self.dev_button = QPushButton("\U0001F41B", self)
         self.sound_button = QPushButton("\U0001F3B5", self)
+        self.patterns_button = QPushButton("\U0001FAC2", self)
 
         self.control_buttons = [
             self.options_button,
@@ -180,6 +182,7 @@ class MainWindow(QMainWindow):
             self.end_button,
             self.dev_button,
             self.sound_button,
+            self.patterns_button,
         ]
         for btn in self.control_buttons:
             self._setup_control_button(btn)
@@ -240,6 +243,13 @@ class MainWindow(QMainWindow):
         self.sound_overlay.music_mode_changed.connect(self.sound_manager.set_music_mode)
         self.sound_overlay.scale_changed.connect(self.sound_manager.set_scale_type)
         self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
+
+        self.breath_modes = BreathModesOverlay(self)
+        self.breath_modes.setGeometry(self.rect())
+        self.breath_modes.hide()
+        self.breath_modes.back_requested.connect(self.menu_handler.close_breath_modes)
+        self.breath_modes.pattern_selected.connect(self._on_pattern_selected)
+        self.patterns_button.clicked.connect(self.menu_handler.toggle_breath_modes)
 
         music_enabled = self.data_store.get_sound_setting("music_enabled", False)
         bell_enabled = self.data_store.get_sound_setting("bell_enabled", False)
@@ -379,6 +389,7 @@ class MainWindow(QMainWindow):
                 or self.badges_view.geometry().contains(pos)
                 or self.options_overlay.geometry().contains(pos)
                 or self.sound_overlay.geometry().contains(pos)
+                or self.breath_modes.geometry().contains(pos)
                 ):
                 self.menu_handler.hide_control_buttons()
                 self.dev_menu.hide()
@@ -388,6 +399,7 @@ class MainWindow(QMainWindow):
                 self.badges_view.hide()
                 self.options_overlay.hide()
                 self.sound_overlay.hide()
+                self.breath_modes.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -420,6 +432,7 @@ class MainWindow(QMainWindow):
             or self.badges_view.geometry().contains(pos)
             or self.options_overlay.geometry().contains(pos)
             or self.sound_overlay.geometry().contains(pos)
+            or self.breath_modes.geometry().contains(pos)
         ):
             self.menu_handler.hide_control_buttons()
             self.dev_menu.hide()
@@ -429,6 +442,7 @@ class MainWindow(QMainWindow):
             self.badges_view.hide()
             self.options_overlay.hide()
             self.sound_overlay.hide()
+            self.breath_modes.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
@@ -503,3 +517,15 @@ class MainWindow(QMainWindow):
 
     def show_control_buttons(self) -> None:
         self.menu_handler.show_control_buttons()
+
+    def toggle_breath_modes(self) -> None:
+        self.menu_handler.toggle_breath_modes()
+
+    def close_breath_modes(self) -> None:
+        self.menu_handler.close_breath_modes()
+
+    def _on_pattern_selected(self, pattern: dict) -> None:
+        phases = pattern.get("phases", [])
+        self.circle.set_pattern(phases)
+        self.circle.start_pattern()
+        self.menu_handler.close_breath_modes()
