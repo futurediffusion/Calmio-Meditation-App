@@ -51,11 +51,14 @@ class MenuHandler:
 
     # --- visibility toggles --------------------------------------------
     def toggle_menu(self) -> None:
-        if self.window.options_button.isVisible():
-            self.hide_control_buttons()
-            self.window.dev_menu.hide()
+        """Show or hide the glass style main menu."""
+        if self.window.main_menu_overlay.isVisible():
+            self.close_main_menu()
         else:
-            self.show_control_buttons()
+            self.window.main_menu_overlay.open()
+
+    def close_main_menu(self) -> None:
+        self.window.main_menu_overlay.close()
 
     def toggle_options(self) -> None:
         if self.window.options_overlay.isVisible():
@@ -96,6 +99,17 @@ class MenuHandler:
     def close_breath_modes(self) -> None:
         self.window.breath_modes.hide()
         self.hide_control_buttons()
+
+    def toggle_mantras(self) -> None:
+        if self.window.mantras_overlay.isVisible():
+            self.close_mantras()
+        else:
+            self.window.mantras_overlay.show()
+            self.window.mantras_overlay.raise_()
+
+    def close_mantras(self) -> None:
+        self.window.mantras_overlay.hide()
+
 
     def hide_control_buttons(self) -> None:
         for btn in self.window.control_buttons:
