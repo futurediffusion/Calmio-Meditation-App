@@ -83,7 +83,7 @@ class BadgesView(QWidget):
     ]
 
     def set_badges(self, badges):
-        from .badges import BADGE_NAMES
+        from .achievements import get_badge_info
 
         for i in reversed(range(self.list_layout.count() - 1)):
             item = self.list_layout.takeAt(i)
@@ -112,7 +112,8 @@ class BadgesView(QWidget):
             row.setContentsMargins(6, 2, 6, 2)
             level = min(count, len(self.LEVEL_EMOJIS))
             medal = self.LEVEL_EMOJIS[level - 1]
-            text = QLabel(f"{BADGE_NAMES.get(code, code)} - Nivel {level}")
+            info = get_badge_info(code)
+            text = QLabel(f"{info.get('emoji', '')} {info.get('nombre', code)} - Nivel {level}")
             txt_font = QFont("Sans Serif")
             txt_font.setBold(True)
             text.setFont(txt_font)

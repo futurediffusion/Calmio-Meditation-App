@@ -136,7 +136,12 @@ class DataStore:
             }
         )
         new_badges = self._check_badges(start_dt, seconds, breaths)
-        daily_only = {
+        try:
+            from .achievements import BADGE_MAP
+        except ImportError:  # fallback when imported as standalone
+            from achievements import BADGE_MAP
+
+        daily_only_codes = {
             "1_session_day",
             "2_sessions_day",
             "3_sessions_day",
@@ -144,6 +149,7 @@ class DataStore:
             "7_day_streak",
             "30_day_streak",
         }
+        daily_only = {BADGE_MAP.get(c, c) for c in daily_only_codes}
         session_badges = [b for b in new_badges if b not in daily_only]
         # store only session-related badges with the session
         self.data["sessions"][-1]["badges"] = list(session_badges)
@@ -206,6 +212,11 @@ class DataStore:
 
     def _check_badges(self, start_dt, session_seconds, breaths):
         """Check and award badges based on totals, session data and streak."""
+        try:
+            from .achievements import BADGE_MAP
+        except ImportError:
+            from achievements import BADGE_MAP
+
         new_badges = []
 
         # total meditation time badges
@@ -252,7 +263,8 @@ class DataStore:
         if self.data.get("streak", 1) >= 30 and "30_day_streak" not in self.data["badges"]:
             new_badges.append("30_day_streak")
 
-        return new_badges
+        # Convert internal codes to catalog ids
+        return [BADGE_MAP.get(b, b) for b in new_badges]
 
     def get_weekly_summary(self, reference_date=None):
         """Return stats for the week of the given date (default today)."""

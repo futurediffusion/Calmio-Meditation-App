@@ -136,10 +136,11 @@ class SessionComplete(QWidget):
         self.end_lbl.setText(f"\u23F0 Fin: {end}")
 
     def show_badges(self, badges):
-        from .badges import BADGE_NAMES
+        from .achievements import get_badge_info
         self._badges = list(badges)
         if badges:
-            name = BADGE_NAMES.get(badges[-1], badges[-1])
+            info = get_badge_info(badges[-1])
+            name = info.get("nombre", badges[-1])
             self.badge_btn.setText("\u2728 " + name)
             self.badge_btn.show()
         else:
