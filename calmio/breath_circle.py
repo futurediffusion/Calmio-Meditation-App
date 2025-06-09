@@ -67,6 +67,7 @@ class BreathCircle(QWidget):
         self.breath_started_callback = None
         self.breath_finished_callback = None
         self.exhale_started_callback = None
+        self.hold_started_callback = None
         self.inhale_finished_callback = None
         self.ripple_spawned_callback = None
         self.breath_start_time = 0
@@ -162,8 +163,9 @@ class BreathCircle(QWidget):
         self.phase = 'inhaling'
         self.breath_start_time = time.perf_counter()
         self.inhale_start_time = self.breath_start_time
+        target_color = color or self.complement_color
         if self.breath_started_callback:
-            self.breath_started_callback()
+            self.breath_started_callback(target_color, dur)
         self.cycle_valid = False
         dur = (duration or self.inhale_time) / self.speed_multiplier
         target_r = self.max_radius if end_radius is None else end_radius
@@ -171,7 +173,7 @@ class BreathCircle(QWidget):
             self._radius,
             target_r,
             dur,
-            target_color=color or self.complement_color,
+            target_color=target_color,
         )
 
     def start_exhale(self, color=None, duration=None, end_radius=None):
@@ -187,13 +189,18 @@ class BreathCircle(QWidget):
             # Trigger ripple/wave when exiting a hold early
             self.start_ripple()
         self.phase = 'exhaling'
+        target_color = color or self.base_color
         dur = (duration if duration is not None else (self.exhale_time if self.cycle_valid else 2000))
         dur /= self.speed_multiplier
         if self.exhale_started_callback:
-            self.exhale_started_callback(dur)
+            self.exhale_started_callback(dur, target_color)
         target_r = self.min_radius if end_radius is None else end_radius
-        self.animate(self._radius, target_r, dur,
-                     target_color=color or self.base_color)
+        self.animate(
+            self._radius,
+            target_r,
+            dur,
+            target_color=target_color,
+        )
 
     def start_hold(self, color=None, duration=None, target_radius=None):
         """Animate color transition during the retention phase."""
@@ -202,9 +209,10 @@ class BreathCircle(QWidget):
         self.phase = 'holding'
         self.animation = QParallelAnimationGroup(self)
 
+        target_color = color or self.retention_color
         color_anim = QPropertyAnimation(self, b"color")
         color_anim.setStartValue(self._color)
-        color_anim.setEndValue(color or self.retention_color)
+        color_anim.setEndValue(target_color)
         dur = int((duration or 0) / self.speed_multiplier)
         color_anim.setDuration(dur)
         color_anim.setEasingCurve(QEasingCurve.InOutSine)
@@ -220,6 +228,8 @@ class BreathCircle(QWidget):
 
         self.animation.start()
         self.hold_timer.start(dur)
+        if self.hold_started_callback:
+            self.hold_started_callback(dur, target_color)
 
     def animate(self, start, end, duration, target_color):
         if self.animation:
