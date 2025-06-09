@@ -35,6 +35,8 @@ from .options_overlay import OptionsOverlay
 from .developer_overlay import DeveloperOverlay
 from .sound_overlay import SoundOverlay
 from .breath_modes_overlay import BreathModesOverlay
+from .main_menu_overlay import MainMenuOverlay
+from .mantras_overlay import MantrasOverlay
 from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
@@ -268,6 +270,20 @@ class MainWindow(QMainWindow):
         self.breath_modes.pattern_selected.connect(self._on_pattern_selected)
         self.patterns_button.clicked.connect(self.menu_handler.toggle_breath_modes)
 
+        self.mantras_overlay = MantrasOverlay(self)
+        self.mantras_overlay.setGeometry(self.rect())
+        self.mantras_overlay.hide()
+        self.mantras_overlay.back_requested.connect(self.menu_handler.close_mantras)
+
+        self.main_menu_overlay = MainMenuOverlay(self)
+        self.main_menu_overlay.hide()
+        self.main_menu_overlay.music_requested.connect(self.menu_handler.toggle_sound)
+        self.main_menu_overlay.breathing_requested.connect(self.menu_handler.toggle_breath_modes)
+        self.main_menu_overlay.mantras_requested.connect(self.menu_handler.toggle_mantras)
+        self.main_menu_overlay.achievements_requested.connect(self.open_today_badges)
+        self.main_menu_overlay.settings_requested.connect(self.menu_handler.toggle_options)
+        self.main_menu_overlay.closed.connect(lambda: None)
+
         music_enabled = self.data_store.get_sound_setting("music_enabled", False)
         bell_enabled = self.data_store.get_sound_setting("bell_enabled", False)
         breath_volume = self.data_store.get_sound_setting("breath_volume", False)
@@ -423,6 +439,14 @@ class MainWindow(QMainWindow):
             self.wave_overlay.setGeometry(self.rect())
         if hasattr(self, "biofeedback_overlay"):
             self.biofeedback_overlay.setGeometry(self.rect())
+        if hasattr(self, "main_menu_overlay") and self.main_menu_overlay.isVisible():
+            w = int(self.width() * 0.8)
+            h = int(self.height() * 0.6)
+            x = (self.width() - w) // 2
+            y = (self.height() - h) // 2
+            self.main_menu_overlay.setGeometry(x, y, w, h)
+        if hasattr(self, "mantras_overlay"):
+            self.mantras_overlay.setGeometry(self.rect())
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
@@ -444,12 +468,15 @@ class MainWindow(QMainWindow):
                 or self.options_overlay.geometry().contains(pos)
                 or self.sound_overlay.geometry().contains(pos)
                 or self.breath_modes.geometry().contains(pos)
+                or self.main_menu_overlay.geometry().contains(pos)
+                or self.mantras_overlay.geometry().contains(pos)
                 or (
                     hasattr(self, "daily_challenge_overlay")
                     and self.daily_challenge_overlay.geometry().contains(pos)
                 )
                 ):
-                self.menu_handler.hide_control_buttons()
+                self.menu_handler.close_main_menu()
+                self.menu_handler.close_mantras()
                 self.dev_menu.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
@@ -493,12 +520,15 @@ class MainWindow(QMainWindow):
             or self.options_overlay.geometry().contains(pos)
             or self.sound_overlay.geometry().contains(pos)
             or self.breath_modes.geometry().contains(pos)
+            or self.main_menu_overlay.geometry().contains(pos)
+            or self.mantras_overlay.geometry().contains(pos)
             or (
                 hasattr(self, "daily_challenge_overlay")
                 and self.daily_challenge_overlay.geometry().contains(pos)
             )
         ):
-            self.menu_handler.hide_control_buttons()
+            self.menu_handler.close_main_menu()
+            self.menu_handler.close_mantras()
             self.dev_menu.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
