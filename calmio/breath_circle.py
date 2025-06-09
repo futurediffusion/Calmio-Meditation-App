@@ -77,7 +77,8 @@ class BreathCircle(QWidget):
         self.pattern = None
         self.phase_index = 0
         self.phase_colors = []
-        self.pattern_anim = None
+        self.pattern_states = []
+        self.key_pressed = False
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -149,8 +150,8 @@ class BreathCircle(QWidget):
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(center, self._radius, self._radius)
 
-    def start_inhale(self):
-        if self.phase != 'idle':
+    def start_inhale(self, color=None, duration=None):
+        if self.phase not in ('idle', 'holding'):
             return
         self.phase = 'inhaling'
         self.breath_start_time = time.perf_counter()
@@ -158,26 +159,26 @@ class BreathCircle(QWidget):
         if self.breath_started_callback:
             self.breath_started_callback()
         self.cycle_valid = False
-        dur = self.inhale_time / self.speed_multiplier
+        dur = (duration or self.inhale_time) / self.speed_multiplier
         self.animate(
             self._radius,
             self.max_radius,
             dur,
-            target_color=self.complement_color,
+            target_color=color or self.complement_color,
         )
 
-    def start_exhale(self):
-        if self.phase != 'inhaling':
+    def start_exhale(self, color=None, duration=None):
+        if self.phase not in ('inhaling', 'holding'):
             return
         self.cycle_valid = self._radius >= self.max_radius - 1
         self.exhale_start_time = time.perf_counter()
         self.phase = 'exhaling'
-        duration = self.exhale_time if self.cycle_valid else 2000
-        duration /= self.speed_multiplier
+        dur = (duration if duration is not None else (self.exhale_time if self.cycle_valid else 2000))
+        dur /= self.speed_multiplier
         if self.exhale_started_callback:
-            self.exhale_started_callback(duration)
-        self.animate(self._radius, self.min_radius, duration,
-                     target_color=self.base_color)
+            self.exhale_started_callback(dur)
+        self.animate(self._radius, self.min_radius, dur,
+                     target_color=color or self.base_color)
 
     def animate(self, start, end, duration, target_color):
         if self.animation:
@@ -252,14 +253,14 @@ class BreathCircle(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.start_inhale()
+            self.on_press()
             event.accept()
         else:
             super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.start_exhale()
+            self.on_release()
             event.accept()
         else:
             super().mouseReleaseEvent(event)
@@ -279,55 +280,91 @@ class BreathCircle(QWidget):
 
     def set_pattern(self, pattern: list[dict]):
         self.pattern = pattern
+        self.phase_index = 0
         self.phase_colors = self._generate_phase_colors(len(pattern))
-        if self.pattern_anim:
-            self.pattern_anim.stop()
-            self.pattern_anim = None
+        self.pattern_states = []
+        state = False
+        for ph in pattern:
+            name = ph.get("name", "").lower()
+            if "inh" in name:
+                state = True
+            elif "exh" in name:
+                state = False
+            # holds keep previous state
+            self.pattern_states.append(state)
+        self.stop_animation()
 
-    def start_pattern(self):
+    def stop_animation(self):
+        if self.animation:
+            self.animation.stop()
+            self.animation = None
+
+    def on_press(self):
+        self.key_pressed = True
+        if not self.pattern:
+            self.start_inhale()
+        else:
+            self._maybe_start_phase()
+
+    def on_release(self):
+        self.key_pressed = False
+        if not self.pattern:
+            self.start_exhale()
+        else:
+            self._maybe_start_phase()
+
+    def _maybe_start_phase(self):
         if not self.pattern:
             return
-        if self.pattern_anim and self.pattern_anim.state() != QPropertyAnimation.Stopped:
-            self.pattern_anim.stop()
-        self.pattern_anim = self._build_pattern_animation()
-        self.pattern_anim.start()
+        if self.phase_index >= len(self.pattern):
+            self.phase_index = 0
+        expected = self.pattern_states[self.phase_index]
+        if expected != self.key_pressed:
+            return
+        self._start_phase(self.phase_index)
 
-    def stop_pattern(self):
-        if self.pattern_anim:
-            self.pattern_anim.stop()
-            self.pattern_anim = None
+    def _start_phase(self, index: int):
+        self.phase_index = index
+        phase = self.pattern[index]
+        name = phase.get("name", "").lower()
+        dur = int(phase.get("duration", 1) * 1000)
+        color = self.phase_colors[index]
+        if "inh" in name:
+            self.start_inhale(color=color, duration=dur)
+            self.animation.finished.disconnect(self.animation_finished)
+        elif "exh" in name:
+            self.start_exhale(color=color, duration=dur)
+            self.animation.finished.disconnect(self.animation_finished)
+        else:
+            # Hold phase
+            self.phase = "holding"
+            self.setColor(color)
+            self.update()
+            return
+        self.animation.finished.connect(self._on_phase_animation_finished)
 
-    def _build_pattern_animation(self):
-        group = QSequentialAnimationGroup(self)
-        radius = self.min_radius
-        color = self.base_color
-        for idx, phase in enumerate(self.pattern):
-            dur = int(phase.get("duration", 1) * 1000 / self.speed_multiplier)
-            target_color = self.phase_colors[idx]
-            name = phase.get("name", "").lower()
-            start_radius = radius
-            end_radius = radius
-            if "inh" in name:
-                end_radius = self.max_radius
-            elif "exh" in name:
-                end_radius = self.min_radius
-            r_anim = QPropertyAnimation(self, b"radius")
-            r_anim.setDuration(dur)
-            r_anim.setStartValue(start_radius)
-            r_anim.setEndValue(end_radius)
-            r_anim.setEasingCurve(QEasingCurve.InOutSine)
-            c_anim = QPropertyAnimation(self, b"color")
-            c_anim.setDuration(dur)
-            c_anim.setStartValue(color)
-            c_anim.setEndValue(target_color)
-            c_anim.setEasingCurve(QEasingCurve.InOutSine)
-            pg = QParallelAnimationGroup()
-            pg.addAnimation(r_anim)
-            pg.addAnimation(c_anim)
-            if idx < len(self.pattern) - 1:
-                pg.finished.connect(self.start_ripple)
-            group.addAnimation(pg)
-            radius = end_radius
-            color = target_color
-        group.finished.connect(self.start_pattern)
-        return group
+    def _on_phase_animation_finished(self):
+        self.animation.finished.disconnect(self._on_phase_animation_finished)
+        if self.phase == 'inhaling':
+            self.start_ripple()
+            if self.inhale_finished_callback:
+                self.inhale_finished_callback()
+        elif self.phase == 'exhaling':
+            if self.cycle_valid:
+                exhale_end = time.perf_counter()
+                duration = exhale_end - self.breath_start_time
+                inhale_dur = self.exhale_start_time - self.inhale_start_time
+                exhale_dur = exhale_end - self.exhale_start_time
+                self.breath_count += 1
+                if self.count_changed_callback:
+                    self.count_changed_callback(self.breath_count)
+                if self.breath_finished_callback:
+                    self.breath_finished_callback(duration, inhale_dur, exhale_dur)
+            self.breath_start_time = 0
+            self.phase = 'idle'
+        self.phase_index += 1
+        if self.phase_index >= len(self.pattern):
+            self.phase_index = 0
+        expected = self.pattern_states[self.phase_index]
+        if expected == self.key_pressed:
+            self._start_phase(self.phase_index)

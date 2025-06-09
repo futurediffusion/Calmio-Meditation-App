@@ -347,14 +347,14 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
-            self.circle.start_inhale()
+            self.circle.on_press()
             event.accept()
         else:
             super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Space and not event.isAutoRepeat():
-            self.circle.start_exhale()
+            self.circle.on_release()
             event.accept()
         else:
             super().keyReleaseEvent(event)
@@ -527,5 +527,4 @@ class MainWindow(QMainWindow):
     def _on_pattern_selected(self, pattern: dict) -> None:
         phases = pattern.get("phases", [])
         self.circle.set_pattern(phases)
-        self.circle.start_pattern()
         self.menu_handler.close_breath_modes()
