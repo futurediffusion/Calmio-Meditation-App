@@ -266,7 +266,7 @@ class BreathCircle(QWidget):
                 self.exhale_time += self.increment
             self.breath_start_time = 0
             self.phase = 'idle'
-        self.released_during_exhale = False
+            self.released_during_exhale = False
         elif self.phase == 'inhaling':
             self.start_ripple()
             if self.inhale_finished_callback:
