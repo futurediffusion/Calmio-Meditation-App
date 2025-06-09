@@ -37,14 +37,5 @@
       {"name": "Exhalar", "duration": 6}
     ],
     "description": "Sincroniza respiración y corazón."
-  },
-  {
-    "id": "4-6",
-    "name": "4-6",
-    "phases": [
-      {"name": "Inhalar", "duration": 4},
-      {"name": "Exhalar", "duration": 6}
-    ],
-    "description": "Relaja y libera tensión."
   }
 ]
