@@ -391,14 +391,14 @@ class BreathCircle(QWidget):
         if "inh" in name:
             self.start_inhale(color=color, duration=dur)
             try:
-                self.animation.finished.disconnect(self.animation_finished)
+                self.animation.finished.disconnect()
             except (TypeError, RuntimeError):
                 pass
             self.animation.finished.connect(self._on_phase_animation_finished)
         elif "exh" in name:
             self.start_exhale(color=color, duration=dur)
             try:
-                self.animation.finished.disconnect(self.animation_finished)
+                self.animation.finished.disconnect()
             except (TypeError, RuntimeError):
                 pass
             self.animation.finished.connect(self._on_phase_animation_finished)
@@ -409,7 +409,7 @@ class BreathCircle(QWidget):
 
     def _on_phase_animation_finished(self):
         try:
-            self.animation.finished.disconnect(self._on_phase_animation_finished)
+            self.animation.finished.disconnect()
         except (TypeError, RuntimeError):
             pass
         if self.phase == 'inhaling':
