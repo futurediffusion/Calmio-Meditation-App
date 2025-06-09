@@ -32,7 +32,6 @@ from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .badges_view import BadgesView
 from .options_overlay import OptionsOverlay
-from .developer_overlay import DeveloperOverlay
 from .sound_overlay import SoundOverlay
 from .breath_modes_overlay import BreathModesOverlay
 from .main_menu_overlay import MainMenuOverlay
@@ -187,32 +186,13 @@ class MainWindow(QMainWindow):
 
         self.setFocus()
 
-        self.options_button = QPushButton("\u2699\ufe0f", self)
-        self.stats_button = QPushButton("\ud83d\udcca", self)
-        self.end_button = QPushButton("\U0001F6D1", self)
-        self.dev_button = QPushButton("\U0001F41B", self)
-        self.sound_button = QPushButton("\U0001F3B5", self)
-        self.patterns_button = QPushButton("\U0001FAC2", self)
-
-        self.control_buttons = [
-            self.options_button,
-            self.stats_button,
-            self.end_button,
-            self.dev_button,
-            self.sound_button,
-            self.patterns_button,
-        ]
-        for btn in self.control_buttons:
-            self._setup_control_button(btn)
-
-        self.end_button.clicked.connect(self.session_manager.end_session)
+        self.control_buttons = []
 
         self.menu_button.setFocusPolicy(Qt.NoFocus)
 
         self.stats_overlay = StatsOverlay(self)
         self.stats_overlay.setGeometry(self.rect())
         self.stats_overlay.hide()
-        self.stats_button.clicked.connect(self.overlay_manager.toggle_stats)
         self.stats_overlay.view_sessions.connect(self.overlay_manager.open_today_sessions)
         self.stats_overlay.session_requested.connect(self.overlay_manager.open_session_details)
         self.stats_overlay.view_badges_today.connect(self.overlay_manager.open_today_badges)
@@ -239,12 +219,7 @@ class MainWindow(QMainWindow):
         self.options_overlay.setGeometry(self.rect())
         self.options_overlay.hide()
         self.options_overlay.back_requested.connect(self.menu_handler.close_options)
-        self.options_button.clicked.connect(self.menu_handler.toggle_options)
-        self.dev_menu = DeveloperOverlay(self)
-        self.dev_menu.hide()
-        self.dev_menu.speed_toggled.connect(self.session_manager.toggle_developer_speed)
-        self.dev_menu.next_day_requested.connect(self.session_manager.advance_day)
-        self.dev_button.clicked.connect(self.menu_handler.toggle_developer_menu)
+
 
         self.sound_overlay = SoundOverlay(self)
         self.sound_overlay.setGeometry(self.rect())
@@ -261,14 +236,12 @@ class MainWindow(QMainWindow):
         self.sound_overlay.music_mode_changed.connect(self.sound_manager.set_music_mode)
         self.sound_overlay.scale_changed.connect(self.sound_manager.set_scale_type)
         self.sound_overlay.breath_volume_toggled.connect(self.sound_manager.set_breath_volume_enabled)
-        self.sound_button.clicked.connect(self.menu_handler.toggle_sound)
 
         self.breath_modes = BreathModesOverlay(self)
         self.breath_modes.setGeometry(self.rect())
         self.breath_modes.hide()
         self.breath_modes.back_requested.connect(self.menu_handler.close_breath_modes)
         self.breath_modes.pattern_selected.connect(self._on_pattern_selected)
-        self.patterns_button.clicked.connect(self.menu_handler.toggle_breath_modes)
 
         self.mantras_overlay = MantrasOverlay(self)
         self.mantras_overlay.setGeometry(self.rect())
@@ -456,11 +429,6 @@ class MainWindow(QMainWindow):
                 pos = self.mapFromGlobal(event.globalPos())
             if not (
                 self.menu_button.geometry().contains(pos)
-                or self.options_button.geometry().contains(pos)
-                or self.stats_button.geometry().contains(pos)
-                or self.end_button.geometry().contains(pos)
-                or self.dev_button.geometry().contains(pos)
-                or self.dev_menu.geometry().contains(pos)
                 or self.stats_overlay.geometry().contains(pos)
                 or self.today_sessions.geometry().contains(pos)
                 or self.session_details.geometry().contains(pos)
@@ -477,7 +445,6 @@ class MainWindow(QMainWindow):
                 ):
                 self.menu_handler.close_main_menu()
                 self.menu_handler.close_mantras()
-                self.dev_menu.hide()
                 self.stats_overlay.hide()
                 self.today_sessions.hide()
                 self.session_details.hide()
@@ -508,11 +475,6 @@ class MainWindow(QMainWindow):
         pos = event.pos()
         if not (
             self.menu_button.geometry().contains(pos)
-            or self.options_button.geometry().contains(pos)
-            or self.stats_button.geometry().contains(pos)
-            or self.end_button.geometry().contains(pos)
-            or self.dev_button.geometry().contains(pos)
-            or self.dev_menu.geometry().contains(pos)
             or self.stats_overlay.geometry().contains(pos)
             or self.today_sessions.geometry().contains(pos)
             or self.session_details.geometry().contains(pos)
@@ -529,7 +491,6 @@ class MainWindow(QMainWindow):
         ):
             self.menu_handler.close_main_menu()
             self.menu_handler.close_mantras()
-            self.dev_menu.hide()
             self.stats_overlay.hide()
             self.today_sessions.hide()
             self.session_details.hide()

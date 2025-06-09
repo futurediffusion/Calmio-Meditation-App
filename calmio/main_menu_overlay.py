@@ -3,9 +3,9 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
-    QGraphicsOpacityEffect,
     QGraphicsDropShadowEffect,
 )
 from PySide6.QtGui import QFont
@@ -34,14 +34,27 @@ class MainMenuOverlay(QWidget):
         shadow.setOffset(0, 4)
         self.setGraphicsEffect(shadow)
 
-        self.opacity = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity)
-        self.opacity.setOpacity(0)
+        self.setWindowOpacity(0)
 
-        layout = QGridLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(20)
 
+        header = QHBoxLayout()
+        self.dismiss_btn = QPushButton("\u274C")
+        self.dismiss_btn.setFixedSize(24, 24)
+        self.dismiss_btn.setStyleSheet(
+            "QPushButton{background:none;border:none;font-size:18px;}"
+        )
+        self.dismiss_btn.setCursor(Qt.PointingHandCursor)
+        self.dismiss_btn.clicked.connect(self.close)
+        header.addWidget(self.dismiss_btn, alignment=Qt.AlignLeft)
+        header.addStretch()
+        layout.addLayout(header)
+
+        grid = QGridLayout()
+        grid.setSpacing(20)
+        
         self.music_btn = self._create_btn("\U0001F3B5", "M\u00fasica")
         self.breath_btn = self._create_btn("\U0001FAC1", "Respiraci\u00f3n")
         self.mantras_btn = self._create_btn("\u2764\ufe0f", "Mantras")
@@ -49,12 +62,16 @@ class MainMenuOverlay(QWidget):
         self.settings_btn = self._create_btn("\u2699\ufe0f", "Ajustes")
         self.close_btn = self._create_btn("\U0001F534", "Cerrar")
 
-        layout.addWidget(self.music_btn, 0, 0)
-        layout.addWidget(self.breath_btn, 0, 1)
-        layout.addWidget(self.mantras_btn, 1, 0)
-        layout.addWidget(self.ach_btn, 1, 1)
-        layout.addWidget(self.settings_btn, 2, 0)
-        layout.addWidget(self.close_btn, 2, 1)
+        grid.addWidget(self.music_btn, 0, 0)
+        grid.addWidget(self.breath_btn, 0, 1)
+        grid.addWidget(self.mantras_btn, 1, 0)
+        grid.addWidget(self.ach_btn, 1, 1)
+        grid.addWidget(self.settings_btn, 2, 0)
+        grid.addWidget(self.close_btn, 2, 1)
+
+        layout.addLayout(grid)
+
+        layout.addStretch()
 
         self.music_btn.clicked.connect(self.music_requested.emit)
         self.breath_btn.clicked.connect(self.breathing_requested.emit)
@@ -109,13 +126,13 @@ class MainMenuOverlay(QWidget):
     def _animate(self, opening: bool):
         if self.anim:
             self.anim.stop()
-        anim = QPropertyAnimation(self.opacity, b"opacity", self)
+        anim = QPropertyAnimation(self, b"windowOpacity", self)
         anim.setDuration(250)
         if opening:
             anim.setStartValue(0)
             anim.setEndValue(1)
         else:
-            anim.setStartValue(self.opacity.opacity())
+            anim.setStartValue(self.windowOpacity())
             anim.setEndValue(0)
             anim.finished.connect(super().hide)
             anim.finished.connect(self.closed.emit)
