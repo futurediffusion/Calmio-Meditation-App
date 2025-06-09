@@ -121,9 +121,14 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
 ## Sistema de sonido opcional
 
 - El overlay `SoundOverlay` permite activar un ambiente (bosque, lluvia, fuego o mar).
-- Se puede activar un tono musical continuo y una campana que suena cada 10 respiraciones.
+- También puede activarse un **modo música** que reproduce la nota `notado.mp3`
+  cambiando el tono en cada respiración (DO, RE, MI, FA, SOL, LA, SI, DO).
+- Al llegar al punto máximo de cada inhalación suena `drop.mp3`.
+- Una campana con fundido de salida suave (`bell.mp3`) se reproduce cada 10 respiraciones.
 - Dos sliders controlan el volumen general y el de la campana.
 - El botón **Silenciar todo** detiene cualquier sonido en reproducción.
+- Los archivos `bosque.mp3`, `LLUVIA.mp3`, `fuego.mp3`, `mar.mp3`, `notado.mp3`,
+  `bell.mp3` y `drop.mp3` deben ubicarse en `assets/sounds/`.
 
 ## Modo desarrollador
 

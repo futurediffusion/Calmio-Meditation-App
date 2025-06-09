@@ -20,8 +20,11 @@ class SoundManager(QObject):
         self.bell_enabled = False
         self.music_enabled = False
         self.current_env: str | None = None
-        self._fade_timer: QTimer | None = None
+        self._bell_fade_timer: QTimer | None = None
+        self._bell_fade_start: float = 0.0
+        self._fade_timer: QTimer | None = None  # legacy, kept for compatibility
         self._fade_start: float = 0.0
+        self.note_index = 0
         sound_files = {
             "bosque": "bosque.mp3",
             "lluvia": "LLUVIA.mp3",
@@ -29,6 +32,7 @@ class SoundManager(QObject):
             "mar": "mar.mp3",
             "bell": "bell.mp3",
             "notado": "notado.mp3",
+            "drop": "drop.mp3",
         }
         for key, filename in sound_files.items():
             player = QMediaPlayer(self)
@@ -40,11 +44,12 @@ class SoundManager(QObject):
             player.setAudioOutput(output)
             player.setSource(QUrl.fromLocalFile(str(base / filename)))
             loops = QMediaPlayer.Infinite if hasattr(QMediaPlayer, "Infinite") else -1
-            player.setLoops(loops)
+            if key in {"bell", "notado", "drop"}:
+                player.setLoops(1)
+            else:
+                player.setLoops(loops)
             self._players[key] = player
             self._outputs[key] = output
-        # Bell should not loop
-        self._players["bell"].setLoops(1)
 
     # ------------------------------------------------------------------
     def set_environment(self, name: str | None) -> None:
@@ -77,37 +82,64 @@ class SoundManager(QObject):
         if self.music_enabled == enabled:
             return
         self.music_enabled = enabled
-        player = self._players["notado"]
         if enabled:
-            player.setPosition(0)
-            self._outputs["notado"].setVolume(0.0)
-            player.play()
-            self._fade_start = time.monotonic()
-            if self._fade_timer is None:
-                self._fade_timer = QTimer(self)
-                self._fade_timer.timeout.connect(self._update_fade)
-            self._fade_timer.start(200)
+            self.set_environment(None)
         else:
+            player = self._players["notado"]
             player.stop()
-            if self._fade_timer:
-                self._fade_timer.stop()
-
-    def _update_fade(self) -> None:
-        elapsed = time.monotonic() - self._fade_start
-        if elapsed >= 15:
-            self._outputs["notado"].setVolume(self.general_volume / 100)
-            if self._fade_timer:
-                self._fade_timer.stop()
-            return
-        volume = (elapsed / 15) * (self.general_volume / 100)
-        self._outputs["notado"].setVolume(volume)
+        self.note_index = 0
 
     def maybe_play_bell(self, count: int) -> None:
         if self.bell_enabled and count % 10 == 0:
             bell = self._players["bell"]
             bell.stop()
             bell.setPosition(0)
+            self._outputs["bell"].setVolume(self.bell_volume / 100)
             bell.play()
+            self._bell_fade_start = time.monotonic()
+            if self._bell_fade_timer is None:
+                self._bell_fade_timer = QTimer(self)
+                self._bell_fade_timer.timeout.connect(self._update_bell_fade)
+            self._bell_fade_timer.start(100)
+
+    def _update_bell_fade(self) -> None:
+        duration = 3.0
+        elapsed = time.monotonic() - self._bell_fade_start
+        if elapsed >= duration:
+            self._outputs["bell"].setVolume(0.0)
+            if self._bell_fade_timer:
+                self._bell_fade_timer.stop()
+            return
+        volume = (1 - elapsed / duration) * (self.bell_volume / 100)
+        self._outputs["bell"].setVolume(volume)
+
+    def maybe_play_music(self, count: int) -> None:
+        if not self.music_enabled:
+            return
+        ratios = [
+            1.0,
+            1.122,
+            1.26,
+            1.335,
+            1.498,
+            1.682,
+            1.887,
+            2.0,
+        ]
+        player = self._players["notado"]
+        player.stop()
+        player.setPlaybackRate(ratios[self.note_index])
+        player.setPosition(0)
+        self._outputs["notado"].setVolume(self.general_volume / 100)
+        player.play()
+        self.note_index = (self.note_index + 1) % len(ratios)
+
+    def play_drop(self) -> None:
+        drop = self._players["drop"]
+        drop.stop()
+        drop.setPosition(0)
+        self._outputs["drop"].setVolume(self.general_volume / 100)
+        drop.play()
 
     def mute_all(self) -> None:
         for p in self._players.values():

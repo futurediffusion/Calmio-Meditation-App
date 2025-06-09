@@ -71,8 +71,8 @@ class SoundOverlay(QWidget):
             layout.addWidget(rb)
         self.env_group.buttonClicked.connect(self._on_env_changed)
 
-        self.music_chk = QCheckBox("Modo m\u00fasica")
-        self.bell_chk = QCheckBox("Campana cada 10 respiraciones")
+        self.music_chk = QCheckBox("\U0001F3B9 Modo m\u00fasica")
+        self.bell_chk = QCheckBox("\U0001F514 Campana cada 10 respiraciones")
         self.music_chk.toggled.connect(self.music_toggled.emit)
         self.bell_chk.toggled.connect(self.bell_toggled.emit)
         layout.addWidget(self.music_chk)
