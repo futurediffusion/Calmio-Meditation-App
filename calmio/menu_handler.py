@@ -31,7 +31,10 @@ class MenuHandler:
             self.window.breath_modes.setGeometry(self.window.rect())
 
     def _setup_control_button(self, button: QPushButton) -> None:
-        """Deprecated: kept for backwards compatibility."""
+        """Apply common styling to control buttons."""
+        button.setFixedSize(40, 40)
+        button.setStyleSheet("QPushButton {background:none; border:none; font-size:20px;}")
+        button.setFocusPolicy(Qt.NoFocus)
         button.hide()
 
     # --- visibility toggles --------------------------------------------
@@ -40,6 +43,8 @@ class MenuHandler:
         if self.window.main_menu_overlay.isVisible():
             self.close_main_menu()
         else:
+            # Hide any legacy control buttons before showing the modal
+            self.hide_control_buttons()
             self.window.main_menu_overlay.open()
 
     def close_main_menu(self) -> None:
@@ -54,6 +59,7 @@ class MenuHandler:
 
     def close_options(self) -> None:
         self.window.options_overlay.hide()
+        self.hide_control_buttons()
 
     def toggle_developer_menu(self) -> None:
         pass
@@ -67,6 +73,7 @@ class MenuHandler:
 
     def close_sound(self) -> None:
         self.window.sound_overlay.hide()
+        self.hide_control_buttons()
 
     def toggle_breath_modes(self) -> None:
         if self.window.breath_modes.isVisible():
@@ -77,6 +84,7 @@ class MenuHandler:
 
     def close_breath_modes(self) -> None:
         self.window.breath_modes.hide()
+        self.hide_control_buttons()
 
     def toggle_mantras(self) -> None:
         if self.window.mantras_overlay.isVisible():
@@ -90,9 +98,9 @@ class MenuHandler:
 
 
     def hide_control_buttons(self) -> None:
-        """Legacy no-op for removed bottom menu."""
-        pass
+        for btn in self.window.control_buttons:
+            btn.hide()
 
     def show_control_buttons(self) -> None:
-        """Legacy no-op for removed bottom menu."""
-        pass
+        for btn in self.window.control_buttons:
+            btn.show()

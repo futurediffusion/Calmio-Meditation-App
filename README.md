@@ -47,9 +47,9 @@ En Windows puede ejecutarse `run_app.bat`, el script creará un entorno virtual 
 
 ## Menú y controles
 
-- El botón de tres puntos abre un menú modal centrado con estilo de tarjeta translúcida.
-  Desde allí se accede a Estadísticas (`📊`), Configuración (`⚙️`), Sonido (`🎵`),
-  Modos de respiración (`🫁`), Finalizar sesión (`🛑`) y el menú de desarrollador (`🐛`).
+- Botón de tres puntos abre o cierra los botones secundarios:
+  - Estadísticas (`📊`), Configuración (`⚙️`), Sonido (`🎵`), Modos de respiración (`🫁`), Finalizar sesión (`🛑`) y menú de desarrollador (`🐛`).
+  - Los botones se ocultan cuando se pulsa fuera de ellos o al cerrar overlays.
 - Finalizar sesión cierra la respiración en curso y muestra la vista de **Finalización de sesión**.
 - El menú de configuración permite borrar todos los datos guardados.
 
@@ -157,7 +157,7 @@ El overlay de estadísticas (`stats_overlay.py`) muestra diferentes pestañas ge
 - `MainWindow` orquesta todos los widgets y controla el estado global de la sesión.
 - `DataStore` persiste la información en `calmio_data.json` dentro del directorio de usuario mediante `platformdirs`.
 - `SessionManager` separa la lógica de temporización y animaciones del círculo.
-- `MenuHandler` posiciona el botón de menú y gestiona el overlay principal.
+- `MenuHandler` posiciona y muestra u oculta los botones de control.
 - `OverlayManager` abre y cierra las vistas secundarias.
 - `MessageHandler` administra los mensajes motivacionales.
 - `SoundManager` reproduce ambientes, notas y campanas.
