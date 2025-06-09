@@ -1,25 +1,28 @@
 [
   {
     "id": "free",
+    "icon": "🌀",
     "name": "Libre",
     "phases": [
       {"name": "Inhalar", "duration": 4},
       {"name": "Exhalar", "duration": 6}
     ],
-    "description": "Respiración libre siguiendo el ritmo natural."
+    "description": "Sigue tu ritmo natural."
   },
   {
     "id": "4-7-8",
+    "icon": "🌙",
     "name": "4-7-8",
     "phases": [
       {"name": "Inhalar", "duration": 4},
       {"name": "Retener", "duration": 7},
       {"name": "Exhalar", "duration": 8}
     ],
-    "description": "Reduce la ansiedad y mejora el sueño."
+    "description": "Reduce ansiedad y mejora el sueño."
   },
   {
     "id": "box",
+    "icon": "🔳",
     "name": "Box Breathing",
     "phases": [
       {"name": "Inhalar", "duration": 4, "press": true},
@@ -27,25 +30,38 @@
       {"name": "Exhalar", "duration": 4, "press": true, "end_fraction": 0.5},
       {"name": "Retener", "duration": 4, "press": false, "end_fraction": 0.0}
     ],
-    "description": "Mejora el enfoque y regula emociones."
+    "description": "Favorece concentración y calma."
   },
   {
     "id": "triple",
+    "icon": "🔁",
     "name": "Tres Respiraciones",
     "phases": [
       {"name": "Inhalar", "duration": 3},
       {"name": "Retener", "duration": 3},
       {"name": "Exhalar", "duration": 3}
     ],
-    "description": "Inhala, retén y suelta contando hasta tres."
+    "description": "Inhala, retén y exhala en 3 tiempos."
   },
   {
     "id": "coherence",
+    "icon": "❤️",
     "name": "Coherencia Cardíaca",
     "phases": [
       {"name": "Inhalar", "duration": 6},
       {"name": "Exhalar", "duration": 6}
     ],
-    "description": "Sincroniza respiración y corazón."
+    "description": "Sincroniza corazón y respiración."
+  },
+  {
+    "id": "6-2-7",
+    "icon": "🌬️",
+    "name": "6-2-7",
+    "phases": [
+      {"name": "Inhalar", "duration": 6},
+      {"name": "Retener", "duration": 2},
+      {"name": "Exhalar", "duration": 7}
+    ],
+    "description": "Calma activa, ideal para enfocarte."
   }
 ]
