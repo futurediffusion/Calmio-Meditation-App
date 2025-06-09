@@ -435,17 +435,17 @@ class BreathCircle(QWidget):
             pass
         if self.phase == 'inhaling':
             self.start_ripple()
-            next_is_hold = False
-            if self.pattern:
-                next_index = (self.phase_index + 1) % len(self.pattern)
-                next_name = self.pattern[next_index].get("name", "").lower()
-                next_is_hold = "ret" in next_name or "hold" in next_name
-            if not next_is_hold and self.inhale_finished_callback:
+            if self.inhale_finished_callback:
                 self.inhale_finished_callback()
         elif self.phase == 'exhaling':
             # Trigger a ripple when the exhale completes so the user
             # knows the contraction finished (used by box breathing)
             self.start_ripple()
+            next_is_hold = False
+            if self.pattern:
+                next_index = (self.phase_index + 1) % len(self.pattern)
+                next_name = self.pattern[next_index].get("name", "").lower()
+                next_is_hold = "ret" in next_name or "hold" in next_name
             if self.cycle_valid:
                 exhale_end = time.perf_counter()
                 duration = exhale_end - self.breath_start_time
@@ -460,6 +460,8 @@ class BreathCircle(QWidget):
                     self.breath_finished_callback(duration, inhale_dur, exhale_dur)
             self.breath_start_time = 0
             self.phase = 'idle'
+            if next_is_hold and self.inhale_finished_callback:
+                self.inhale_finished_callback()
         self.released_during_exhale = False
         self.phase_index += 1
         if self.phase_index >= len(self.pattern):

@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
         self.session_manager.on_exhale_start(duration)
 
     def on_inhale_finished(self):
-        """Handle actions when an inhale or final hold ends."""
+        """Handle actions when a breathing phase ends."""
         # During box breathing play the musical note when the last hold
         # completes instead of the usual drop cue.
         if (
