@@ -23,6 +23,8 @@ class MenuHandler:
         ]
         if hasattr(self.window, "sound_button"):
             buttons.append(self.window.sound_button)
+        if hasattr(self.window, "patterns_button"):
+            buttons.append(self.window.patterns_button)
         for i, btn in enumerate(buttons, start=1):
             btn.move(x - i * (self.window.menu_button.width() + margin), y)
         if hasattr(self.window, "dev_menu"):
@@ -37,6 +39,8 @@ class MenuHandler:
             self.window.options_overlay.setGeometry(self.window.rect())
         if hasattr(self.window, "sound_overlay"):
             self.window.sound_overlay.setGeometry(self.window.rect())
+        if hasattr(self.window, "breath_modes"):
+            self.window.breath_modes.setGeometry(self.window.rect())
 
     def _setup_control_button(self, button: QPushButton) -> None:
         """Apply common styling to control buttons."""
@@ -80,6 +84,17 @@ class MenuHandler:
 
     def close_sound(self) -> None:
         self.window.sound_overlay.hide()
+        self.hide_control_buttons()
+
+    def toggle_breath_modes(self) -> None:
+        if self.window.breath_modes.isVisible():
+            self.close_breath_modes()
+        else:
+            self.window.breath_modes.show()
+            self.window.breath_modes.raise_()
+
+    def close_breath_modes(self) -> None:
+        self.window.breath_modes.hide()
         self.hide_control_buttons()
 
     def hide_control_buttons(self) -> None:

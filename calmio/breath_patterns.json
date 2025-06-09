@@ -1,0 +1,50 @@
+[
+  {
+    "id": "free",
+    "name": "Libre",
+    "phases": [
+      {"name": "Inhalar", "duration": 4},
+      {"name": "Exhalar", "duration": 6}
+    ],
+    "description": "Respiración libre siguiendo el ritmo natural."
+  },
+  {
+    "id": "4-7-8",
+    "name": "4-7-8",
+    "phases": [
+      {"name": "Inhalar", "duration": 4},
+      {"name": "Retener", "duration": 7},
+      {"name": "Exhalar", "duration": 8}
+    ],
+    "description": "Reduce la ansiedad y mejora el sueño."
+  },
+  {
+    "id": "box",
+    "name": "Box Breathing",
+    "phases": [
+      {"name": "Inhalar", "duration": 4},
+      {"name": "Retener", "duration": 4},
+      {"name": "Exhalar", "duration": 4},
+      {"name": "Retener", "duration": 4}
+    ],
+    "description": "Mejora el enfoque y regula emociones."
+  },
+  {
+    "id": "coherence",
+    "name": "Coherencia Cardíaca",
+    "phases": [
+      {"name": "Inhalar", "duration": 6},
+      {"name": "Exhalar", "duration": 6}
+    ],
+    "description": "Sincroniza respiración y corazón."
+  },
+  {
+    "id": "4-6",
+    "name": "4-6",
+    "phases": [
+      {"name": "Inhalar", "duration": 4},
+      {"name": "Exhalar", "duration": 6}
+    ],
+    "description": "Relaja y libera tensión."
+  }
+]
