@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
     QSlider,
+    QScrollArea,
 )
 
 
@@ -35,9 +36,20 @@ class SoundOverlay(QWidget):
             "background-color:#FAFAFA;border-radius:20px;color:#444;"
         )
 
-        layout = QVBoxLayout(self)
+        outer_layout = QVBoxLayout(self)
+        outer_layout.setContentsMargins(0, 0, 0, 0)
+        outer_layout.setSpacing(0)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("QScrollArea{border:none;}")
+        outer_layout.addWidget(self.scroll)
+
+        self.container = QWidget()
+        layout = QVBoxLayout(self.container)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
+        self.scroll.setWidget(self.container)
 
         header = QHBoxLayout()
         self.back_btn = QPushButton("\u2190")
