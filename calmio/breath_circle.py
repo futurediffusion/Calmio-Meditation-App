@@ -351,6 +351,9 @@ class BreathCircle(QWidget):
         self.key_pressed = False
         if self.phase == "exhaling" and self.animation:
             self.released_during_exhale = True
+            if not self.pattern:
+                # Keep current exhale animation so it matches pattern behavior
+                return
         if not self.pattern:
             self.start_exhale()
         else:
