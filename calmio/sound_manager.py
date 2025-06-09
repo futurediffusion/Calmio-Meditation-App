@@ -102,7 +102,7 @@ class SoundManager(QObject):
             p.setPosition(0)
             volume = self.general_volume / 100
             if self.breath_volume_enabled:
-                volume *= 0.5
+                volume *= 0.1
             self._outputs[name].setVolume(volume)
             p.play()
 
@@ -112,7 +112,7 @@ class SoundManager(QObject):
             if k not in {"bell", "notado", "drop"}:
                 vol = value / 100
                 if self.breath_volume_enabled:
-                    vol *= 0.5
+                    vol *= 0.1
                 out.setVolume(vol)
 
     def set_music_volume(self, value: int) -> None:
@@ -152,7 +152,7 @@ class SoundManager(QObject):
         if self.current_env:
             base = self.general_volume / 100
             if enabled:
-                base *= 0.5
+                base *= 0.1
             self._outputs[self.current_env].setVolume(base)
 
     def maybe_play_bell(self, count: int) -> None:
@@ -180,7 +180,7 @@ class SoundManager(QObject):
         if not self.breath_volume_enabled or not self.current_env:
             return
         start = self._outputs[self.current_env].volume()
-        end = (self.general_volume / 100) * 0.5
+        end = (self.general_volume / 100) * 0.1
         self._start_breath_anim(start, end, duration_ms / 1000)
 
     def _start_breath_anim(self, start: float, end: float, duration: float) -> None:
