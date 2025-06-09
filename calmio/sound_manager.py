@@ -16,6 +16,8 @@ class SoundManager(QObject):
         self._players: dict[str, QMediaPlayer] = {}
         self._outputs: dict[str, QAudioOutput] = {}
         self.general_volume = 50
+        self.music_volume = 50
+        self.drop_volume = 50
         self.bell_volume = 50
         self.bell_enabled = False
         self.music_enabled = False
@@ -39,6 +41,10 @@ class SoundManager(QObject):
             output = QAudioOutput(self)
             if key == "bell":
                 output.setVolume(self.bell_volume / 100)
+            elif key == "notado":
+                output.setVolume(self.music_volume / 100)
+            elif key == "drop":
+                output.setVolume(self.drop_volume / 100)
             else:
                 output.setVolume(self.general_volume / 100)
             player.setAudioOutput(output)
@@ -68,8 +74,16 @@ class SoundManager(QObject):
     def set_volume(self, value: int) -> None:
         self.general_volume = value
         for k, out in self._outputs.items():
-            if k != "bell":
+            if k not in {"bell", "notado", "drop"}:
                 out.setVolume(value / 100)
+
+    def set_music_volume(self, value: int) -> None:
+        self.music_volume = value
+        self._outputs["notado"].setVolume(value / 100)
+
+    def set_drop_volume(self, value: int) -> None:
+        self.drop_volume = value
+        self._outputs["drop"].setVolume(value / 100)
 
     def set_bell_volume(self, value: int) -> None:
         self.bell_volume = value
@@ -82,9 +96,7 @@ class SoundManager(QObject):
         if self.music_enabled == enabled:
             return
         self.music_enabled = enabled
-        if enabled:
-            self.set_environment(None)
-        else:
+        if not enabled:
             player = self._players["notado"]
             player.stop()
         self.note_index = 0
@@ -130,7 +142,7 @@ class SoundManager(QObject):
         player.stop()
         player.setPlaybackRate(ratios[self.note_index])
         player.setPosition(0)
-        self._outputs["notado"].setVolume(self.general_volume / 100)
+        self._outputs["notado"].setVolume(self.music_volume / 100)
         player.play()
         self.note_index = (self.note_index + 1) % len(ratios)
 
@@ -138,7 +150,7 @@ class SoundManager(QObject):
         drop = self._players["drop"]
         drop.stop()
         drop.setPosition(0)
-        self._outputs["drop"].setVolume(self.general_volume / 100)
+        self._outputs["drop"].setVolume(self.drop_volume / 100)
         drop.play()
 
     def mute_all(self) -> None:
