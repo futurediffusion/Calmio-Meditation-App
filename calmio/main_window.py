@@ -314,6 +314,11 @@ class MainWindow(QMainWindow):
                 play_music = (
                     count % 3 == 0 and not self.circle.released_during_exhale
                 )
+            elif self.current_pattern_id == "box":
+                # Play note only when the four-phase box cycle completes
+                play_music = (
+                    count % 4 == 0 and not self.circle.released_during_exhale
+                )
             elif self.circle.released_during_exhale:
                 play_music = False
             if play_music:
