@@ -36,6 +36,7 @@ En Windows puede ejecutarse `run_app.bat`, el script creará un entorno virtual 
 - **Animaciones asociadas**
   - Expansión/contracción del radio mediante `QPropertyAnimation`.
   - Cambio de color entre el tono base y su complemento durante cada fase.
+  - La retención utiliza un tercer color para formar una triada equilibrada.
   - Efecto de anillo expansivo que se desvanece tras la exhalación.
 - **Interacciones**
   - El usuario puede pulsar el círculo o mantener la barra espaciadora para respirar.
