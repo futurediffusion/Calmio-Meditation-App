@@ -18,7 +18,6 @@ class OverlayManager:
 
     def close_stats(self):
         self.window.stats_overlay.hide()
-        self.window.menu_handler.hide_control_buttons()
 
     def open_today_sessions(self):
         sessions = self.window.data_store.get_sessions_for_date(self.window.data_store.now())
@@ -42,7 +41,6 @@ class OverlayManager:
         self.window.label.setText("")
         self.window.count_opacity.setOpacity(0)
         self.window.session_seconds = 0
-        self.window.menu_handler.hide_control_buttons()
         self.window.start_prompt_animation()
 
     def on_session_complete_closed(self):
@@ -51,7 +49,6 @@ class OverlayManager:
         self.window.label.setText("")
         self.window.count_opacity.setOpacity(0)
         self.window.session_seconds = 0
-        self.window.menu_handler.hide_control_buttons()
         self.window.start_prompt_animation()
 
     def open_session_details(self, session):
