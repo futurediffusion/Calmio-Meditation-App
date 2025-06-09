@@ -30,6 +30,16 @@
     "description": "Mejora el enfoque y regula emociones."
   },
   {
+    "id": "triple",
+    "name": "Tres Respiraciones",
+    "phases": [
+      {"name": "Inhalar", "duration": 3},
+      {"name": "Retener", "duration": 3},
+      {"name": "Exhalar", "duration": 3}
+    ],
+    "description": "Inhala, retén y suelta contando hasta tres."
+  },
+  {
     "id": "coherence",
     "name": "Coherencia Cardíaca",
     "phases": [
