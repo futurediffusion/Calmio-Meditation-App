@@ -25,6 +25,12 @@ class SoundManager(QObject):
         self.music_mode = "scale"
         self.scale_type = "major"
         self.current_env: str | None = None
+        self.breath_volume_enabled = False
+        self._breath_anim_timer: QTimer | None = None
+        self._breath_anim_start: float = 0.0
+        self._breath_anim_duration: float = 0.0
+        self._breath_anim_from: float = 0.0
+        self._breath_anim_to: float = 0.0
         self._bell_fade_timer: QTimer | None = None
         self._bell_fade_start: float = 0.0
         self._fade_timer: QTimer | None = None  # legacy, kept for compatibility
@@ -94,14 +100,20 @@ class SoundManager(QObject):
         if name and name in self._players:
             p = self._players[name]
             p.setPosition(0)
-            self._outputs[name].setVolume(self.general_volume / 100)
+            volume = self.general_volume / 100
+            if self.breath_volume_enabled:
+                volume *= 0.5
+            self._outputs[name].setVolume(volume)
             p.play()
 
     def set_volume(self, value: int) -> None:
         self.general_volume = value
         for k, out in self._outputs.items():
             if k not in {"bell", "notado", "drop"}:
-                out.setVolume(value / 100)
+                vol = value / 100
+                if self.breath_volume_enabled:
+                    vol *= 0.5
+                out.setVolume(vol)
 
     def set_music_volume(self, value: int) -> None:
         self.music_volume = value
@@ -135,6 +147,14 @@ class SoundManager(QObject):
             player.stop()
         self.note_index = 0
 
+    def set_breath_volume_enabled(self, enabled: bool) -> None:
+        self.breath_volume_enabled = enabled
+        if self.current_env:
+            base = self.general_volume / 100
+            if enabled:
+                base *= 0.5
+            self._outputs[self.current_env].setVolume(base)
+
     def maybe_play_bell(self, count: int) -> None:
         if self.bell_enabled and count % 10 == 0:
             bell = self._players["bell"]
@@ -147,6 +167,43 @@ class SoundManager(QObject):
                 self._bell_fade_timer = QTimer(self)
                 self._bell_fade_timer.timeout.connect(self._update_bell_fade)
             self._bell_fade_timer.start(100)
+
+    # ------------------------------------------------------------------
+    def breath_inhale(self, duration_ms: int) -> None:
+        if not self.breath_volume_enabled or not self.current_env:
+            return
+        start = self._outputs[self.current_env].volume()
+        end = self.general_volume / 100
+        self._start_breath_anim(start, end, duration_ms / 1000)
+
+    def breath_exhale(self, duration_ms: int) -> None:
+        if not self.breath_volume_enabled or not self.current_env:
+            return
+        start = self._outputs[self.current_env].volume()
+        end = (self.general_volume / 100) * 0.5
+        self._start_breath_anim(start, end, duration_ms / 1000)
+
+    def _start_breath_anim(self, start: float, end: float, duration: float) -> None:
+        self._breath_anim_from = start
+        self._breath_anim_to = end
+        self._breath_anim_duration = max(0.01, duration)
+        self._breath_anim_start = time.monotonic()
+        if self._breath_anim_timer is None:
+            self._breath_anim_timer = QTimer(self)
+            self._breath_anim_timer.timeout.connect(self._update_breath_anim)
+        self._breath_anim_timer.start(30)
+
+    def _update_breath_anim(self) -> None:
+        if not self.current_env:
+            if self._breath_anim_timer:
+                self._breath_anim_timer.stop()
+            return
+        elapsed = time.monotonic() - self._breath_anim_start
+        ratio = min(1.0, elapsed / self._breath_anim_duration)
+        vol = self._breath_anim_from + (self._breath_anim_to - self._breath_anim_from) * ratio
+        self._outputs[self.current_env].setVolume(vol)
+        if ratio >= 1.0 and self._breath_anim_timer:
+            self._breath_anim_timer.stop()
 
     def _update_bell_fade(self) -> None:
         duration = 3.0

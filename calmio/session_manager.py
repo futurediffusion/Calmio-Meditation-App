@@ -72,6 +72,9 @@ class SessionManager:
         self.window.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.window.bg_padding_anim.start()
 
+        if hasattr(self.window, "sound_manager"):
+            self.window.sound_manager.breath_inhale(int(duration))
+
     def on_exhale_start(self, duration, color):
         if (
             hasattr(self.window, "count_anim")
@@ -111,6 +114,9 @@ class SessionManager:
         self.window.bg_padding_anim.setEndValue(1.0)
         self.window.bg_padding_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.window.bg_padding_anim.start()
+
+        if hasattr(self.window, "sound_manager"):
+            self.window.sound_manager.breath_exhale(int(duration))
 
     def on_hold_start(self, duration, color):
         if self.window.text_color_anim and self.window.text_color_anim.state() != QAbstractAnimation.Stopped:

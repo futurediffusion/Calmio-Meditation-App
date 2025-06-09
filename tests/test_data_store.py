@@ -54,3 +54,18 @@ def test_weekly_summary(tmp_path):
     assert summary["longest_time"] == "11:00"
     assert summary["longest_minutes"] == pytest.approx(5)
     assert summary["total_seconds"] == 990
+
+
+def test_breath_volume_setting(tmp_path):
+    data_file = tmp_path / "data.json"
+    ds = DataStore(data_file)
+
+    # default should be False
+    assert ds.get_sound_setting("breath_volume", False) is False
+
+    ds.set_sound_setting("breath_volume", True)
+    assert ds.get_sound_setting("breath_volume") is True
+
+    # ensure persistence
+    ds2 = DataStore(data_file)
+    assert ds2.get_sound_setting("breath_volume") is True
