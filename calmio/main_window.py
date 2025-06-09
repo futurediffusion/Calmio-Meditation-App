@@ -44,6 +44,7 @@ from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
 from .sound_manager import SoundManager
 from .biofeedback_overlay import BioFeedbackOverlay
+from .daily_challenge_overlay import DailyChallengeOverlay
 
 
 class MainWindow(QMainWindow):
@@ -325,6 +326,9 @@ class MainWindow(QMainWindow):
         self.message_label.setGraphicsEffect(self.msg_opacity)
         self.message_handler.start_prompt_animation()
 
+        self._load_daily_challenges()
+        self._setup_daily_challenge()
+
     def update_count(self, count):
         """Handle breath count updates after a full cycle."""
         if hasattr(self, "sound_manager"):
@@ -440,6 +444,10 @@ class MainWindow(QMainWindow):
                 or self.options_overlay.geometry().contains(pos)
                 or self.sound_overlay.geometry().contains(pos)
                 or self.breath_modes.geometry().contains(pos)
+                or (
+                    hasattr(self, "daily_challenge_overlay")
+                    and self.daily_challenge_overlay.geometry().contains(pos)
+                )
                 ):
                 self.menu_handler.hide_control_buttons()
                 self.dev_menu.hide()
@@ -450,6 +458,8 @@ class MainWindow(QMainWindow):
                 self.options_overlay.hide()
                 self.sound_overlay.hide()
                 self.breath_modes.hide()
+                if hasattr(self, "daily_challenge_overlay"):
+                    self.daily_challenge_overlay.hide()
         return super().eventFilter(obj, event)
 
     def toggle_menu(self):
@@ -483,6 +493,10 @@ class MainWindow(QMainWindow):
             or self.options_overlay.geometry().contains(pos)
             or self.sound_overlay.geometry().contains(pos)
             or self.breath_modes.geometry().contains(pos)
+            or (
+                hasattr(self, "daily_challenge_overlay")
+                and self.daily_challenge_overlay.geometry().contains(pos)
+            )
         ):
             self.menu_handler.hide_control_buttons()
             self.dev_menu.hide()
@@ -493,6 +507,8 @@ class MainWindow(QMainWindow):
             self.options_overlay.hide()
             self.sound_overlay.hide()
             self.breath_modes.hide()
+            if hasattr(self, "daily_challenge_overlay"):
+                self.daily_challenge_overlay.hide()
         super().mousePressEvent(event)
 
     def on_session_complete_done(self):
@@ -592,6 +608,41 @@ class MainWindow(QMainWindow):
         except Exception:
             self.biofeedback_messages = []
 
+    def _load_daily_challenges(self):
+        path = Path(__file__).resolve().parent / "daily_challenges.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            ch = data.get("challenges") if isinstance(data, dict) else data
+            if isinstance(ch, list):
+                self.daily_challenges = ch
+            else:
+                self.daily_challenges = []
+        except Exception:
+            self.daily_challenges = []
+
+    def _setup_daily_challenge(self):
+        today_ch = self.data_store.get_challenge_for_date(self.data_store.now())
+        if not today_ch:
+            if getattr(self, "daily_challenges", None):
+                desc = random.choice(self.daily_challenges)
+                self.data_store.set_daily_challenge(desc)
+                today_ch = {"text": desc, "completed": False}
+        if not today_ch:
+            return
+        self.daily_challenge_overlay = DailyChallengeOverlay(self)
+        self.daily_challenge_overlay.setGeometry(self.rect())
+        self.daily_challenge_overlay.set_challenge(
+            today_ch.get("text", ""), today_ch.get("completed", False)
+        )
+        self.daily_challenge_overlay.completed.connect(self._challenge_completed)
+        self.daily_challenge_overlay.closed.connect(
+            self.overlay_manager.close_daily_challenge
+        )
+        if not today_ch.get("completed"):
+            QTimer.singleShot(
+                1500, self.overlay_manager.show_daily_challenge
+            )
+
     def show_biofeedback_message(self):
         if not self.biofeedback_messages:
             self.display_session_complete()
@@ -602,3 +653,7 @@ class MainWindow(QMainWindow):
 
     def display_session_complete(self):
         self.stack.setCurrentWidget(self.session_complete)
+
+    def _challenge_completed(self):
+        self.data_store.mark_challenge_completed()
+        self.display_motivational_message("\u2728 Reto diario completado!")
