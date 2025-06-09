@@ -168,7 +168,6 @@ class SessionManager:
             self.window.session_complete.show_badges(new_badges)
         else:
             self.window.session_complete.show_badges([])
-        self.window.stack.setCurrentWidget(self.window.session_complete)
         self.window.stats_overlay.update_streak(self.window.data_store.get_streak())
         self.window.stats_overlay.update_badges(
             self.window.data_store.get_badges_for_date(self.window.data_store.now())
@@ -184,6 +183,8 @@ class SessionManager:
         self.window.bg_anim.setEndValue(0.0)
         self.window.bg_anim.setEasingCurve(QEasingCurve.InOutSine)
         self.window.bg_anim.start()
+
+        self.window.show_biofeedback_message()
 
     def toggle_developer_speed(self):
         self.window.speed_multiplier = 10 if getattr(self.window, "speed_multiplier", 1) == 1 else 1

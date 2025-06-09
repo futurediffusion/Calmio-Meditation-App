@@ -1,0 +1,25 @@
+{
+  "messages": [
+    {"id": 1, "mensaje": "Tu ritmo cardíaco bajó naturalmente.", "tipo": "biofeedback_real"},
+    {"id": 2, "mensaje": "Se redujo tu nivel de cortisol.", "tipo": "biofeedback_real"},
+    {"id": 3, "mensaje": "Mayor flujo de ondas alfa cerebrales.", "tipo": "biofeedback_real"},
+    {"id": 4, "mensaje": "Activaste tu sistema parasimpático.", "tipo": "biofeedback_real"},
+    {"id": 5, "mensaje": "Tu atención se volvió más sostenida.", "tipo": "biofeedback_real"},
+    {"id": 6, "mensaje": "Mejoró tu regulación emocional.", "tipo": "biofeedback_real"},
+    {"id": 7, "mensaje": "Estimulaste el nervio vago.", "tipo": "biofeedback_real"},
+    {"id": 8, "mensaje": "Tu presión arterial disminuyó.", "tipo": "biofeedback_real"},
+    {"id": 9, "mensaje": "Se sincronizó tu respiración con tu corazón.", "tipo": "biofeedback_real"},
+    {"id": 10, "mensaje": "Tu sistema límbico se estabilizó.", "tipo": "biofeedback_real"},
+
+    {"id": 11, "mensaje": "Tu mente se calmó un 34%.", "tipo": "biofeedback_falso"},
+    {"id": 12, "mensaje": "Tu respiración fue 81% fluida.", "tipo": "biofeedback_falso"},
+    {"id": 13, "mensaje": "Nivel de enfoque: 4 estrellas ✨✨✨✨", "tipo": "biofeedback_falso"},
+    {"id": 14, "mensaje": "Reducción de caos mental: -16 unidades.", "tipo": "biofeedback_falso"},
+    {"id": 15, "mensaje": "Claridad mental al 88%.", "tipo": "biofeedback_falso"},
+    {"id": 16, "mensaje": "Despertaste el modo zen.", "tipo": "biofeedback_falso"},
+    {"id": 17, "mensaje": "Nivel de presencia: 73%.", "tipo": "biofeedback_falso"},
+    {"id": 18, "mensaje": "Redujiste la turbulencia emocional un 41%.", "tipo": "biofeedback_falso"},
+    {"id": 19, "mensaje": "Conciencia expandida en un 69%.", "tipo": "biofeedback_falso"},
+    {"id": 20, "mensaje": "Frecuencia interior armonizada.", "tipo": "biofeedback_falso"}
+  ]
+}

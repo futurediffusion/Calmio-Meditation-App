@@ -4,6 +4,7 @@ from .breath_circle import BreathCircle
 from .progress_circle import ProgressCircle
 from .stats_overlay import StatsOverlay
 from .session_complete import SessionComplete
+from .biofeedback_overlay import BioFeedbackOverlay
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .options_overlay import OptionsOverlay
@@ -36,4 +37,5 @@ __all__ = [
     "OverlayManager",
     "MessageHandler",
     "SoundManager",
+    "BioFeedbackOverlay",
 ]
