@@ -21,6 +21,10 @@ class DataStore:
             "badges": {},
             # badges earned today {date: {code: count}}
             "daily_badges": {},
+            "sound_settings": {
+                "music_enabled": False,
+                "bell_enabled": False,
+            },
         }
         self.time_offset = timedelta()
         self.load()
@@ -64,12 +68,25 @@ class DataStore:
                                 for b in v:
                                     counts[b] = counts.get(b, 0) + 1
                                 self.data["daily_badges"][k] = counts
+                    if "sound_settings" not in self.data:
+                        self.data["sound_settings"] = {
+                            "music_enabled": False,
+                            "bell_enabled": False,
+                        }
             except (json.JSONDecodeError, IOError):
                 pass
 
     def save(self):
         with self.path.open("w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2)
+
+    # ------------------------------------------------------------------
+    def get_sound_setting(self, name: str, default=None):
+        return self.data.get("sound_settings", {}).get(name, default)
+
+    def set_sound_setting(self, name: str, value) -> None:
+        self.data.setdefault("sound_settings", {})[name] = value
+        self.save()
 
     def add_session(self, start_dt, seconds, breaths, inhale, exhale, cycles=None):
         date_key = start_dt.date().isoformat()
@@ -325,5 +342,9 @@ class DataStore:
             "sessions": [],
             "badges": {},
             "daily_badges": {},
+            "sound_settings": {
+                "music_enabled": False,
+                "bell_enabled": False,
+            },
         }
         self.save()
