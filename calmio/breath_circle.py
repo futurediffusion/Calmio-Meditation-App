@@ -342,8 +342,10 @@ class BreathCircle(QWidget):
             self.hold_timer.stop()
 
     def _on_hold_finished(self):
+        current = self.phase_index
         self.start_ripple()
-        if self.inhale_finished_callback:
+        if current == len(self.pattern) - 1 and self.inhale_finished_callback:
+            # Only trigger the cue when the final hold of the pattern ends
             self.inhale_finished_callback()
         self.phase_index += 1
         if self.phase_index >= len(self.pattern):
