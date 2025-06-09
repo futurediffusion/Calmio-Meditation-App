@@ -79,6 +79,9 @@ class BreathCircle(QWidget):
         self.phase_colors = []
         self.pattern_states = []
         self.key_pressed = False
+        self.hold_timer = QTimer(self)
+        self.hold_timer.setSingleShot(True)
+        self.hold_timer.timeout.connect(self._on_hold_finished)
         self.setMinimumSize(self.max_radius * 2 + 20, self.max_radius * 2 + 20)
 
     def getRadius(self):
@@ -298,12 +301,28 @@ class BreathCircle(QWidget):
         if self.animation:
             self.animation.stop()
             self.animation = None
+        if self.hold_timer.isActive():
+            self.hold_timer.stop()
+
+    def _on_hold_finished(self):
+        self.start_ripple()
+        if self.inhale_finished_callback:
+            self.inhale_finished_callback()
+        self.phase_index += 1
+        if self.phase_index >= len(self.pattern):
+            self.phase_index = 0
+        self.phase = 'holding'
+        expected = self.pattern_states[self.phase_index]
+        if expected == self.key_pressed:
+            self._start_phase(self.phase_index)
 
     def on_press(self):
         self.key_pressed = True
         if not self.pattern:
             self.start_inhale()
         else:
+            if self.hold_timer.isActive():
+                self.hold_timer.stop()
             self._maybe_start_phase()
 
     def on_release(self):
@@ -311,6 +330,8 @@ class BreathCircle(QWidget):
         if not self.pattern:
             self.start_exhale()
         else:
+            if self.hold_timer.isActive():
+                self.hold_timer.stop()
             self._maybe_start_phase()
 
     def _maybe_start_phase(self):
@@ -332,16 +353,18 @@ class BreathCircle(QWidget):
         if "inh" in name:
             self.start_inhale(color=color, duration=dur)
             self.animation.finished.disconnect(self.animation_finished)
+            self.animation.finished.connect(self._on_phase_animation_finished)
         elif "exh" in name:
             self.start_exhale(color=color, duration=dur)
             self.animation.finished.disconnect(self.animation_finished)
+            self.animation.finished.connect(self._on_phase_animation_finished)
         else:
             # Hold phase
             self.phase = "holding"
             self.setColor(color)
             self.update()
+            self.hold_timer.start(int(dur / self.speed_multiplier))
             return
-        self.animation.finished.connect(self._on_phase_animation_finished)
 
     def _on_phase_animation_finished(self):
         self.animation.finished.disconnect(self._on_phase_animation_finished)
