@@ -289,19 +289,23 @@ class BreathCircle(QWidget):
         self.phase_index = 0
         self.phase_colors = []
         self.pattern_states = []
-        state = False
-        for ph in pattern:
+        total = len(pattern)
+        for i, ph in enumerate(pattern):
             name = ph.get("name", "").lower()
             if "inh" in name:
-                state = True
                 self.phase_colors.append(self.complement_color)
+                expected = True
             elif "exh" in name:
-                state = False
                 self.phase_colors.append(self.base_color)
+                expected = False
             else:
                 # hold phase color
                 self.phase_colors.append(self.retention_color)
-            self.pattern_states.append(state)
+                # Expected state follows next phase
+                next_ph = pattern[(i + 1) % total]
+                next_name = next_ph.get("name", "").lower()
+                expected = "inh" in next_name
+            self.pattern_states.append(expected)
         self.stop_animation()
 
     def stop_animation(self):
