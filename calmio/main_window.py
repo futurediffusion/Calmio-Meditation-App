@@ -11,6 +11,7 @@ from PySide6.QtCore import (
 from datetime import datetime
 import json
 import time
+import random
 from pathlib import Path
 from PySide6.QtGui import QFont, QFontMetrics, QPalette, QColor
 from PySide6.QtWidgets import (
@@ -42,6 +43,7 @@ from .session_manager import SessionManager
 from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
 from .sound_manager import SoundManager
+from .biofeedback_overlay import BioFeedbackOverlay
 
 
 class MainWindow(QMainWindow):
@@ -80,6 +82,9 @@ class MainWindow(QMainWindow):
         self.message_handler = MessageHandler(self)
         self.sound_manager = SoundManager(self)
         self.current_pattern_id = None
+
+        self.biofeedback_messages = []
+        self._load_biofeedback_messages()
 
         self.timer.timeout.connect(self.session_manager.update_timer)
         self.timer.start(1000)
@@ -152,6 +157,11 @@ class MainWindow(QMainWindow):
         self.session_complete.badges_requested.connect(
             lambda badges: self.overlay_manager.open_session_badges(badges, return_to=self.session_complete)
         )
+
+        self.biofeedback_overlay = BioFeedbackOverlay(self)
+        self.biofeedback_overlay.setGeometry(self.rect())
+        self.biofeedback_overlay.hide()
+        self.biofeedback_overlay.done.connect(self.display_session_complete)
 
         self.stack = QStackedWidget()
         self.stack.addWidget(self.main_view)
@@ -399,6 +409,8 @@ class MainWindow(QMainWindow):
             self.bg.setGeometry(self.rect())
         if hasattr(self, "wave_overlay"):
             self.wave_overlay.setGeometry(self.rect())
+        if hasattr(self, "biofeedback_overlay"):
+            self.biofeedback_overlay.setGeometry(self.rect())
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
@@ -560,3 +572,25 @@ class MainWindow(QMainWindow):
         self.circle.set_pattern(phases)
         self.current_pattern_id = pattern.get("id")
         self.menu_handler.close_breath_modes()
+
+    # ------------------------------------------------------------------
+    def _load_biofeedback_messages(self):
+        path = Path(__file__).resolve().parent / "biofeedback.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            msgs = data.get("messages") if isinstance(data, dict) else data
+            if isinstance(msgs, list):
+                self.biofeedback_messages = msgs
+        except Exception:
+            self.biofeedback_messages = []
+
+    def show_biofeedback_message(self):
+        if not self.biofeedback_messages:
+            self.display_session_complete()
+            return
+        msg = random.choice(self.biofeedback_messages).get("mensaje", "")
+        self.biofeedback_overlay.raise_()
+        self.biofeedback_overlay.show_message(msg)
+
+    def display_session_complete(self):
+        self.stack.setCurrentWidget(self.session_complete)
