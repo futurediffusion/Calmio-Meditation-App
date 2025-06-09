@@ -156,7 +156,7 @@ class BreathCircle(QWidget):
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(center, self._radius, self._radius)
 
-    def start_inhale(self, color=None, duration=None):
+    def start_inhale(self, color=None, duration=None, end_radius=None):
         if self.phase not in ('idle', 'holding'):
             return
         self.phase = 'inhaling'
@@ -166,14 +166,15 @@ class BreathCircle(QWidget):
             self.breath_started_callback()
         self.cycle_valid = False
         dur = (duration or self.inhale_time) / self.speed_multiplier
+        target_r = self.max_radius if end_radius is None else end_radius
         self.animate(
             self._radius,
-            self.max_radius,
+            target_r,
             dur,
             target_color=color or self.complement_color,
         )
 
-    def start_exhale(self, color=None, duration=None):
+    def start_exhale(self, color=None, duration=None, end_radius=None):
         if self.phase not in ("inhaling", "holding"):
             return
         # Treat early release during the hold phase as an incomplete cycle
@@ -190,20 +191,33 @@ class BreathCircle(QWidget):
         dur /= self.speed_multiplier
         if self.exhale_started_callback:
             self.exhale_started_callback(dur)
-        self.animate(self._radius, self.min_radius, dur,
+        target_r = self.min_radius if end_radius is None else end_radius
+        self.animate(self._radius, target_r, dur,
                      target_color=color or self.base_color)
 
-    def start_hold(self, color=None, duration=None):
+    def start_hold(self, color=None, duration=None, target_radius=None):
         """Animate color transition during the retention phase."""
         if self.animation:
             self.animation.stop()
         self.phase = 'holding'
-        self.animation = QPropertyAnimation(self, b"color")
-        self.animation.setStartValue(self._color)
-        self.animation.setEndValue(color or self.retention_color)
+        self.animation = QParallelAnimationGroup(self)
+
+        color_anim = QPropertyAnimation(self, b"color")
+        color_anim.setStartValue(self._color)
+        color_anim.setEndValue(color or self.retention_color)
         dur = int((duration or 0) / self.speed_multiplier)
-        self.animation.setDuration(dur)
-        self.animation.setEasingCurve(QEasingCurve.InOutSine)
+        color_anim.setDuration(dur)
+        color_anim.setEasingCurve(QEasingCurve.InOutSine)
+        self.animation.addAnimation(color_anim)
+
+        if target_radius is not None:
+            r_anim = QPropertyAnimation(self, b"radius")
+            r_anim.setStartValue(self._radius)
+            r_anim.setEndValue(target_radius)
+            r_anim.setDuration(dur)
+            r_anim.setEasingCurve(QEasingCurve.InOutSine)
+            self.animation.addAnimation(r_anim)
+
         self.animation.start()
         self.hold_timer.start(dur)
 
@@ -310,12 +324,13 @@ class BreathCircle(QWidget):
                 self.phase_colors.append(self.base_color)
                 expected = False
             else:
-                # Hold phase keeps the current key state
                 self.phase_colors.append(self.retention_color)
                 if i == 0:
                     expected = True
                 else:
                     expected = self.pattern_states[i - 1]
+            if "press" in ph:
+                expected = bool(ph["press"])
             self.pattern_states.append(expected)
         self.stop_animation()
 
@@ -388,15 +403,20 @@ class BreathCircle(QWidget):
         name = phase.get("name", "").lower()
         dur = int(phase.get("duration", 1) * 1000)
         color = self.phase_colors[index]
+        end_frac = phase.get("end_fraction")
+        target = None
+        if isinstance(end_frac, (int, float)):
+            span = self.max_radius - self.min_radius
+            target = self.min_radius + span * float(end_frac)
         if "inh" in name:
-            self.start_inhale(color=color, duration=dur)
+            self.start_inhale(color=color, duration=dur, end_radius=target)
             try:
                 self.animation.finished.disconnect()
             except (TypeError, RuntimeError):
                 pass
             self.animation.finished.connect(self._on_phase_animation_finished)
         elif "exh" in name:
-            self.start_exhale(color=color, duration=dur)
+            self.start_exhale(color=color, duration=dur, end_radius=target)
             try:
                 self.animation.finished.disconnect()
             except (TypeError, RuntimeError):
@@ -404,7 +424,7 @@ class BreathCircle(QWidget):
             self.animation.finished.connect(self._on_phase_animation_finished)
         else:
             # Hold phase
-            self.start_hold(color=color, duration=dur)
+            self.start_hold(color=color, duration=dur, target_radius=target)
             return
 
     def _on_phase_animation_finished(self):

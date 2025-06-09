@@ -22,10 +22,10 @@
     "id": "box",
     "name": "Box Breathing",
     "phases": [
-      {"name": "Inhalar", "duration": 4},
-      {"name": "Retener", "duration": 4},
-      {"name": "Exhalar", "duration": 4},
-      {"name": "Retener", "duration": 4}
+      {"name": "Inhalar", "duration": 4, "press": true},
+      {"name": "Retener", "duration": 4, "press": true},
+      {"name": "Exhalar", "duration": 4, "press": true, "end_fraction": 0.5},
+      {"name": "Retener", "duration": 4, "press": false, "end_fraction": 0.0}
     ],
     "description": "Mejora el enfoque y regula emociones."
   },
