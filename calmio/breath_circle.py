@@ -262,6 +262,8 @@ class BreathCircle(QWidget):
                 inhale_dur = self.exhale_start_time - self.inhale_start_time
                 exhale_dur = exhale_end - self.exhale_start_time
                 self.breath_count += 1
+                # Reset flag before callbacks so listeners see final state
+                self.released_during_exhale = False
                 if self.count_changed_callback:
                     self.count_changed_callback(self.breath_count)
                 if self.breath_finished_callback:
@@ -382,11 +384,17 @@ class BreathCircle(QWidget):
         color = self.phase_colors[index]
         if "inh" in name:
             self.start_inhale(color=color, duration=dur)
-            self.animation.finished.disconnect(self.animation_finished)
+            try:
+                self.animation.finished.disconnect(self.animation_finished)
+            except (TypeError, RuntimeError):
+                pass
             self.animation.finished.connect(self._on_phase_animation_finished)
         elif "exh" in name:
             self.start_exhale(color=color, duration=dur)
-            self.animation.finished.disconnect(self.animation_finished)
+            try:
+                self.animation.finished.disconnect(self.animation_finished)
+            except (TypeError, RuntimeError):
+                pass
             self.animation.finished.connect(self._on_phase_animation_finished)
         else:
             # Hold phase
@@ -394,7 +402,10 @@ class BreathCircle(QWidget):
             return
 
     def _on_phase_animation_finished(self):
-        self.animation.finished.disconnect(self._on_phase_animation_finished)
+        try:
+            self.animation.finished.disconnect(self._on_phase_animation_finished)
+        except (TypeError, RuntimeError):
+            pass
         if self.phase == 'inhaling':
             self.start_ripple()
             if self.inhale_finished_callback:
@@ -406,6 +417,8 @@ class BreathCircle(QWidget):
                 inhale_dur = self.exhale_start_time - self.inhale_start_time
                 exhale_dur = exhale_end - self.exhale_start_time
                 self.breath_count += 1
+                # Reset flag before callbacks so listeners see final state
+                self.released_during_exhale = False
                 if self.count_changed_callback:
                     self.count_changed_callback(self.breath_count)
                 if self.breath_finished_callback:
