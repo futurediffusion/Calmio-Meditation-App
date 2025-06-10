@@ -114,6 +114,7 @@ class BreathGraph(QWidget):
         painter.setPen(QColor("#555"))
         painter.drawText(points[0].x() - 20, points[0].y() - 5, self.start_label)
         painter.drawText(points[-1].x() - 30, points[-1].y() - 5, self.end_label)
+        painter.end()
 
 
 class SessionDetailsView(QWidget):

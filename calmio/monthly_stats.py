@@ -84,7 +84,7 @@ class MonthlyLineGraph(QWidget):
                 Qt.AlignHCenter | Qt.AlignTop,
                 self.labels[i] if i < len(self.labels) else f"Week {i+1}",
             )
-
+        painter.end()
 
 class DonutProgress(QWidget):
     """Circular progress bar for monthly goal."""
@@ -133,6 +133,7 @@ class DonutProgress(QWidget):
         painter.setPen(QColor("#444"))
         center_text = f"{int(self.minutes)}\n/{int(self.goal)} min"
         painter.drawText(self.rect(), Qt.AlignCenter, center_text)
+        painter.end()
 
 
 class MonthlyStatsView(QWidget):

@@ -103,5 +103,5 @@ class WaveOverlay(QWidget):
             painter.setPen(pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawEllipse(self._center, int(wave._radius), int(wave._radius))
-
+        painter.end()
 
