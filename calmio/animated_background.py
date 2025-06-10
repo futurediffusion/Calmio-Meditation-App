@@ -202,4 +202,5 @@ class AnimatedBackground(QWidget):
             path.closeSubpath()
             color = QColor(255, 255, 255, 80)
             painter.fillPath(path, color)
+        painter.end()
 

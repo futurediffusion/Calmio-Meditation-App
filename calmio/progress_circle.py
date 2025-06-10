@@ -91,3 +91,4 @@ class ProgressCircle(QWidget):
             rect.bottom() + 15,
             f"{labels['left']} min",
         )
+        painter.end()

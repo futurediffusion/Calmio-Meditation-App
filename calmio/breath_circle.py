@@ -158,6 +158,7 @@ class BreathCircle(QWidget):
         painter.setBrush(QBrush(gradient))
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(center, self._radius, self._radius)
+        painter.end()
 
     def start_inhale(self, color=None, duration=None, end_radius=None):
         if self.phase not in ('idle', 'holding'):

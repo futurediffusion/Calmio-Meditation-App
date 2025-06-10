@@ -68,7 +68,7 @@ class WeeklyBarGraph(QWidget):
                 Qt.AlignHCenter | Qt.AlignTop,
                 self.days[i],
             )
-
+        painter.end()
 
 class WeeklyStatsView(QWidget):
     """Widget displaying weekly statistics."""
