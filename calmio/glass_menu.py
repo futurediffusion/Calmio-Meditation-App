@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal, QPropertyAnimation
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QWidget,
@@ -6,10 +6,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QGraphicsOpacityEffect,
     QFrame,
     QSizePolicy,
-    QGraphicsDropShadowEffect,
 )
 
 from .font_utils import get_emoji_font
@@ -34,9 +32,7 @@ class GlassMenu(QWidget):
             "background:rgba(255,255,255,0.95);border-radius:24px;color:#444;"
         )
 
-        self.opacity = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity)
-        self.opacity.setOpacity(1)
+
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -79,10 +75,6 @@ class GlassMenu(QWidget):
             "QFrame#menuCard{background:white;border-radius:15px;}"
             "QFrame#menuCard:hover{background:#F2F2F2;}"
         )
-        eff = QGraphicsDropShadowEffect(self)
-        eff.setBlurRadius(8)
-        eff.setOffset(0, 2)
-        card.setGraphicsEffect(eff)
 
         layout = QHBoxLayout(card)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -129,23 +121,12 @@ class GlassMenu(QWidget):
         self.setGeometry((pw - w) // 2, (ph - h) // 2, w, h)
 
     def show_with_anim(self):
+        """Show the menu without complex animations."""
         self.adjust_position()
-        self.opacity.setOpacity(0)
         super().show()
         self.raise_()
-        anim = QPropertyAnimation(self.opacity, b"opacity", self)
-        anim.setDuration(200)
-        anim.setStartValue(0)
-        anim.setEndValue(1)
-        anim.start()
-        self._anim = anim
 
     def hide_with_anim(self):
-        anim = QPropertyAnimation(self.opacity, b"opacity", self)
-        anim.setDuration(200)
-        anim.setStartValue(1)
-        anim.setEndValue(0)
-        anim.finished.connect(super().hide)
-        anim.finished.connect(self.close_requested)
-        anim.start()
-        self._anim = anim
+        """Hide the menu and emit the close signal."""
+        super().hide()
+        self.close_requested.emit()
