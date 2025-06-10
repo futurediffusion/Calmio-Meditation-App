@@ -15,9 +15,16 @@ class DailyChallengePrompt(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.button = QPushButton("\U0001F3C6")
-        self.button.setFixedSize(48, 48)
+        # Slightly smaller circular button
+        self.button.setFixedSize(40, 40)
         self.button.setStyleSheet(
-            "QPushButton{background-color:#4D9FFF;border:none;border-radius:24px;color:white;font-size:20px;}"
+            "QPushButton{"
+            "background-color:#4D9FFF;"
+            "border:none;"
+            "border-radius:20px;"
+            "color:white;"
+            "font-size:20px;"
+            "}"
         )
         self.button.clicked.connect(self.clicked)
         layout.addWidget(self.button)
@@ -31,7 +38,8 @@ class DailyChallengePrompt(QWidget):
         if self._fade and self._fade.state() != QPropertyAnimation.Stopped:
             self._fade.stop()
         self._fade = QPropertyAnimation(self.opacity, b"opacity", self)
-        self._fade.setDuration(600)
+        # Match the fade duration of the motivational text
+        self._fade.setDuration(4000)
         self._fade.setStartValue(self.opacity.opacity())
         self._fade.setEndValue(0)
         self._fade.finished.connect(self.hide)
