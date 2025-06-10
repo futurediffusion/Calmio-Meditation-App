@@ -39,7 +39,7 @@ from .data_store import DataStore
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
 from .menu_handler import MenuHandler
-from .menu_overlay import MenuOverlay
+from .glass_menu import GlassMenu
 from .session_manager import SessionManager
 from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         self.breath_modes.back_requested.connect(self.menu_handler.close_breath_modes)
         self.breath_modes.pattern_selected.connect(self._on_pattern_selected)
 
-        self.menu_overlay = MenuOverlay(self)
+        self.menu_overlay = GlassMenu(self)
         self.menu_overlay.hide()
         self.menu_overlay.breath_modes_requested.connect(self.menu_handler.toggle_breath_modes)
         self.menu_overlay.sound_requested.connect(self.menu_handler.toggle_sound)

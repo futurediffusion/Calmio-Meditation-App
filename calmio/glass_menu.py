@@ -7,17 +7,16 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QGraphicsOpacityEffect,
-    QScrollArea,
     QFrame,
     QSizePolicy,
     QGraphicsDropShadowEffect,
-    QLayout,
 )
+
 from .font_utils import get_emoji_font
 
 
-class MenuOverlay(QWidget):
-    """Floating modal menu with glass style."""
+class GlassMenu(QWidget):
+    """Minimal floating menu with a glass style background."""
 
     breath_modes_requested = Signal()
     sound_requested = Signal()
@@ -40,21 +39,8 @@ class MenuOverlay(QWidget):
         self.opacity.setOpacity(1)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet("QScrollArea{border:none;}")
-        self.scroll.setFrameShape(QFrame.NoFrame)
-        layout.addWidget(self.scroll)
-
-        container = QWidget()
-        self.scroll.setWidget(container)
-        c_layout = QVBoxLayout(container)
-        c_layout.setContentsMargins(20, 20, 20, 20)
-        c_layout.setSpacing(15)
-        c_layout.setSizeConstraint(QLayout.SetMinimumSize)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
 
         header = QHBoxLayout()
         self.back_btn = QPushButton("\u2190")
@@ -72,13 +58,7 @@ class MenuOverlay(QWidget):
         title.setAlignment(Qt.AlignCenter)
         header.addWidget(title, alignment=Qt.AlignCenter)
         header.addStretch()
-        c_layout.addLayout(header)
-
-        self.menu_container = QVBoxLayout()
-        self.menu_container.setSpacing(10)
-        self.menu_container.setSizeConstraint(QLayout.SetMinimumSize)
-        c_layout.addLayout(self.menu_container)
-        c_layout.addStretch()
+        layout.addLayout(header)
 
         self.cards = []
         self.labels = []
@@ -89,6 +69,7 @@ class MenuOverlay(QWidget):
         self._add_menu_row("\U0001F9E0", "Logros", self.achievements_requested)
         self._add_menu_row("\u2699\ufe0f", "Ajustes", self.settings_requested)
         self._add_menu_row("\U0001F41B", "Modo desarrollador", self.developer_requested)
+        layout.addStretch()
 
     def _add_menu_row(self, icon: str, text: str, signal: Signal) -> None:
         card = QFrame()
@@ -123,7 +104,7 @@ class MenuOverlay(QWidget):
 
         card.mouseReleaseEvent = lambda e, s=signal: s.emit()
 
-        self.menu_container.addWidget(card)
+        self.layout().addWidget(card)
         self.cards.append(card)
         self.labels.append(txt_lbl)
 
