@@ -75,6 +75,7 @@ class GlassMenu(QWidget):
             "QFrame#menuCard{background:white;border-radius:15px;}"
             "QFrame#menuCard:hover{background:#F2F2F2;}"
         )
+        card.setMinimumHeight(48)
 
         layout = QHBoxLayout(card)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -117,7 +118,12 @@ class GlassMenu(QWidget):
         pw = self.parent().width()
         ph = self.parent().height()
         w = int(pw * 0.8)
-        h = int(ph * 0.6)
+        content_h = self.layout().sizeHint().height()
+        base_h = int(ph * 0.6)
+        h = max(content_h, base_h)
+        max_h = int(ph * 0.9)
+        if h > max_h:
+            h = max_h
         self.setGeometry((pw - w) // 2, (ph - h) // 2, w, h)
 
     def show_with_anim(self):
