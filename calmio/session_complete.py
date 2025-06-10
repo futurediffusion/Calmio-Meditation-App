@@ -148,9 +148,16 @@ class SessionComplete(QWidget):
         self.play_completion_animation()
 
     def play_completion_animation(self):
+        """Show ephemeral twinkling stars when the session is complete."""
         import random
+
+        # Clean up previous effects and hide stars
         for star in self._stars:
+            if star.graphicsEffect():
+                star.graphicsEffect().deleteLater()
+                star.setGraphicsEffect(None)
             star.hide()
+
         for star in self._stars:
             x = random.randint(0, max(0, self.width() - star.width()))
             y = random.randint(0, max(0, self.height() - star.height()))
@@ -159,12 +166,21 @@ class SessionComplete(QWidget):
             star.setGraphicsEffect(effect)
             effect.setOpacity(1)
             star.show()
+
             anim = QPropertyAnimation(effect, b"opacity", self)
             anim.setDuration(1000)
             anim.setStartValue(1)
             anim.setEndValue(0)
-            anim.finished.connect(star.hide)
+            anim.finished.connect(lambda _=None, s=star: self._hide_star(s))
             anim.start()
+
+    def _hide_star(self, star):
+        """Hide *star* and remove its graphics effect once animation finishes."""
+        star.hide()
+        eff = star.graphicsEffect()
+        if eff:
+            eff.deleteLater()
+            star.setGraphicsEffect(None)
 
     def _emit_badges(self, evt=None):
         if self._badges:
