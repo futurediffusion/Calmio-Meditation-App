@@ -71,6 +71,8 @@ class BreathGraph(QWidget):
         if not self.values or self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)
+        if not painter.isActive():
+            return
         painter.setRenderHint(QPainter.Antialiasing)
 
         margin_x = 40

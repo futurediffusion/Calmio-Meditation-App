@@ -158,6 +158,8 @@ class AnimatedBackground(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        if not painter.isActive():
+            return
         rect = self.rect()
         painter.fillRect(rect, QColor("white"))
         if self._opacity <= 0:
