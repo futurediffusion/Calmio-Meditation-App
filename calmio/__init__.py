@@ -15,6 +15,7 @@ from .main_window import MainWindow
 from .animated_background import AnimatedBackground
 from .wave_overlay import WaveOverlay
 from .menu_handler import MenuHandler
+from .glass_menu import GlassMenu
 from .session_manager import SessionManager
 from .overlay_manager import OverlayManager
 from .message_utils import MessageHandler
@@ -34,6 +35,7 @@ __all__ = [
     "AnimatedBackground",
     "WaveOverlay",
     "MenuHandler",
+    "GlassMenu",
     "SessionManager",
     "OverlayManager",
     "MessageHandler",
