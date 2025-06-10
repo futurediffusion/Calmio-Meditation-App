@@ -6,6 +6,7 @@ from .stats_overlay import StatsOverlay
 from .session_complete import SessionComplete
 from .biofeedback_overlay import BioFeedbackOverlay
 from .daily_challenge_overlay import DailyChallengeOverlay
+from .daily_challenge_prompt import DailyChallengePrompt
 from .today_sessions import TodaySessionsView
 from .session_details import SessionDetailsView
 from .options_overlay import OptionsOverlay
@@ -42,4 +43,5 @@ __all__ = [
     "SoundManager",
     "BioFeedbackOverlay",
     "DailyChallengeOverlay",
+    "DailyChallengePrompt",
 ]

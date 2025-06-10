@@ -44,6 +44,7 @@ En Windows puede ejecutarse `run_app.bat`, el script creará un entorno virtual 
   - El usuario puede pulsar el círculo o mantener la barra espaciadora para respirar.
   - Cada ciclo incrementa el contador visual en la parte superior.
   - Mensajes motivacionales aparecen cada cierto número de respiraciones.
+  - Un botón flotante 🏆 abre el **Reto diario** cuando está disponible. El botón se desvanece al comenzar una sesión o al cerrar el reto.
 
 ## Menú y controles
 
