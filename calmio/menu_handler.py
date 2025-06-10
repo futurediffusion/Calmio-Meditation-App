@@ -51,6 +51,8 @@ class MenuHandler:
     def close_options(self) -> None:
         self.window.options_overlay.hide()
         self.window.menu_overlay.hide()
+        # Restore focus to main window for breathing controls
+        self.window.setFocus()
 
     def toggle_developer_menu(self) -> None:
         if self.window.dev_menu.isVisible():
@@ -71,6 +73,7 @@ class MenuHandler:
     def close_sound(self) -> None:
         self.window.sound_overlay.hide()
         self.window.menu_overlay.hide()
+        self.window.setFocus()
 
     def toggle_breath_modes(self) -> None:
         if self.window.breath_modes.isVisible():
@@ -83,8 +86,11 @@ class MenuHandler:
     def close_breath_modes(self) -> None:
         self.window.breath_modes.hide()
         self.window.menu_overlay.hide()
+        self.window.setFocus()
 
     def hide_control_buttons(self) -> None:
         if hasattr(self.window, "menu_overlay"):
             self.window.menu_overlay.hide()
+        # Ensure breathing controls receive key events again
+        self.window.setFocus()
 
