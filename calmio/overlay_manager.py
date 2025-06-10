@@ -107,3 +107,5 @@ class OverlayManager:
     def close_daily_challenge(self):
         if hasattr(self.window, "daily_challenge_overlay"):
             self.window.daily_challenge_overlay.hide()
+        if hasattr(self.window, "hide_daily_challenge_prompt"):
+            self.window.hide_daily_challenge_prompt()

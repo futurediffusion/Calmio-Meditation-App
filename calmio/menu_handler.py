@@ -30,6 +30,10 @@ class MenuHandler:
             self.window.sound_overlay.setGeometry(self.window.rect())
         if hasattr(self.window, "breath_modes"):
             self.window.breath_modes.setGeometry(self.window.rect())
+        if hasattr(self.window, "daily_challenge_prompt"):
+            px = margin
+            py = self.window.height() - self.window.daily_challenge_prompt.height() - margin
+            self.window.daily_challenge_prompt.move(px, py)
 
 
     # --- visibility toggles --------------------------------------------

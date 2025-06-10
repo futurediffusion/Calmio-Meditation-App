@@ -46,6 +46,7 @@ from .message_utils import MessageHandler
 from .sound_manager import SoundManager
 from .biofeedback_overlay import BioFeedbackOverlay
 from .daily_challenge_overlay import DailyChallengeOverlay
+from .daily_challenge_prompt import DailyChallengePrompt
 
 
 class MainWindow(QMainWindow):
@@ -434,6 +435,10 @@ class MainWindow(QMainWindow):
                     hasattr(self, "daily_challenge_overlay")
                     and self.daily_challenge_overlay.geometry().contains(pos)
                 )
+                or (
+                    hasattr(self, "daily_challenge_prompt")
+                    and self.daily_challenge_prompt.geometry().contains(pos)
+                )
                 ):
                 self.menu_handler.hide_control_buttons()
                 self.dev_menu.hide()
@@ -479,6 +484,10 @@ class MainWindow(QMainWindow):
             or (
                 hasattr(self, "daily_challenge_overlay")
                 and self.daily_challenge_overlay.geometry().contains(pos)
+            )
+            or (
+                hasattr(self, "daily_challenge_prompt")
+                and self.daily_challenge_prompt.geometry().contains(pos)
             )
         ):
             self.menu_handler.hide_control_buttons()
@@ -534,6 +543,10 @@ class MainWindow(QMainWindow):
 
     def stop_prompt_animation(self):
         self.message_handler.stop_prompt_animation()
+
+    def hide_daily_challenge_prompt(self):
+        if hasattr(self, "daily_challenge_prompt") and self.daily_challenge_prompt.isVisible():
+            self.daily_challenge_prompt.fade_out()
 
     def display_motivational_message(self, text):
         self.message_handler.display_motivational_message(text)
@@ -616,10 +629,16 @@ class MainWindow(QMainWindow):
         self.daily_challenge_overlay.closed.connect(
             self.overlay_manager.close_daily_challenge
         )
+
+        self.daily_challenge_prompt = DailyChallengePrompt(self)
+        self.daily_challenge_prompt.hide()
+        self.daily_challenge_prompt.clicked.connect(
+            self.overlay_manager.show_daily_challenge
+        )
+        self.menu_handler.position_buttons()
+
         if not today_ch.get("completed"):
-            QTimer.singleShot(
-                1500, self.overlay_manager.show_daily_challenge
-            )
+            QTimer.singleShot(1500, self.daily_challenge_prompt.show)
 
     def show_biofeedback_message(self):
         if not self.biofeedback_messages:
@@ -634,4 +653,5 @@ class MainWindow(QMainWindow):
 
     def _challenge_completed(self):
         self.data_store.mark_challenge_completed()
+        self.hide_daily_challenge_prompt()
         self.display_motivational_message("\u2728 Reto diario completado!")

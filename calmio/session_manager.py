@@ -27,6 +27,8 @@ class SessionManager:
             self.window.session_seconds = 0
             self.window.cycle_durations = []
             self.window.stop_prompt_animation()
+            if hasattr(self.window, "hide_daily_challenge_prompt"):
+                self.window.hide_daily_challenge_prompt()
             self.window._chakra_index = 0
             if hasattr(self.window, "bg"):
                 self.window.bg.transition_to_index(0, duration=0)
