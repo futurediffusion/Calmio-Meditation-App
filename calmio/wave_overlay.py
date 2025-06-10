@@ -89,6 +89,8 @@ class WaveOverlay(QWidget):
         if not self._waves:
             return
         painter = QPainter(self)
+        if not painter.isActive():
+            return
         painter.setRenderHint(QPainter.Antialiasing)
         for wave in list(self._waves):
             if wave._opacity <= 0:

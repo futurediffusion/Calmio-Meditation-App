@@ -25,6 +25,8 @@ class MonthlyLineGraph(QWidget):
         if not self.minutes or self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)
+        if not painter.isActive():
+            return
         painter.setRenderHint(QPainter.Antialiasing)
         w = self.width()
         h = self.height()
@@ -106,6 +108,8 @@ class DonutProgress(QWidget):
         if self.width() <= 0 or self.height() <= 0:
             return
         painter = QPainter(self)
+        if not painter.isActive():
+            return
         painter.setRenderHint(QPainter.Antialiasing)
         stroke = 10
         side = min(self.width(), self.height()) - stroke
