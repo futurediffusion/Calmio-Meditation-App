@@ -629,6 +629,8 @@ class MainWindow(QMainWindow):
         self.daily_challenge_overlay.closed.connect(
             self.overlay_manager.close_daily_challenge
         )
+        # Keep the overlay hidden until explicitly shown via the manager
+        self.daily_challenge_overlay.hide()
 
         self.daily_challenge_prompt = DailyChallengePrompt(self)
         self.daily_challenge_prompt.hide()
