@@ -31,8 +31,17 @@ class MenuHandler:
         if hasattr(self.window, "breath_modes"):
             self.window.breath_modes.setGeometry(self.window.rect())
         if hasattr(self.window, "daily_challenge_prompt"):
-            px = margin
-            py = self.window.height() - self.window.daily_challenge_prompt.height() - margin
+            # Position the daily challenge prompt in the bottom-right corner
+            px = (
+                self.window.width()
+                - self.window.daily_challenge_prompt.width()
+                - margin
+            )
+            py = (
+                self.window.height()
+                - self.window.daily_challenge_prompt.height()
+                - margin
+            )
             self.window.daily_challenge_prompt.move(px, py)
 
 

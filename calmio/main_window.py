@@ -640,7 +640,8 @@ class MainWindow(QMainWindow):
         self.menu_handler.position_buttons()
 
         if not today_ch.get("completed"):
-            QTimer.singleShot(1500, self.daily_challenge_prompt.show)
+            # Show the prompt immediately once the challenge is set up
+            self.daily_challenge_prompt.show()
 
     def show_biofeedback_message(self):
         if not self.biofeedback_messages:
