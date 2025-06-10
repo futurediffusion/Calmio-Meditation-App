@@ -1,12 +1,17 @@
 from PySide6.QtCore import Qt, Signal, QPropertyAnimation
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
     QLabel,
-    QGridLayout,
     QGraphicsOpacityEffect,
+    QScrollArea,
+    QFrame,
+    QSizePolicy,
+    QGraphicsDropShadowEffect,
+    QLayout,
 )
 from .font_utils import get_emoji_font
 
@@ -35,8 +40,21 @@ class MenuOverlay(QWidget):
         self.opacity.setOpacity(1)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(10)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setStyleSheet("QScrollArea{border:none;}")
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        layout.addWidget(self.scroll)
+
+        container = QWidget()
+        self.scroll.setWidget(container)
+        c_layout = QVBoxLayout(container)
+        c_layout.setContentsMargins(20, 20, 20, 20)
+        c_layout.setSpacing(15)
+        c_layout.setSizeConstraint(QLayout.SetMinimumSize)
 
         header = QHBoxLayout()
         self.back_btn = QPushButton("\u2190")
@@ -45,47 +63,80 @@ class MenuOverlay(QWidget):
         )
         self.back_btn.clicked.connect(self.hide_with_anim)
         header.addWidget(self.back_btn, alignment=Qt.AlignLeft)
+
+        title = QLabel("Men\u00fa")
+        t_font = QFont("Sans Serif")
+        t_font.setPointSize(20)
+        t_font.setWeight(QFont.Medium)
+        title.setFont(t_font)
+        title.setAlignment(Qt.AlignCenter)
+        header.addWidget(title, alignment=Qt.AlignCenter)
         header.addStretch()
-        layout.addLayout(header)
+        c_layout.addLayout(header)
 
-        self.grid = QGridLayout()
-        self.grid.setSpacing(15)
-        layout.addLayout(self.grid)
-        layout.addStretch()
+        self.menu_container = QVBoxLayout()
+        self.menu_container.setSpacing(10)
+        self.menu_container.setSizeConstraint(QLayout.SetMinimumSize)
+        c_layout.addLayout(self.menu_container)
+        c_layout.addStretch()
 
-        self.buttons = []
-        self._add_button(0, 0, "\U0001FAC1", "Respiraciones", self.breath_modes_requested)
-        self._add_button(0, 1, "\U0001F3B5", "Sonido", self.sound_requested)
-        self._add_button(1, 0, "\U0001F4CA", "Estad\u00edsticas", self.stats_requested)
-        self._add_button(1, 1, "\U0001F534", "Terminar sesi\u00f3n", self.end_requested)
-        self._add_button(2, 0, "\U0001F9E0", "Logros", self.achievements_requested)
-        self._add_button(2, 1, "\u2699\ufe0f", "Ajustes", self.settings_requested)
-        self._add_button(3, 0, "\U0001F41B", "Modo desarrollador", self.developer_requested, span=2)
+        self.cards = []
+        self.labels = []
+        self._add_menu_row("\U0001FAC1", "Respiraciones", self.breath_modes_requested)
+        self._add_menu_row("\U0001F3B5", "Sonido", self.sound_requested)
+        self._add_menu_row("\U0001F4CA", "Estad\u00edsticas", self.stats_requested)
+        self._add_menu_row("\U0001F534", "Terminar sesi\u00f3n", self.end_requested)
+        self._add_menu_row("\U0001F9E0", "Logros", self.achievements_requested)
+        self._add_menu_row("\u2699\ufe0f", "Ajustes", self.settings_requested)
+        self._add_menu_row("\U0001F41B", "Modo desarrollador", self.developer_requested)
 
-    def _add_button(self, row, col, icon, text, signal, span=1):
-        btn = QPushButton()
-        btn.setCursor(Qt.PointingHandCursor)
-        btn.setStyleSheet(
-            "QPushButton{background:rgba(255,255,255,0.6);border:none;border-radius:12px;}"
-            "QPushButton:hover{background:rgba(255,255,255,0.8);}"
+    def _add_menu_row(self, icon: str, text: str, signal: Signal) -> None:
+        card = QFrame()
+        card.setObjectName("menuCard")
+        card.setCursor(Qt.PointingHandCursor)
+        card.setStyleSheet(
+            "QFrame#menuCard{background:white;border-radius:15px;}"
+            "QFrame#menuCard:hover{background:#F2F2F2;}"
         )
-        b_layout = QVBoxLayout(btn)
-        b_layout.setContentsMargins(10, 10, 10, 10)
+        eff = QGraphicsDropShadowEffect(self)
+        eff.setBlurRadius(8)
+        eff.setOffset(0, 2)
+        card.setGraphicsEffect(eff)
+
+        layout = QHBoxLayout(card)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
+
         icon_lbl = QLabel(icon)
+        icon_lbl.setFont(get_emoji_font(18))
         icon_lbl.setAlignment(Qt.AlignCenter)
-        icon_lbl.setFont(get_emoji_font(32))
+
         txt_lbl = QLabel(text)
-        txt_lbl.setAlignment(Qt.AlignCenter)
-        txt_lbl.setWordWrap(True)
-        txt_lbl.setStyleSheet("font-size:16px;")
-        b_layout.addWidget(icon_lbl)
-        b_layout.addWidget(txt_lbl)
-        btn.clicked.connect(signal.emit)
-        if span == 1:
-            self.grid.addWidget(btn, row, col)
-        else:
-            self.grid.addWidget(btn, row, col, 1, span)
-        self.buttons.append(btn)
+        name_font = QFont("Sans Serif")
+        name_font.setPointSize(14)
+        name_font.setWeight(QFont.Bold)
+        txt_lbl.setFont(name_font)
+        txt_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        layout.addWidget(icon_lbl)
+        layout.addWidget(txt_lbl)
+
+        card.mouseReleaseEvent = lambda e, s=signal: s.emit()
+
+        self.menu_container.addWidget(card)
+        self.cards.append(card)
+        self.labels.append(txt_lbl)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        max_w = int(self.width() * 0.9)
+        font_size = 12 if self.width() < 400 else 14
+        for card in self.cards:
+            card.setMaximumWidth(max_w)
+        for lbl in self.labels:
+            f = lbl.font()
+            f.setPointSize(font_size)
+            lbl.setFont(f)
 
     def adjust_position(self):
         if not self.parent():
