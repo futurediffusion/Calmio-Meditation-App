@@ -1,40 +1,97 @@
 import json
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from peewee import fn, DoesNotExist
+
+from .database import (
+    initialize_database,
+    Setting,
+    Session,
+    Badge,
+    DailyBadge,
+    DailyChallenge,
+    db,
+)
+
+
 from platformdirs import user_data_dir
 
 
 class DataStore:
     def __init__(self, path: str | Path | None = None):
         """Initialize the data store using a writable user data directory."""
-        if path is None:
-            data_dir = Path(user_data_dir("Calmio"))
-            data_dir.mkdir(parents=True, exist_ok=True)
-            path = data_dir / "calmio_data.json"
-        self.path = Path(path)
-        self.data = {
-            "daily_seconds": {},
-            "last_session": {},
-            "streak": 1,
-            "sessions": [],
-            # store cumulative counts for each badge code
-            "badges": {},
-            # badges earned today {date: {code: count}}
-            "daily_badges": {},
-            "visual_settings": {
-                "dark_mode": False,
-            },
-            "sound_settings": {
-                "music_enabled": False,
-                "bell_enabled": False,
-                "music_mode": "scale",
-                "scale_type": "major",
-                "breath_volume": False,
-            },
-            "daily_challenges": {},
-        }
         self.time_offset = timedelta()
-        self.load()
+        self.db_path = path or Path(user_data_dir("Calmio")) / "calmio.db"
+        initialize_database()
+        self._migrate_from_json()
+
+    def _migrate_from_json(self):
+        """Migrate data from the old JSON file to the database if it exists."""
+        json_path = self.db_path.parent / "calmio_data.json"
+        if not json_path.exists():
+            return
+
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return
+
+        # Check if migration has already been done
+        if Setting.select().count() > 0 or Session.select().count() > 0:
+            return
+
+        with db.atomic():
+            # Migrate sessions
+            for session_data in data.get("sessions", []):
+                try:
+                    start_time = datetime.fromisoformat(session_data["start"])
+                    Session.create(
+                        start_time=start_time,
+                        duration=session_data.get("duration", 0),
+                        breaths=session_data.get("breaths", 0),
+                        last_inhale=session_data.get("last_inhale", 0),
+                        last_exhale=session_data.get("last_exhale", 0),
+                        cycles=session_data.get("cycles", []),
+                    )
+                except (ValueError, KeyError):
+                    continue
+
+            # Migrate settings
+            if "visual_settings" in data:
+                self._set_setting("visual_settings", data["visual_settings"])
+            if "sound_settings" in data:
+                self._set_setting("sound_settings", data["sound_settings"])
+
+            # Migrate badges
+            for code, count in data.get("badges", {}).items():
+                Badge.create(code=code, count=count)
+
+            # Migrate daily badges
+            for date_str, badges in data.get("daily_badges", {}).items():
+                try:
+                    date_obj = datetime.fromisoformat(date_str).date()
+                    for code, count in badges.items():
+                        badge, _ = Badge.get_or_create(code=code)
+                        DailyBadge.create(date=date_obj, badge=badge, count=count)
+                except (ValueError, KeyError):
+                    continue
+
+            # Migrate daily challenges
+            for date_str, challenge_data in data.get("daily_challenges", {}).items():
+                try:
+                    date_obj = datetime.fromisoformat(date_str).date()
+                    DailyChallenge.create(
+                        date=date_obj,
+                        text=challenge_data.get("text", ""),
+                        completed=challenge_data.get("completed", False),
+                    )
+                except (ValueError, KeyError):
+                    continue
+
+        # Archive the old JSON file
+        archive_path = json_path.with_suffix(".json.migrated")
+        json_path.rename(archive_path)
 
     def now(self):
         """Return the current datetime adjusted by any developer offset."""
@@ -48,100 +105,68 @@ class DataStore:
         """Clear any developer time offset."""
         self.time_offset = timedelta()
 
-    def load(self):
-        if self.path.exists():
-            try:
-                with self.path.open("r", encoding="utf-8") as f:
-                    self.data.update(json.load(f))
-                    if "daily_minutes" in self.data:
-                        self.data["daily_seconds"] = {
-                            k: v * 60 for k, v in self.data.pop("daily_minutes").items()
-                        }
-                    if "streak" not in self.data:
-                        self.data["streak"] = 1
-                    if "sessions" not in self.data:
-                        self.data["sessions"] = []
-                    if "badges" not in self.data:
-                        self.data["badges"] = {}
-                    elif isinstance(self.data["badges"], list):
-                        self.data["badges"] = {b: 1 for b in self.data["badges"]}
-                    if "daily_badges" not in self.data:
-                        self.data["daily_badges"] = {}
-                    else:
-                        # convert old format lists to count dicts
-                        for k, v in list(self.data["daily_badges"].items()):
-                            if isinstance(v, list):
-                                counts = {}
-                                for b in v:
-                                    counts[b] = counts.get(b, 0) + 1
-                                self.data["daily_badges"][k] = counts
-                    if "visual_settings" not in self.data:
-                        self.data["visual_settings"] = {"dark_mode": False}
-                    if "sound_settings" not in self.data:
-                        self.data["sound_settings"] = {
-                            "music_enabled": False,
-                            "bell_enabled": False,
-                            "music_mode": "scale",
-                            "scale_type": "major",
-                            "breath_volume": False,
-                        }
-                    if "daily_challenges" not in self.data:
-                        self.data["daily_challenges"] = {}
-                    else:
-                        self.data["sound_settings"].setdefault("music_mode", "scale")
-                        self.data["sound_settings"].setdefault("scale_type", "major")
-                        self.data["sound_settings"].setdefault("breath_volume", False)
-            except (json.JSONDecodeError, IOError):
-                pass
+    def _get_setting(self, key, default=None):
+        try:
+            setting = Setting.get(Setting.key == key)
+            return setting.value
+        except DoesNotExist:
+            return default if default is not None else {}
 
-    def save(self):
-        with self.path.open("w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2)
+    def _set_setting(self, key, value):
+        setting, created = Setting.get_or_create(key=key, defaults={"value": value})
+        if not created:
+            setting.value = value
+            setting.save()
 
     # ------------------------------------------------------------------
     def get_visual_setting(self, name: str, default=None):
-        return self.data.get("visual_settings", {}).get(name, default)
+        settings = self._get_setting("visual_settings", {"dark_mode": False})
+        return settings.get(name, default)
 
     def set_visual_setting(self, name: str, value) -> None:
-        self.data.setdefault("visual_settings", {})[name] = value
-        self.save()
+        settings = self._get_setting("visual_settings", {"dark_mode": False})
+        settings[name] = value
+        self._set_setting("visual_settings", settings)
 
     # ------------------------------------------------------------------
     def get_sound_setting(self, name: str, default=None):
-        return self.data.get("sound_settings", {}).get(name, default)
+        defaults = {
+            "music_enabled": False,
+            "bell_enabled": False,
+            "music_mode": "scale",
+            "scale_type": "major",
+            "breath_volume": False,
+        }
+        settings = self._get_setting("sound_settings", defaults)
+        return settings.get(name, default)
 
     def set_sound_setting(self, name: str, value) -> None:
-        self.data.setdefault("sound_settings", {})[name] = value
-        self.save()
+        defaults = {
+            "music_enabled": False,
+            "bell_enabled": False,
+            "music_mode": "scale",
+            "scale_type": "major",
+            "breath_volume": False,
+        }
+        settings = self._get_setting("sound_settings", defaults)
+        settings[name] = value
+        self._set_setting("sound_settings", settings)
 
     def add_session(self, start_dt, seconds, breaths, inhale, exhale, cycles=None):
-        date_key = start_dt.date().isoformat()
-        self.data["daily_seconds"][date_key] = (
-            self.data["daily_seconds"].get(date_key, 0) + seconds
+        session = Session.create(
+            start_time=start_dt,
+            duration=seconds,
+            breaths=breaths,
+            last_inhale=inhale,
+            last_exhale=exhale,
+            cycles=cycles or [],
         )
-        self.data["last_session"] = {
-            "start": start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            "duration": seconds,
-            "breaths": breaths,
-            "last_inhale": inhale,
-            "last_exhale": exhale,
-            "cycles": cycles or [],
-        }
-        self._update_streak()
-        self.data.setdefault("sessions", []).append(
-            {
-                "start": start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                "duration": seconds,
-                "breaths": breaths,
-                "last_inhale": inhale,
-                "last_exhale": exhale,
-                "cycles": cycles or [],
-            }
-        )
+
         new_badges = self._check_badges(start_dt, seconds, breaths)
+
         try:
             from .achievements import BADGE_MAP
-        except ImportError:  # fallback when imported as standalone
+        except ImportError:
             from achievements import BADGE_MAP
 
         daily_only_codes = {
@@ -152,117 +177,119 @@ class DataStore:
             "7_day_streak",
             "30_day_streak",
         }
-        daily_only = {BADGE_MAP.get(c, c) for c in daily_only_codes}
-        session_badges = [b for b in new_badges if b not in daily_only]
-        # store only session-related badges with the session
-        self.data["sessions"][-1]["badges"] = list(session_badges)
+        session_badges = [b for b in new_badges if b not in daily_only_codes]
+
         if new_badges:
-            day_badges = self.data.setdefault("daily_badges", {}).get(date_key, {})
-            for b in new_badges:
-                day_badges[b] = day_badges.get(b, 0) + 1
-                self.data["badges"][b] = self.data["badges"].get(b, 0) + 1
-            self.data["daily_badges"][date_key] = day_badges
-        self.save()
-        return session_badges
+            date_key = start_dt.date()
+            for code in new_badges:
+                badge_id = BADGE_MAP.get(code, code)
+                badge, _ = Badge.get_or_create(code=badge_id)
+                badge.count = (badge.count or 0) + 1
+                badge.save()
+
+                daily_badge, created = DailyBadge.get_or_create(
+                    date=date_key, badge=badge
+                )
+                if not created:
+                    daily_badge.count = (daily_badge.count or 0) + 1
+                else:
+                    daily_badge.count = 1
+                daily_badge.save()
+
+        return [BADGE_MAP.get(b, b) for b in session_badges]
 
     def get_today_seconds(self):
-        today_key = self.now().date().isoformat()
-        return self.data["daily_seconds"].get(today_key, 0)
+        today = self.now().date()
+        query = Session.select(fn.SUM(Session.duration)).where(
+            fn.STRFTIME("%Y-%m-%d", Session.start_time) == today.isoformat()
+        )
+        total_seconds = query.scalar() or 0
+        return total_seconds
 
     def get_last_session(self):
-        return self.data.get("last_session", {})
+        try:
+            last = Session.select().order_by(Session.start_time.desc()).get()
+            return {
+                "start": last.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "duration": last.duration,
+                "breaths": last.breaths,
+                "last_inhale": last.last_inhale,
+                "last_exhale": last.last_exhale,
+                "cycles": last.cycles or [],
+            }
+        except DoesNotExist:
+            return {}
 
     def get_badges(self):
-        return self.data.get("badges", {})
-
-    # ------------------------------------------------------------------
-    def get_challenge_for_date(self, date_obj=None):
-        if date_obj is None:
-            date_obj = self.now().date()
-        if hasattr(date_obj, "date"):
-            date_obj = date_obj.date()
-        date_key = date_obj.isoformat()
-        return self.data.get("daily_challenges", {}).get(date_key)
-
-    def set_daily_challenge(self, text: str, date_obj=None):
-        if date_obj is None:
-            date_obj = self.now().date()
-        if hasattr(date_obj, "date"):
-            date_obj = date_obj.date()
-        date_key = date_obj.isoformat()
-        self.data.setdefault("daily_challenges", {})[date_key] = {
-            "text": text,
-            "completed": False,
-        }
-        self.save()
-
-    def mark_challenge_completed(self, date_obj=None):
-        if date_obj is None:
-            date_obj = self.now().date()
-        if hasattr(date_obj, "date"):
-            date_obj = date_obj.date()
-        date_key = date_obj.isoformat()
-        ch = self.data.setdefault("daily_challenges", {}).get(date_key)
-        if ch is None:
-            ch = {"text": "", "completed": True}
-            self.data["daily_challenges"][date_key] = ch
-        else:
-            ch["completed"] = True
-        self.save()
+        return {b.code: b.count for b in Badge.select()}
 
     def get_badges_for_date(self, date_obj):
-        date_key = (
-            date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
+        date_key = date_obj.date() if hasattr(date_obj, "date") else date_obj
+        badges = (
+            Badge.select(Badge.code, DailyBadge.count)
+            .join(DailyBadge)
+            .where(fn.STRFTIME("%Y-%m-%d", DailyBadge.date) == date_key.isoformat())
         )
-        return self.data.get("daily_badges", {}).get(date_key, {})
+        return {b.code: b.dailybadge.count for b in badges}
 
     def get_sessions_for_date(self, date_obj):
-        date_key = date_obj.date().isoformat() if hasattr(date_obj, "date") else date_obj.isoformat()
-        sessions = []
-        for s in self.data.get("sessions", []):
-            try:
-                dt = datetime.fromisoformat(s.get("start", ""))
-            except ValueError:
-                continue
-            if dt.date().isoformat() == date_key:
-                sessions.append(s)
+        date_key = date_obj.date() if hasattr(date_obj, "date") else date_obj
+        sessions_query = Session.select().where(
+            fn.STRFTIME("%Y-%m-%d", Session.start_time) == date_key.isoformat()
+        )
+        sessions = [
+            {
+                "start": s.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "duration": s.duration,
+                "breaths": s.breaths,
+                "last_inhale": s.last_inhale,
+                "last_exhale": s.last_exhale,
+                "cycles": s.cycles or [],
+            }
+            for s in sessions_query
+        ]
         sessions.sort(key=lambda x: x.get("start", ""), reverse=True)
         return sessions
 
     def get_streak(self):
-        return self.data.get("streak", 1)
+        dates_query = (
+            Session.select(
+                fn.STRFTIME("%Y-%m-%d", Session.start_time).alias("session_date")
+            )
+            .distinct()
+            .order_by(fn.STRFTIME("%Y-%m-%d", Session.start_time).desc())
+        )
+        dates = [
+            datetime.strptime(d.session_date, "%Y-%m-%d").date() for d in dates_query
+        ]
 
-    def _update_streak(self):
-        dates = sorted(self.data["daily_seconds"].keys())
         if not dates:
-            self.data["streak"] = 0
-            return
+            return 0
+
+        today = self.now().date()
+        last_session_date = dates[0]
+
+        if (today - last_session_date).days > 1:
+            return 0
+
         streak = 1
-        prev = datetime.fromisoformat(dates[-1]).date()
-        for d in reversed(dates[:-1]):
-            current = datetime.fromisoformat(d).date()
-            if (prev - current).days == 1:
+        for i in range(len(dates) - 1):
+            if (dates[i] - dates[i + 1]).days == 1:
                 streak += 1
-                prev = current
             else:
                 break
-        self.data["streak"] = streak
+        return streak
 
     def _check_badges(self, start_dt, session_seconds, breaths):
         """Check and award badges based on totals, session data and streak."""
-        try:
-            from .achievements import BADGE_MAP
-        except ImportError:
-            from achievements import BADGE_MAP
-
         new_badges = []
+        existing_badges = self.get_badges()
 
-        # total meditation time badges
-        total_minutes = sum(self.data["daily_seconds"].values()) / 60
-        if total_minutes >= 5 and "5_min_total" not in self.data["badges"]:
+        total_seconds = Session.select(fn.SUM(Session.duration)).scalar() or 0
+        total_minutes = total_seconds / 60
+        if total_minutes >= 5 and "5_min_total" not in existing_badges:
             new_badges.append("5_min_total")
 
-        # breaths per session badges
         breath_levels = [
             (1, "1_breath_session"),
             (5, "5_breaths_session"),
@@ -279,68 +306,79 @@ class DataStore:
             if breaths >= count:
                 new_badges.append(code)
 
-        # number of sessions in a day badges
-        date_key = start_dt.date().isoformat()
-        sessions_today = len(
-            [s for s in self.data.get("sessions", []) if s.get("start", "").startswith(date_key)]
+        date_key = start_dt.date()
+        sessions_today = Session.select().where(
+            fn.STRFTIME("%Y-%m-%d", Session.start_time) == date_key.isoformat()
         )
+        sessions_today_count = sessions_today.count()
+
         session_levels = [
             (1, "1_session_day"),
             (2, "2_sessions_day"),
             (3, "3_sessions_day"),
         ]
         for count, code in session_levels:
-            if sessions_today >= count:
+            if sessions_today_count >= count:
                 new_badges.append(code)
 
-        # streak based badges
-        if self.data.get("streak", 1) >= 3 and "3_day_streak" not in self.data["badges"]:
+        streak = self.get_streak()
+        if streak >= 3 and "3_day_streak" not in existing_badges:
             new_badges.append("3_day_streak")
-        if self.data.get("streak", 1) >= 7 and "7_day_streak" not in self.data["badges"]:
+        if streak >= 7 and "7_day_streak" not in existing_badges:
             new_badges.append("7_day_streak")
-        if self.data.get("streak", 1) >= 30 and "30_day_streak" not in self.data["badges"]:
+        if streak >= 30 and "30_day_streak" not in existing_badges:
             new_badges.append("30_day_streak")
 
-        # Convert internal codes to catalog ids
+        try:
+            from .achievements import BADGE_MAP
+        except ImportError:
+            from achievements import BADGE_MAP
+
         return [BADGE_MAP.get(b, b) for b in new_badges]
 
+    # ------------------------------------------------------------------
     def get_weekly_summary(self, reference_date=None):
-        """Return stats for the week of the given date (default today)."""
         if reference_date is None:
             reference_date = self.now().date()
-        start = reference_date - timedelta(days=reference_date.weekday())
+        start_of_week = reference_date - timedelta(days=reference_date.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+
         minutes_per_day = []
         total_seconds = 0
         for i in range(7):
-            d = start + timedelta(days=i)
-            secs = self.data["daily_seconds"].get(d.isoformat(), 0)
+            day = start_of_week + timedelta(days=i)
+            secs = (
+                Session.select(fn.SUM(Session.duration))
+                .where(fn.STRFTIME("%Y-%m-%d", Session.start_time) == day.isoformat())
+                .scalar()
+                or 0
+            )
             minutes_per_day.append(secs / 60)
             total_seconds += secs
 
-        longest_secs = 0
-        longest_day = ""
-        longest_time = ""
-        for s in self.data.get("sessions", []):
-            try:
-                dt = datetime.fromisoformat(s.get("start", ""))
-            except ValueError:
-                continue
-            if start <= dt.date() <= start + timedelta(days=6):
-                dur = s.get("duration", 0)
-                if dur > longest_secs:
-                    longest_secs = dur
-                    eng_day = dt.strftime("%A")
-                    day_map = {
-                        "Monday": "Lunes",
-                        "Tuesday": "Martes",
-                        "Wednesday": "Mi\u00e9rcoles",
-                        "Thursday": "Jueves",
-                        "Friday": "Viernes",
-                        "Saturday": "S\u00e1bado",
-                        "Sunday": "Domingo",
-                    }
-                    longest_day = day_map.get(eng_day, eng_day)
-                    longest_time = dt.strftime("%H:%M")
+        longest_session = (
+            Session.select()
+            .where(Session.start_time.between(start_of_week, end_of_week))
+            .order_by(Session.duration.desc())
+            .first()
+        )
+
+        longest_day, longest_time, longest_secs = "", "", 0
+        if longest_session:
+            dt = longest_session.start_time
+            eng_day = dt.strftime("%A")
+            day_map = {
+                "Monday": "Lunes",
+                "Tuesday": "Martes",
+                "Wednesday": "Miércoles",
+                "Thursday": "Jueves",
+                "Friday": "Viernes",
+                "Saturday": "Sábado",
+                "Sunday": "Domingo",
+            }
+            longest_day = day_map.get(eng_day, eng_day)
+            longest_time = dt.strftime("%H:%M")
+            longest_secs = longest_session.duration
 
         average = (total_seconds / 60) / 7 if total_seconds else 0
         return {
@@ -350,43 +388,49 @@ class DataStore:
             "longest_day": longest_day,
             "longest_time": longest_time,
             "longest_minutes": longest_secs / 60,
-            "total_seconds": total_seconds,
         }
 
     def get_monthly_summary(self, year, month, goal=600):
-        """Return stats for the specified month."""
-        from datetime import date
-
-        start = date(year, month, 1)
+        start_date = date(year, month, 1)
         if month == 12:
-            next_month = date(year + 1, 1, 1)
+            end_date = date(year + 1, 1, 1)
         else:
-            next_month = date(year, month + 1, 1)
-        days = (next_month - start).days
+            end_date = date(year, month + 1, 1)
 
-        # minutes per week (fixed day ranges: 1-7, 8-14, 15-21, 22-end)
+        days_in_month = (end_date - start_date).days
+        sessions = Session.select().where(
+            Session.start_time.between(start_date, end_date)
+        )
+
+        daily_seconds = {
+            d.isoformat(): 0
+            for d in (start_date + timedelta(days=i) for i in range(days_in_month))
+        }
+        for s in sessions:
+            day_key = s.start_time.date().isoformat()
+            daily_seconds[day_key] += s.duration
+
         weeks = []
         for start_day in (1, 8, 15, 22):
-            day_start = start + timedelta(days=start_day - 1)
-            if day_start >= next_month:
+            day_start = start_date + timedelta(days=start_day - 1)
+            if day_start >= end_date:
                 break
-            day_end = min(start_day + 6, days)
+            day_end_num = min(start_day + 6, days_in_month)
             total = 0
-            for i in range(start_day, day_end + 1):
-                d = start + timedelta(days=i - 1)
-                total += self.data["daily_seconds"].get(d.isoformat(), 0)
+            for i in range(start_day, day_end_num + 1):
+                d = start_date + timedelta(days=i - 1)
+                total += daily_seconds.get(d.isoformat(), 0)
             weeks.append(total / 60)
 
         total_minutes = sum(weeks)
-        average = total_minutes / days if days else 0
+        average = total_minutes / days_in_month if days_in_month else 0
         best_week_idx = 1 + weeks.index(max(weeks)) if weeks else 0
 
-        # longest streak in month
         longest = 0
         current_streak = 0
-        for i in range(days):
-            day = start + timedelta(days=i)
-            if self.data["daily_seconds"].get(day.isoformat(), 0) > 0:
+        for i in range(days_in_month):
+            day = start_date + timedelta(days=i)
+            if daily_seconds.get(day.isoformat(), 0) > 0:
                 current_streak += 1
                 longest = max(longest, current_streak)
             else:
@@ -402,29 +446,81 @@ class DataStore:
         }
 
     def clear_data(self):
-        """Delete stored data and reset to defaults."""
-        if self.path.exists():
-            try:
-                self.path.unlink()
-            except OSError:
-                pass
-        self.data = {
-            "daily_seconds": {},
-            "last_session": {},
-            "streak": 1,
-            "sessions": [],
-            "badges": {},
+        """Delete all data from the database."""
+        with db.atomic():
+            for model in [Session, Badge, DailyBadge, DailyChallenge, Setting]:
+                model.delete().execute()
+
+    def get_challenge_for_date(self, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        date_key = date_obj.date() if hasattr(date_obj, "date") else date_obj
+        try:
+            challenge = DailyChallenge.get(
+                fn.STRFTIME("%Y-%m-%d", DailyChallenge.date) == date_key.isoformat()
+            )
+            return {"text": challenge.text, "completed": challenge.completed}
+        except DoesNotExist:
+            return None
+
+    def set_daily_challenge(self, text: str, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        date_key = date_obj.date() if hasattr(date_obj, "date") else date_obj
+        challenge, _ = DailyChallenge.get_or_create(
+            date=date_key, defaults={"text": text, "completed": False}
+        )
+        challenge.text = text
+        challenge.save()
+
+    def mark_challenge_completed(self, date_obj=None):
+        if date_obj is None:
+            date_obj = self.now().date()
+        date_key = date_obj.date() if hasattr(date_obj, "date") else date_obj
+        try:
+            challenge = DailyChallenge.get(
+                fn.STRFTIME("%Y-%m-%d", DailyChallenge.date) == date_key.isoformat()
+            )
+            challenge.completed = True
+            challenge.save()
+        except DoesNotExist:
+            DailyChallenge.create(
+                date=date_key, text="Reto completado", completed=True
+            )
+
+    def export_to_json(self, file_path: str):
+        """Export all data to a JSON file."""
+        data_export = {
+            "sessions": [
+                {
+                    "start": s.start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "duration": s.duration,
+                    "breaths": s.breaths,
+                    "last_inhale": s.last_inhale,
+                    "last_exhale": s.last_exhale,
+                    "cycles": s.cycles,
+                }
+                for s in Session.select()
+            ],
+            "badges": {b.code: b.count for b in Badge.select()},
             "daily_badges": {},
-            "visual_settings": {
-                "dark_mode": False,
+            "daily_challenges": {
+                c.date.strftime("%Y-%m-%d"): {
+                    "text": c.text,
+                    "completed": c.completed,
+                }
+                for c in DailyChallenge.select()
             },
-            "sound_settings": {
-                "music_enabled": False,
-                "bell_enabled": False,
-                "music_mode": "scale",
-                "scale_type": "major",
-                "breath_volume": False,
-            },
-            "daily_challenges": {},
+            "settings": {s.key: s.value for s in Setting.select()},
         }
-        self.save()
+
+        # Populate daily_badges
+        daily_badges_query = DailyBadge.select()
+        for db in daily_badges_query:
+            date_str = db.date.strftime("%Y-%m-%d")
+            if date_str not in data_export["daily_badges"]:
+                data_export["daily_badges"][date_str] = {}
+            data_export["daily_badges"][date_str][db.badge.code] = db.count
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data_export, f, indent=2, ensure_ascii=False)
